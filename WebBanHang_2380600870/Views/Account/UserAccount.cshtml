@@ -1,0 +1,221 @@
+﻿@* Views/Account/UserAccount.cshtml — THAY THẾ TOÀN BỘ FILE CŨ *@
+@{
+    ViewData["Title"] = "Tài Khoản Của Tôi";
+    var user = ViewBag.User as WebBanHang_2380600870.Models.AppUser;
+    var orders = ViewBag.Orders as List<WebBanHang_2380600870.Models.Order> ?? new();
+}
+
+<section class="min-h-screen pt-28 pb-20" style="background-color: #F7F7F6;">
+    <div class="max-w-5xl mx-auto px-4">
+
+        <!-- Header -->
+        <div class="mb-8 flex items-center gap-4">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center text-2xl text-white font-bold"
+                 style="background-color: #A27B5C; font-family: 'Playfair Display', serif;">
+                @(user?.FullName?.FirstOrDefault().ToString().ToUpper() ?? "U")
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                    @(user?.FullName ?? "Khách hàng")
+                </h1>
+                <p class="text-sm" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                    @user?.Email · Thành viên từ @user?.CreatedAt.ToString("MM/yyyy")
+                </p>
+            </div>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="mb-6 px-5 py-4 rounded-xl text-sm" style="background-color: #DCD7C9; color: #2C3639; font-family: 'Work Sans', sans-serif;">
+                ✓ @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-6 px-5 py-4 rounded-xl text-sm bg-red-50 text-red-700" style="font-family: 'Work Sans', sans-serif;">
+                @TempData["Error"]
+            </div>
+        }
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Sidebar: Thông tin cá nhân -->
+            <div class="space-y-6">
+                <!-- Cập nhật thông tin -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <h2 class="font-bold text-lg mb-5" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                        Thông Tin Cá Nhân
+                    </h2>
+                    <form method="post" action="/Account/UpdateProfile">
+                        @Html.AntiForgeryToken()
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                    Họ và tên
+                                </label>
+                                <input type="text" name="fullName" value="@user?.FullName"
+                                       class="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+                                       style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                    Email
+                                </label>
+                                <input type="text" value="@user?.Email" disabled
+                                       class="w-full px-3 py-2 rounded-lg border text-sm"
+                                       style="border-color: #DCD7C9; background-color: #F7F7F6; font-family: 'Work Sans', sans-serif; color: #3F4E4F;" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                    Số điện thoại
+                                </label>
+                                <input type="tel" name="phoneNumber" value="@user?.PhoneNumber"
+                                       class="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+                                       style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
+                                       placeholder="Chưa cập nhật" />
+                            </div>
+                            <button type="submit"
+                                    class="w-full py-2 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                                    style="background-color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                                Lưu Thay Đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Đổi mật khẩu -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <h2 class="font-bold text-lg mb-5" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                        Đổi Mật Khẩu
+                    </h2>
+                    <form method="post" action="/Account/ChangePassword">
+                        @Html.AntiForgeryToken()
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Mật khẩu hiện tại</label>
+                                <input type="password" name="currentPassword" required
+                                       class="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+                                       style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif;"
+                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Mật khẩu mới</label>
+                                <input type="password" name="newPassword" required
+                                       class="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+                                       style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif;"
+                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Xác nhận mật khẩu mới</label>
+                                <input type="password" name="confirmPassword" required
+                                       class="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+                                       style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif;"
+                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'" />
+                            </div>
+                            <button type="submit"
+                                    class="w-full py-2 rounded-lg text-sm font-medium border transition-all hover:opacity-70"
+                                    style="border-color: #A27B5C; color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                                Đổi Mật Khẩu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Main: Lịch sử đơn hàng -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="font-bold text-xl" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                            Lịch Sử Đơn Hàng
+                        </h2>
+                        <span class="text-sm px-3 py-1 rounded-full" style="background-color: #DCD7C9; color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                            @orders.Count đơn hàng
+                        </span>
+                    </div>
+
+                    @if (!orders.Any())
+                    {
+                        <div class="text-center py-16">
+                            <span class="material-symbols-outlined text-5xl mb-4 block" style="color: #DCD7C9;">receipt_long</span>
+                            <p style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Bạn chưa có đơn hàng nào.</p>
+                            <a href="/Menu" class="inline-block mt-4 text-sm transition-colors hover:opacity-70"
+                               style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                                Khám phá thực đơn →
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="space-y-4">
+                            @foreach (var order in orders)
+                            {
+                                var statusColor = order.Status switch
+                                {
+                                    WebBanHang_2380600870.Models.OrderStatus.Pending => "#F59E0B",
+                                    WebBanHang_2380600870.Models.OrderStatus.Confirmed => "#3B82F6",
+                                    WebBanHang_2380600870.Models.OrderStatus.Processing => "#8B5CF6",
+                                    WebBanHang_2380600870.Models.OrderStatus.Ready => "#10B981",
+                                    WebBanHang_2380600870.Models.OrderStatus.Completed => "#A27B5C",
+                                    WebBanHang_2380600870.Models.OrderStatus.Cancelled => "#EF4444",
+                                    _ => "#6B7280"
+                                };
+                                var statusVi = order.Status switch
+                                {
+                                    WebBanHang_2380600870.Models.OrderStatus.Pending => "Chờ xác nhận",
+                                    WebBanHang_2380600870.Models.OrderStatus.Confirmed => "Đã xác nhận",
+                                    WebBanHang_2380600870.Models.OrderStatus.Processing => "Đang pha chế",
+                                    WebBanHang_2380600870.Models.OrderStatus.Ready => "Sẵn sàng",
+                                    WebBanHang_2380600870.Models.OrderStatus.Completed => "Hoàn thành",
+                                    WebBanHang_2380600870.Models.OrderStatus.Cancelled => "Đã huỷ",
+                                    _ => order.Status.ToString()
+                                };
+
+                                <details class="rounded-xl border overflow-hidden" style="border-color: #DCD7C9;">
+                                    <summary class="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 list-none">
+                                        <div class="flex items-center gap-4">
+                                            <div>
+                                                <p class="font-semibold text-sm" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">
+                                                    Đơn #@order.Id
+                                                </p>
+                                                <p class="text-xs" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                                    @order.OrderDate.ToString("dd/MM/yyyy HH:mm")
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <span class="text-xs px-3 py-1 rounded-full font-medium text-white"
+                                                  style="background-color: @statusColor; font-family: 'Work Sans', sans-serif;">
+                                                @statusVi
+                                            </span>
+                                            <span class="font-bold text-sm" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                                                @order.TotalAmount.ToString("N0")đ
+                                            </span>
+                                        </div>
+                                    </summary>
+                                    <div class="px-5 py-4 border-t" style="border-color: #DCD7C9; background-color: #F7F7F6;">
+                                        @foreach (var detail in order.OrderDetails)
+                                        {
+                                            <div class="flex justify-between text-sm py-1" style="font-family: 'Work Sans', sans-serif; color: #3F4E4F;">
+                                                <span>@detail.Product?.Name × @detail.Quantity</span>
+                                                <span>@((detail.UnitPrice * detail.Quantity).ToString("N0"))đ</span>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(order.ShippingAddress))
+                                        {
+                                            <p class="text-xs mt-3 pt-3 border-t" style="border-color: #DCD7C9; color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                                📍 @order.ShippingAddress
+                                            </p>
+                                        }
+                                    </div>
+                                </details>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

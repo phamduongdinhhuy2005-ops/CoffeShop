@@ -1,0 +1,622 @@
+﻿@* Views/Admin/CategoryOptions.cshtml *@
+@{
+    ViewData["Title"] = "Tùy Chọn Theo Danh Mục";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "Category";
+    ViewData["Breadcrumb"] = "<a href='/Category'>Danh mục</a> <span class='material-symbols-outlined'>chevron_right</span> Tùy chọn sản phẩm";
+}
+
+<style>
+    .co-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .co-card {
+        background: #fff;
+        border: 1px solid rgba(162,123,92,.18);
+        border-radius: 18px;
+        padding: 1.75rem;
+        box-shadow: 0 2px 8px rgba(44,54,57,.06);
+    }
+
+    .co-card-header {
+        display: flex;
+        align-items: center;
+        gap: .875rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .co-cat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(162,123,92,.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .co-cat-name {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #2c3639;
+    }
+
+    .co-cat-sub {
+        font-size: .75rem;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+
+    .co-section-title {
+        font-size: .72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        color: rgba(44,54,57,.5);
+        margin: 1.25rem 0 .75rem;
+    }
+
+        .co-section-title:first-of-type {
+            margin-top: 0;
+        }
+
+    .co-option-row {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .625rem .875rem;
+        border: 1.5px solid rgba(162,123,92,.18);
+        border-radius: 10px;
+        margin-bottom: .5rem;
+        background: #fafaf9;
+        transition: border-color .15s, background .15s;
+    }
+
+        .co-option-row:hover {
+            border-color: #a27b5c;
+            background: #fff;
+        }
+
+    .co-option-icon {
+        color: #a27b5c;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .co-option-name {
+        flex: 1;
+        font-size: .88rem;
+        font-weight: 600;
+        color: #2c3639;
+    }
+
+    .co-option-price {
+        font-size: .8rem;
+        font-weight: 700;
+        color: #a27b5c;
+        background: rgba(162,123,92,.1);
+        padding: .2rem .6rem;
+        border-radius: 20px;
+    }
+
+    .co-option-edit {
+        display: flex;
+        gap: .3rem;
+        opacity: 0;
+        transition: opacity .15s;
+    }
+
+    .co-option-row:hover .co-option-edit {
+        opacity: 1;
+    }
+
+    .co-icon-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 18px;
+        padding: .15rem;
+        border-radius: 6px;
+        transition: color .15s, background .15s;
+        display: flex;
+        align-items: center;
+    }
+
+        .co-icon-btn:hover {
+            color: #2c3639;
+            background: rgba(44,54,57,.08);
+        }
+
+        .co-icon-btn.del:hover {
+            color: #ef4444;
+            background: rgba(239,68,68,.08);
+        }
+
+    .co-add-row {
+        display: flex;
+        gap: .5rem;
+        margin-top: .875rem;
+    }
+
+    .co-input {
+        flex: 1;
+        padding: .55rem .875rem;
+        border: 1.5px solid rgba(162,123,92,.25);
+        border-radius: 10px;
+        font-size: .85rem;
+        color: #2c3639;
+        background: #fafaf9;
+        outline: none;
+        transition: border-color .15s;
+        font-family: 'Work Sans',sans-serif;
+    }
+
+        .co-input:focus {
+            border-color: #a27b5c;
+            background: #fff;
+        }
+
+    .co-input-price {
+        width: 80px;
+        padding: .55rem .75rem;
+        border: 1.5px solid rgba(162,123,92,.25);
+        border-radius: 10px;
+        font-size: .85rem;
+        color: #2c3639;
+        background: #fafaf9;
+        outline: none;
+        transition: border-color .15s;
+        font-family: 'Work Sans',sans-serif;
+        text-align: right;
+    }
+
+        .co-input-price:focus {
+            border-color: #a27b5c;
+            background: #fff;
+        }
+
+    .co-add-btn {
+        padding: .55rem .875rem;
+        background: #a27b5c;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: .85rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        transition: opacity .15s;
+        font-family: 'Work Sans',sans-serif;
+    }
+
+        .co-add-btn:hover {
+            opacity: .88;
+        }
+
+    .co-toggle-row {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .5rem 0;
+        border-bottom: 1px solid rgba(162,123,92,.08);
+    }
+
+        .co-toggle-row:last-child {
+            border-bottom: none;
+        }
+
+    .co-toggle-label {
+        flex: 1;
+        font-size: .88rem;
+        font-weight: 600;
+        color: #2c3639;
+    }
+
+    .co-toggle-sub {
+        font-size: .75rem;
+        color: #94a3b8;
+    }
+
+    .co-switch {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+        .co-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+
+    .co-slider {
+        position: absolute;
+        inset: 0;
+        border-radius: 24px;
+        background: rgba(162,123,92,.2);
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+        .co-slider::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            top: 3px;
+            left: 3px;
+            transition: transform .2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,.2);
+        }
+
+    .co-switch input:checked + .co-slider {
+        background: #a27b5c;
+    }
+
+        .co-switch input:checked + .co-slider::after {
+            transform: translateX(20px);
+        }
+
+    .co-save-bar {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        display: flex;
+        gap: .75rem;
+        z-index: 1000;
+        transform: translateY(calc(100% + 1.5rem));
+        opacity: 0;
+        transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+    }
+
+        .co-save-bar.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+    .co-save-btn {
+        padding: .75rem 1.5rem;
+        background: #a27b5c;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: .9rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        box-shadow: 0 4px 18px rgba(162,123,92,.35);
+        font-family: 'Work Sans',sans-serif;
+        transition: opacity .15s;
+    }
+
+        .co-save-btn:hover {
+            opacity: .9;
+        }
+
+    .co-discard-btn {
+        padding: .75rem 1.25rem;
+        background: #fff;
+        color: #2c3639;
+        border: 1.5px solid rgba(44,54,57,.15);
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: .9rem;
+        font-weight: 600;
+        font-family: 'Work Sans',sans-serif;
+    }
+
+    .co-toast {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 9999;
+        background: #fff;
+        border: 1px solid rgba(162,123,92,.3);
+        border-left: 4px solid #a27b5c;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        box-shadow: 0 8px 24px rgba(44,54,57,.12);
+        transform: translateX(110%);
+        opacity: 0;
+        transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+        max-width: 360px;
+    }
+
+        .co-toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+    .co-badge-new {
+        font-size: .65rem;
+        font-weight: 800;
+        background: #10b981;
+        color: #fff;
+        padding: .1rem .4rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+</style>
+
+<!-- Toast -->
+<div class="co-toast" id="coToast">
+    <span class="material-symbols-outlined" style="color:#a27b5c;font-size:22px;">check_circle</span>
+    <span id="coToastMsg" style="font-size:.875rem;font-weight:500;color:#2c3639;">Đã lưu!</span>
+    <button onclick="hideToast()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#94a3b8;" class="material-symbols-outlined">close</button>
+</div>
+
+<!-- Save bar -->
+<div class="co-save-bar" id="saveBar">
+    <button class="co-discard-btn" onclick="discardChanges()">Hủy thay đổi</button>
+    <button class="co-save-btn" onclick="saveAllOptions()">
+        <span class="material-symbols-outlined" style="font-size:18px;">save</span>
+        Lưu tất cả thay đổi
+    </button>
+</div>
+
+<!-- Header info -->
+<div style="background:#fff;border:1px solid rgba(162,123,92,.12);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;">
+    <div style="width:42px;height:42px;border-radius:10px;background:rgba(162,123,92,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span class="material-symbols-outlined" style="color:#a27b5c;font-size:22px;">tune</span>
+    </div>
+    <div>
+        <div style="font-size:.95rem;font-weight:700;color:#2c3639;">Quản lý tùy chọn theo danh mục</div>
+        <div style="font-size:.8rem;color:#94a3b8;">Các tùy chọn này sẽ hiển thị trong trang chi tiết sản phẩm theo từng loại danh mục. Thay đổi sẽ được áp dụng ngay sau khi lưu.</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:.5rem;">
+        <a href="/Product" style="display:flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border:1px solid rgba(162,123,92,.25);border-radius:10px;color:#a27b5c;text-decoration:none;font-size:.85rem;font-weight:600;">
+            <span class="material-symbols-outlined" style="font-size:17px;">storefront</span> Xem sản phẩm
+        </a>
+    </div>
+</div>
+
+<div class="co-grid" id="categoriesGrid">
+    <!-- Cards rendered by JS from localStorage data -->
+</div>
+
+<script>
+    // ══════════════════════════════════════════════════════════════
+    //  DEFAULT CONFIG — theo category name
+    // ══════════════════════════════════════════════════════════════
+    const DEFAULT_CONFIG = {
+        "Cà Phê": {
+            icon: "coffee",
+            sub: "Đồ uống có caffeine",
+            hasSugar: true,
+            sizeLabel: "Kích Cỡ",
+            sugars: ["Không đường", "Ít ngọt", "Vừa", "Nhiều đường"],
+            toppings: [
+                { name: "Thêm đá",       price: 0 },
+                { name: "Sữa yến mạch", price: 10000 },
+                { name: "Shot espresso thêm", price: 15000 },
+                { name: "Trân châu đen", price: 15000 },
+            ]
+        },
+        "Trà & Thảo Mộc": {
+            icon: "local_florist",
+            sub: "Trà tươi & thảo mộc",
+            hasSugar: true,
+            sizeLabel: "Kích Cỡ",
+            sugars: ["Không đường", "Ít ngọt", "Vừa", "Nhiều đường"],
+            toppings: [
+                { name: "Thêm đá",       price: 0 },
+                { name: "Sữa yến mạch", price: 10000 },
+                { name: "Mật ong thêm", price: 5000 },
+                { name: "Chanh tươi",   price: 5000 },
+            ]
+        },
+        "Bánh Sáng": {
+            icon: "bakery_dining",
+            sub: "Bánh & đồ ăn",
+            hasSugar: false,
+            sizeLabel: "Phần",
+            sugars: [],
+            toppings: [
+                { name: "Bơ thêm",     price: 5000 },
+                { name: "Mứt dâu",     price: 5000 },
+                { name: "Trứng ốp la", price: 15000 },
+                { name: "Cà phê kèm",  price: 20000 },
+            ]
+        }
+    };
+
+    // Load từ localStorage, nếu chưa có thì dùng default
+    function getConfig() {
+        try {
+            const saved = localStorage.getItem('goclang_category_options');
+            return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+        } catch { return JSON.parse(JSON.stringify(DEFAULT_CONFIG)); }
+    }
+
+    let config = getConfig();
+    let dirty  = false;
+
+    function setDirty() {
+        dirty = true;
+        document.getElementById('saveBar').classList.add('show');
+    }
+
+    function discardChanges() {
+        config = getConfig();
+        dirty  = false;
+        document.getElementById('saveBar').classList.remove('show');
+        renderAll();
+    }
+
+    function saveAllOptions() {
+        localStorage.setItem('goclang_category_options', JSON.stringify(config));
+        dirty = false;
+        document.getElementById('saveBar').classList.remove('show');
+        showToast('Đã lưu tùy chọn! Trang chi tiết sản phẩm sẽ cập nhật ngay.');
+    }
+
+    // ── Render ────────────────────────────────────────────────────
+    function renderAll() {
+        const grid = document.getElementById('categoriesGrid');
+        grid.innerHTML = '';
+        Object.keys(config).forEach(catName => renderCard(catName, grid));
+    }
+
+    function renderCard(catName, container) {
+        const cat = config[catName];
+        const card = document.createElement('div');
+        card.className = 'co-card';
+        card.innerHTML = `
+            <div class="co-card-header">
+                <div class="co-cat-icon">
+                    <span class="material-symbols-outlined" style="color:#a27b5c;font-size:24px;">${cat.icon}</span>
+                </div>
+                <div>
+                    <div class="co-cat-name">${catName}</div>
+                    <div class="co-cat-sub">${cat.sub}</div>
+                </div>
+            </div>
+
+            <!-- Cài đặt chung -->
+            <div class="co-section-title">Cài đặt chung</div>
+            <div class="co-toggle-row">
+                <div><div class="co-toggle-label">Độ ngọt</div><div class="co-toggle-sub">Cho phép chọn mức đường</div></div>
+                <label class="co-switch">
+                    <input type="checkbox" ${cat.hasSugar ? 'checked' : ''}
+                           onchange="toggleSugar('${catName}', this.checked)" />
+                    <span class="co-slider"></span>
+                </label>
+            </div>
+            <div class="co-toggle-row" style="margin-top:.25rem;">
+                <div><div class="co-toggle-label">Nhãn kích cỡ</div></div>
+                <input class="co-input" style="max-width:120px;margin:0;"
+                       value="${cat.sizeLabel}"
+                       onchange="config['${catName}'].sizeLabel=this.value;setDirty();" />
+            </div>
+
+            <!-- Topping -->
+            <div class="co-section-title" style="margin-top:1.25rem;">
+                Topping / Tùy chọn thêm
+            </div>
+            <div id="toppings-${safeName(catName)}">
+                ${cat.toppings.map((t, i) => renderToppingRow(catName, t, i)).join('')}
+            </div>
+            <div class="co-add-row">
+                <input class="co-input" id="new-topping-name-${safeName(catName)}" placeholder="Tên topping..." />
+                <input class="co-input-price" id="new-topping-price-${safeName(catName)}" placeholder="0đ" type="number" min="0" step="1000" value="0" />
+                <button class="co-add-btn" onclick="addTopping('${catName}')">
+                    <span class="material-symbols-outlined" style="font-size:17px;">add</span> Thêm
+                </button>
+            </div>
+
+            <!-- Size pricing info -->
+            <div class="co-section-title" style="margin-top:1.25rem;">Giá theo kích cỡ</div>
+            <div style="background:rgba(162,123,92,.06);border-radius:10px;padding:.875rem 1rem;font-size:.82rem;color:#3f4e4f;display:flex;gap:1rem;flex-wrap:wrap;">
+                <span>🔹 <strong>Nhỏ</strong>: Giá gốc −7k</span>
+                <span>🔹 <strong>Vừa</strong>: Giá gốc (mặc định)</span>
+                <span>🔹 <strong>Lớn</strong>: Giá gốc +7k</span>
+            </div>
+        `;
+        container.appendChild(card);
+    }
+
+    function renderToppingRow(catName, topping, index) {
+        const priceStr = topping.price === 0 ? '+0k' : '+' + (topping.price/1000) + 'k';
+        return `
+        <div class="co-option-row" id="topping-row-${safeName(catName)}-${index}">
+            <span class="material-symbols-outlined co-option-icon">local_offer</span>
+            <span class="co-option-name">${topping.name}</span>
+            <span class="co-option-price">${priceStr}</span>
+            <div class="co-option-edit">
+                <button class="co-icon-btn" onclick="editTopping('${catName}',${index})" title="Sửa">
+                    <span class="material-symbols-outlined" style="font-size:17px;">edit</span>
+                </button>
+                <button class="co-icon-btn del" onclick="deleteTopping('${catName}',${index})" title="Xóa">
+                    <span class="material-symbols-outlined" style="font-size:17px;">delete</span>
+                </button>
+            </div>
+        </div>`;
+    }
+
+    function safeName(name) {
+        return name.replace(/[^a-zA-Z0-9]/g, '_');
+    }
+
+    // ── Actions ───────────────────────────────────────────────────
+    function toggleSugar(catName, val) {
+        config[catName].hasSugar = val;
+        setDirty();
+    }
+
+    function addTopping(catName) {
+        const sn    = safeName(catName);
+        const nameEl  = document.getElementById('new-topping-name-' + sn);
+        const priceEl = document.getElementById('new-topping-price-' + sn);
+        const name  = nameEl.value.trim();
+        const price = parseInt(priceEl.value) || 0;
+        if (!name) { nameEl.style.borderColor='#ef4444'; setTimeout(()=>nameEl.style.borderColor='',1500); return; }
+
+        config[catName].toppings.push({ name, price });
+        setDirty();
+        nameEl.value = ''; priceEl.value = '0';
+
+        // Re-render just the toppings list
+        const container = document.getElementById('toppings-' + sn);
+        container.innerHTML = config[catName].toppings
+            .map((t, i) => renderToppingRow(catName, t, i)).join('');
+    }
+
+    function deleteTopping(catName, index) {
+        if (!confirm('Xóa topping "' + config[catName].toppings[index].name + '"?')) return;
+        config[catName].toppings.splice(index, 1);
+        setDirty();
+        const sn = safeName(catName);
+        document.getElementById('toppings-' + sn).innerHTML =
+            config[catName].toppings.map((t, i) => renderToppingRow(catName, t, i)).join('');
+    }
+
+    function editTopping(catName, index) {
+        const t = config[catName].toppings[index];
+        const newName  = prompt('Tên topping:', t.name);
+        if (newName === null) return;
+        const newPrice = prompt('Giá (đ, nhập 0 nếu miễn phí):', t.price);
+        if (newPrice === null) return;
+        config[catName].toppings[index] = {
+            name: newName.trim() || t.name,
+            price: parseInt(newPrice) || 0
+        };
+        setDirty();
+        const sn = safeName(catName);
+        document.getElementById('toppings-' + sn).innerHTML =
+            config[catName].toppings.map((t2, i) => renderToppingRow(catName, t2, i)).join('');
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────
+    function showToast(msg) {
+        const t = document.getElementById('coToast');
+        document.getElementById('coToastMsg').textContent = msg;
+        t.classList.add('show');
+        setTimeout(hideToast, 4000);
+    }
+    function hideToast() { document.getElementById('coToast').classList.remove('show'); }
+
+    // ── Init ──────────────────────────────────────────────────────
+    renderAll();
+
+    // Thông báo nếu vừa vào trang lần đầu
+    if (!localStorage.getItem('goclang_category_options')) {
+        setTimeout(() => showToast('💡 Đang dùng cấu hình mặc định. Thay đổi và nhấn Lưu để áp dụng.'), 600);
+    }
+</script>

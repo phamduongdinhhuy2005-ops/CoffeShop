@@ -1,0 +1,163 @@
+﻿@* FILE: Views/Story/Index.cshtml *@
+@{
+    ViewData["Title"] = "Câu Chuyện Của Chúng Mình";
+}
+
+<div class="min-h-screen bg-cream-custom py-16">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-slate-custom mb-4">Câu Chuyện Của Góc Lặng</h1>
+            <div class="w-24 h-1 bg-primary mx-auto mb-6"></div>
+            <p class="text-xl text-teal-custom italic">Nơi mỗi ly cà phê kể một câu chuyện</p>
+        </div>
+
+        <!-- Main Story Content -->
+        <div class="space-y-12">
+            <!-- Section 1: Khởi Đầu -->
+            <section class="bg-white rounded-2xl p-8 shadow-lg">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="material-symbols-outlined text-primary text-4xl">coffee</span>
+                    <h2 class="text-3xl font-bold text-slate-custom">Khởi Đầu</h2>
+                </div>
+                <p class="text-lg text-teal-custom leading-relaxed mb-4">
+                    Năm 2020, giữa những ngày thành phố nhộn nhịp, chúng mình mơ về một không gian
+                    nơi con người có thể tạm dừng, thưởng thức và kết nối. Góc Lặng ra đời từ niềm
+                    đam mê với cà phê và khao khát tạo nên một "góc nhỏ yên bình" giữa lòng Sài Gòn.
+                </p>
+                <p class="text-lg text-teal-custom leading-relaxed">
+                    Với tình yêu cà phê và niềm tin vào chất lượng, chúng mình bắt đầu hành trình
+                    mang đến những ly cà phê đậm đà, được pha chế từ những hạt cà phê nguyên chất nhất.
+                </p>
+            </section>
+
+            <!-- Section 2: Triết Lý -->
+            <section class="bg-white rounded-2xl p-8 shadow-lg">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="material-symbols-outlined text-primary text-4xl">favorite</span>
+                    <h2 class="text-3xl font-bold text-slate-custom">Triết Lý</h2>
+                </div>
+                <p class="text-lg text-teal-custom leading-relaxed mb-4">
+                    Chúng mình tin rằng mỗi ly cà phê không chỉ là thức uống, mà là một trải nghiệm,
+                    một khoảnh khắc đáng nhớ. Góc Lặng là nơi bạn có thể:
+                </p>
+                <ul class="space-y-3 text-lg text-teal-custom">
+                    <li class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
+                        <span>Tìm thấy sự bình yên giữa cuộc sống bận rộn</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
+                        <span>Thưởng thức hương vị cà phê đích thực</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
+                        <span>Kết nối với bạn bè, người thân trong không gian ấm cúng</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
+                        <span>Sáng tạo và làm việc trong môi trường yên tĩnh</span>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Section 3: Cam Kết -->
+            <section class="bg-gradient-to-br from-primary/10 to-teal-custom/10 rounded-2xl p-8">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="material-symbols-outlined text-primary text-4xl">workspace_premium</span>
+                    <h2 class="text-3xl font-bold text-slate-custom">Cam Kết Của Chúng Mình</h2>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl p-6 shadow">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-symbols-outlined text-primary text-2xl">eco</span>
+                            <h3 class="font-bold text-lg text-slate-custom">100% Nguyên Chất</h3>
+                        </div>
+                        <p class="text-teal-custom">Cà phê nguyên chất, không pha trộn, từ những vùng trồng uy tín</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-symbols-outlined text-primary text-2xl">home</span>
+                            <h3 class="font-bold text-lg text-slate-custom">Không Gian Ấm Cúng</h3>
+                        </div>
+                        <p class="text-teal-custom">Thiết kế yên tĩnh, thoải mái để bạn thư giãn và làm việc</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-symbols-outlined text-primary text-2xl">groups</span>
+                            <h3 class="font-bold text-lg text-slate-custom">Phục Vụ Tận Tâm</h3>
+                        </div>
+                        <p class="text-teal-custom">Đội ngũ nhân viên chuyên nghiệp, thân thiện và nhiệt tình</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-symbols-outlined text-primary text-2xl">payments</span>
+                            <h3 class="font-bold text-lg text-slate-custom">Giá Cả Hợp Lý</h3>
+                        </div>
+                        <p class="text-teal-custom">Chất lượng cao với mức giá phải chăng cho mọi người</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4: Hành Trình -->
+            <section class="bg-white rounded-2xl p-8 shadow-lg">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="material-symbols-outlined text-primary text-4xl">timeline</span>
+                    <h2 class="text-3xl font-bold text-slate-custom">Hành Trình Phát Triển</h2>
+                </div>
+                <div class="space-y-6">
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-24 text-right">
+                            <span class="inline-block bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">2020</span>
+                        </div>
+                        <div class="flex-1 border-l-2 border-primary pl-6 pb-6">
+                            <h3 class="font-bold text-lg text-slate-custom mb-2">Khởi Đầu</h3>
+                            <p class="text-teal-custom">Ra mắt cửa hàng đầu tiên tại Quận 3, TP.HCM</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-24 text-right">
+                            <span class="inline-block bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">2021</span>
+                        </div>
+                        <div class="flex-1 border-l-2 border-primary pl-6 pb-6">
+                            <h3 class="font-bold text-lg text-slate-custom mb-2">Phát Triển</h3>
+                            <p class="text-teal-custom">Mở rộng menu và cải thiện chất lượng phục vụ</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-24 text-right">
+                            <span class="inline-block bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">2022</span>
+                        </div>
+                        <div class="flex-1 border-l-2 border-primary pl-6 pb-6">
+                            <h3 class="font-bold text-lg text-slate-custom mb-2">Mở Rộng</h3>
+                            <p class="text-teal-custom">Ra mắt hệ thống đặt hàng và đặt chỗ online</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-24 text-right">
+                            <span class="inline-block bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">2024</span>
+                        </div>
+                        <div class="flex-1 pl-6">
+                            <h3 class="font-bold text-lg text-slate-custom mb-2">Hiện Tại</h3>
+                            <p class="text-teal-custom">Tiếp tục phát triển và mang đến trải nghiệm tốt nhất cho khách hàng</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CTA Section -->
+            <section class="text-center bg-gradient-to-br from-primary to-teal-custom text-white rounded-2xl p-12">
+                <h2 class="text-3xl font-bold mb-4">Hãy Đến Và Trải Nghiệm</h2>
+                <p class="text-lg mb-8 opacity-90">Mỗi ly cà phê là một câu chuyện, và chúng mình muốn chia sẻ câu chuyện đó cùng bạn</p>
+                <div class="flex gap-4 justify-center flex-wrap">
+                    <a asp-controller="Menu" asp-action="Index" class="bg-white text-primary px-8 py-3 rounded-full font-bold hover:bg-cream-custom transition-colors">
+                        Xem Thực Đơn
+                    </a>
+                    <a asp-controller="Booking" asp-action="Index" class="bg-white/20 text-white px-8 py-3 rounded-full font-bold hover:bg-white/30 transition-colors border-2 border-white">
+                        Đặt Chỗ Ngay
+                    </a>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>

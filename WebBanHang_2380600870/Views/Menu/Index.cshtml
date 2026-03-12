@@ -1,0 +1,106 @@
+﻿@* Views/Menu/Index.cshtml *@
+@model IEnumerable<WebBanHang_2380600870.Models.Product>
+@{
+    ViewData["Title"] = "Thực Đơn | Góc Lặng";
+    Layout = "_Layout";
+    int? activeCategory = ViewBag.ActiveCategory as int?;
+    var categories = ViewBag.Categories as IEnumerable<WebBanHang_2380600870.Models.Category>
+                     ?? Enumerable.Empty<WebBanHang_2380600870.Models.Category>();
+    var products = Model.ToList();
+    string PriceK(decimal price) => (price / 1000).ToString("0") + "k";
+}
+
+<main class="flex-1">
+
+    <!-- Hero mini -->
+    <div class="py-14 px-6 text-center" style="background:linear-gradient(135deg,#2C3639 0%,#3F4E4F 100%);">
+        <p class="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-3">Góc Lặng Café</p>
+        <h1 class="font-black text-4xl mb-3" style="font-family:'Playfair Display',serif; color:#DCD7C9;">Thực Đơn</h1>
+        <p style="color:rgba(220,215,201,0.65); font-size:15px; max-width:480px; margin:0 auto; line-height:1.9;">
+            Mỗi món được chọn lọc kỹ càng — từ những nguyên liệu tươi ngon nhất, pha chế bằng tâm huyết.
+        </p>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 md:px-10 py-12">
+
+        <!-- Category filter nav -->
+        <div class="flex flex-wrap gap-2 mb-10">
+            <a asp-controller="Menu" asp-action="Index"
+               class="px-5 py-2.5 rounded-full text-sm font-bold transition-all"
+               style="@(activeCategory == null
+                                  ? "background:#2C3639; color:#DCD7C9;"
+                                  : "background:rgba(44,54,57,0.08); color:#3F4E4F; border:1.5px solid rgba(44,54,57,0.15);")">
+                Tất Cả
+            </a>
+            @foreach (var cat in categories)
+            {
+                <a asp-controller="Menu" asp-action="Index" asp-route-categoryId="@cat.Id"
+                   class="px-5 py-2.5 rounded-full text-sm font-bold transition-all"
+                   style="@(activeCategory == cat.Id
+                                          ? "background:#A27B5C; color:#fff;"
+                                          : "background:rgba(162,123,92,0.08); color:#3F4E4F; border:1.5px solid rgba(162,123,92,0.18);")">
+                    @cat.Name
+                </a>
+            }
+        </div>
+
+        <!-- Product count -->
+        <p class="text-sm text-teal-custom mb-6 opacity-70">
+            @products.Count sản phẩm
+            @if (activeCategory != null)
+            {
+                <span>trong <strong>@(categories.FirstOrDefault(c => c.Id == activeCategory)?.Name ?? "")</strong></span>
+            }
+        </p>
+
+        <!-- Product grid -->
+        @if (!products.Any())
+        {
+            <div class="py-24 text-center">
+                <span class="material-symbols-outlined text-5xl text-primary opacity-30">coffee</span>
+                <p class="text-teal-custom mt-4 italic">Chưa có sản phẩm trong danh mục này.</p>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                @foreach (var product in products)
+                {
+                    <a asp-controller="Product" asp-action="Detail" asp-route-id="@product.Id"
+                       class="group flex flex-col gap-3 cursor-pointer" style="text-decoration:none;">
+                        <div class="relative overflow-hidden rounded-2xl shadow-sm group-hover:shadow-xl transition-all duration-300"
+                             style="aspect-ratio:1/1; background:#e8e0d5;
+                                            background-image:url('@product.ImageUrl');
+                                            background-size:cover; background-position:center;">
+                            <!-- Hover overlay -->
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                 style="background:rgba(44,54,57,0.45);">
+                                <span class="text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full"
+                                      style="border:1.5px solid rgba(255,255,255,0.75);">Xem chi tiết</span>
+                            </div>
+                            <!-- Category badge -->
+                            @if (product.Category != null)
+                            {
+                                <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-bold"
+                                      style="background:rgba(44,54,57,0.75); color:#DCD7C9; backdrop-filter:blur(4px);">
+                                    @product.Category.Name
+                                </span>
+                            }
+                        </div>
+                        <div class="flex justify-between items-start gap-2 px-1">
+                            <div class="flex-1">
+                                <h3 class="text-slate-custom font-bold text-sm group-hover:text-primary transition-colors">@product.Name</h3>
+                                @if (!string.IsNullOrWhiteSpace(product.Description))
+                                {
+                                    <p class="text-teal-custom text-xs italic mt-0.5 opacity-70 line-clamp-2">@product.Description</p>
+                                }
+                            </div>
+                            <p class="text-primary font-black whitespace-nowrap text-sm">@PriceK(product.Price)</p>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+
+    </div>
+</main>

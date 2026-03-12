@@ -1,0 +1,151 @@
+﻿@* Views/Cart/Checkout.cshtml *@
+@model WebBanHang_2380600870.Models.CheckoutViewModel
+@{
+    ViewData["Title"] = "Thanh Toán";
+}
+
+<section class="min-h-screen pt-28 pb-20" style="background-color: #F7F7F6;">
+    <div class="max-w-6xl mx-auto px-4">
+
+        <div class="mb-10 text-center">
+            <p class="text-sm tracking-[0.2em] uppercase mb-2" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                Bước Cuối Cùng
+            </p>
+            <h1 class="text-4xl font-bold" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                Thông Tin Thanh Toán
+            </h1>
+        </div>
+
+        <form method="post" action="/Cart/Checkout">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Form thông tin -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-sm">
+                        <h2 class="text-xl font-bold mb-5" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                            Thông Tin Giao Hàng
+                        </h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                    Họ và tên *
+                                </label>
+                                <input type="text" name="FullName" value="@Model.FullName" required
+                                       class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
+                                       style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
+                                       placeholder="Nguyễn Văn A" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                    Số điện thoại *
+                                </label>
+                                <input type="tel" name="PhoneNumber" value="@Model.PhoneNumber" required
+                                       class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
+                                       style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
+                                       placeholder="0901 234 567" />
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium mb-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                Địa chỉ giao hàng *
+                            </label>
+                            <input type="text" name="ShippingAddress" required
+                                   class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
+                                   style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                   onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
+                                   placeholder="Số nhà, đường, phường, quận, thành phố" />
+                        </div>
+
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium mb-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                Ghi chú (tuỳ chọn)
+                            </label>
+                            <textarea name="Note" rows="3"
+                                      class="w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none"
+                                      style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                      onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
+                                      placeholder="Ghi chú cho đơn hàng, ví dụ: ít đá, thêm siro..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Phương thức thanh toán -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm">
+                        <h2 class="text-xl font-bold mb-5" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                            Phương Thức Thanh Toán
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all payment-option"
+                                   style="border-color: #A27B5C; background-color: #FDF9F5;">
+                                <input type="radio" name="PaymentMethod" value="COD" checked class="accent-amber-700 w-4 h-4" />
+                                <div>
+                                    <p class="font-semibold" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">Tiền mặt (COD)</p>
+                                    <p class="text-xs" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Thanh toán khi nhận hàng</p>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all"
+                                   style="border-color: #DCD7C9;">
+                                <input type="radio" name="PaymentMethod" value="Transfer" class="accent-amber-700 w-4 h-4" />
+                                <div>
+                                    <p class="font-semibold" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">Chuyển khoản</p>
+                                    <p class="text-xs" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Thông tin CK sau khi đặt</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tóm tắt -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl p-6 shadow-sm sticky top-28">
+                        <h2 class="text-xl font-bold mb-5" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                            Đơn Hàng
+                        </h2>
+                        <div class="space-y-3 mb-5 max-h-64 overflow-y-auto">
+                            @foreach (var item in Model.Cart.Items)
+                            {
+                                <div class="flex gap-3">
+                                    <img src="@item.ImageUrl" class="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                                         onerror="this.src='/images/placeholder.jpg'" />
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium truncate" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">
+                                            @item.ProductName
+                                        </p>
+                                        <p class="text-xs" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                            Size @item.Size · ×@item.Quantity
+                                        </p>
+                                    </div>
+                                    <span class="text-sm font-semibold flex-shrink-0" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                                        @item.LineTotal.ToString("N0")đ
+                                    </span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="border-t pt-4 mb-6" style="border-color: #DCD7C9;">
+                            <div class="flex justify-between font-bold text-xl" style="color: #2C3639; font-family: 'Playfair Display', serif;">
+                                <span>Tổng cộng</span>
+                                <span style="color: #A27B5C;">@Model.Cart.TotalAmount.ToString("N0")đ</span>
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                                class="w-full py-4 rounded-full text-white font-semibold transition-all duration-300 hover:opacity-90 hover:shadow-lg"
+                                style="background-color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                            Xác Nhận Đặt Hàng
+                        </button>
+
+                        <a href="/Cart" class="block text-center mt-3 text-sm transition-colors hover:opacity-70"
+                           style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                            ← Quay lại giỏ hàng
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>

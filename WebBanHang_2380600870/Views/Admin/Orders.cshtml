@@ -1,0 +1,154 @@
+﻿@model IEnumerable<WebBanHang_2380600870.Models.Order>
+@{
+    ViewData["Title"] = "Quản Lý Đơn Hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "Order";
+    ViewData["Breadcrumb"] = "Đơn hàng";
+    string cur = ViewBag.CurrentStatus ?? "";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div id="hcToast" style="position:fixed;top:1.5rem;right:1.5rem;z-index:9999;background:#fff;border:1px solid rgba(162,123,92,.3);border-left:4px solid #a27b5c;border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 8px 24px rgba(44,54,57,.12);animation:toastIn .3s ease;">
+        <span class="material-symbols-outlined" style="color:#a27b5c;font-size:22px;">check_circle</span>
+        <span style="font-size:.875rem;font-weight:500;color:#2c3639;">@TempData["Success"]</span>
+        <button onclick="document.getElementById('hcToast').remove()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#94a3b8;" class="material-symbols-outlined">close</button>
+    </div>
+}
+<style>
+    @@keyframes toastIn {
+        from {
+            transform: translateX(110%);
+            opacity: 0
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1
+        }
+    }
+</style>
+
+@* Stat cards *@
+@{
+    var total = Model.Count();
+    var pending = Model.Count(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Pending);
+    var processing = Model.Count(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Processing || o.Status == WebBanHang_2380600870.Models.OrderStatus.Confirmed);
+    var completed = Model.Count(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Completed);
+    var revenue = Model.Where(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Completed).Sum(o => o.TotalAmount);
+}
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
+    @foreach (var (label, val, icon) in new[]{
+        ("Tổng đơn", total.ToString(), "receipt_long"),
+        ("Chờ xử lý", pending.ToString(), "pending"),
+        ("Đang xử lý", processing.ToString(), "local_cafe"),
+        ("Hoàn thành", completed.ToString(), "task_alt")
+        })
+    {
+        <div style="background:#fff;border-radius:14px;padding:1.1rem 1.25rem;border:1px solid rgba(162,123,92,.15);display:flex;align-items:center;gap:.85rem;">
+            <div style="width:40px;height:40px;border-radius:10px;background:rgba(162,123,92,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="color:#a27b5c;font-size:20px;">@icon</span>
+            </div>
+            <div>
+                <div style="font-size:1.4rem;font-weight:800;color:#2c3639;line-height:1;">@val</div>
+                <div style="font-size:.72rem;color:#94a3b8;">@label</div>
+            </div>
+        </div>
+    }
+</div>
+
+@* Filter tabs *@
+<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+    @foreach (var (label, status) in new[]{
+        ("Tất cả", ""), ("Chờ XN", "Pending"), ("Đã XN", "Confirmed"),
+        ("Đang pha", "Processing"), ("Hoàn thành", "Completed"), ("Đã hủy", "Cancelled")
+        })
+    {
+        bool active = cur == status;
+        <a asp-action="Orders" asp-route-status="@(status == "" ? null : status)"
+           style="padding:.45rem 1rem;border-radius:99px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-decoration:none;border:1.5px solid @(active ? "#a27b5c" : "rgba(162,123,92,.25)");background:@(active ? "#a27b5c" : "transparent");color:@(active ? "#fff" : "#a27b5c");transition:all .15s;">
+            @label
+        </a>
+    }
+</div>
+
+@* Table *@
+<div style="background:#fff;border-radius:16px;border:1px solid rgba(162,123,92,.15);overflow:hidden;">
+    @if (!Model.Any())
+    {
+        <div style="text-align:center;padding:5rem;color:#94a3b8;font-style:italic;">
+            <span class="material-symbols-outlined" style="font-size:48px;display:block;margin-bottom:.75rem;opacity:.3;">receipt_long</span>
+            Không có đơn hàng nào.
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+                <thead>
+                    <tr style="background:rgba(162,123,92,.07);border-bottom:2px solid rgba(162,123,92,.15);">
+                        <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">#</th>
+                        <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Khách hàng</th>
+                        <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Ngày đặt</th>
+                        <th style="text-align:right;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Tổng tiền</th>
+                        <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Trạng thái</th>
+                        <th style="text-align:center;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Cập nhật</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model)
+                    {
+                        var (statusClr, statusBg, statusLabel) = o.Status switch
+                        {
+                            WebBanHang_2380600870.Models.OrderStatus.Pending => ("#92400e", "rgba(251,191,36,.15)", "Chờ XN"),
+                            WebBanHang_2380600870.Models.OrderStatus.Confirmed => ("#1e40af", "rgba(59,130,246,.12)", "Đã XN"),
+                            WebBanHang_2380600870.Models.OrderStatus.Processing => ("#7c3aed", "rgba(139,92,246,.12)", "Đang pha"),
+                            WebBanHang_2380600870.Models.OrderStatus.Ready => ("#065f46", "rgba(16,185,129,.12)", "Sẵn sàng"),
+                            WebBanHang_2380600870.Models.OrderStatus.Completed => ("#166534", "rgba(34,197,94,.12)", "Hoàn thành"),
+                            WebBanHang_2380600870.Models.OrderStatus.Cancelled => ("#991b1b", "rgba(239,68,68,.1)", "Đã hủy"),
+                            _ => ("#64748b", "rgba(100,116,139,.1)", o.Status.ToString())
+                        };
+                        <tr style="border-bottom:1px solid rgba(162,123,92,.09);transition:background .12s;" onmouseover="this.style.background='rgba(162,123,92,.03)'" onmouseout="this.style.background='transparent'">
+                            <td style="padding:1rem 1.25rem;color:#94a3b8;font-size:.8rem;font-weight:700;">#@o.Id.ToString("D4")</td>
+                            <td style="padding:1rem 1.25rem;font-weight:600;color:#2c3639;">@(o.User?.FullName ?? o.User?.Email ?? "—")</td>
+                            <td style="padding:1rem 1.25rem;color:#64748b;white-space:nowrap;">@o.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td style="padding:1rem 1.25rem;text-align:right;font-weight:700;color:#2c3639;">@o.TotalAmount.ToString("N0")đ</td>
+                            <td style="padding:1rem 1.25rem;">
+                                <span style="display:inline-block;padding:.3rem .7rem;border-radius:99px;font-size:.72rem;font-weight:800;text-transform:uppercase;background:@statusBg;color:@statusClr;">
+                                    @statusLabel
+                                </span>
+                            </td>
+                            <td style="padding:1rem 1.25rem;">
+                                <form asp-action="UpdateOrderStatus" method="post" style="display:flex;gap:.4rem;align-items:center;justify-content:center;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="orderId" value="@o.Id" />
+                                    <select name="status"
+                                            style="padding:.4rem .65rem;border:1.5px solid rgba(162,123,92,.3);border-radius:8px;font-family:'Work Sans',sans-serif;font-size:.78rem;color:#2c3639;background:#fafaf9;outline:none;cursor:pointer;">
+                                        @foreach (var s in Enum.GetValues<WebBanHang_2380600870.Models.OrderStatus>())
+                                        {
+                                            <option value="@s" selected="@(o.Status == s)">@s</option>
+                                        }
+                                    </select>
+                                    <button type="submit"
+                                            style="padding:.4rem .65rem;background:#a27b5c;color:#fff;border:none;border-radius:8px;font-family:'Work Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:opacity .15s;"
+                                            onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+                                        Lưu
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        setTimeout(() => {
+            const t = document.getElementById('hcToast');
+            if (t) { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }
+        }, 4000);
+    </script>
+}

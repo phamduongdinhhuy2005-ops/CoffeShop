@@ -1,0 +1,260 @@
+﻿@model WebBanHang_2380600870.Models.Booking
+@{
+    ViewData["Title"] = "Đặt Chỗ | Góc Lặng";
+}
+
+<main class="flex-1">
+
+    <!-- Hero với form -->
+    <div class="relative min-h-[620px] flex items-center justify-center py-16 px-4"
+         style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD33nyXdaW2wSJZnDHTY6pq5HASgtdv_aSNK7ZycLo5KyMVuyNfWhjBJOnXkjlYXFoKVnteadCBCP5mtp0z2q9Z0x00ezhRTjs3Y_pPo7hKNOdVJxRT85_fRqCF7Y2veIZgCNIPFbAOWkqxfa7GPuFJT89k8EoEyBGJxWmIA7pQCg9AnIx96PQRkhTJDi3Pa0xvMUHS8ZbceGxwKqxtFn6dfwzvaNM4kICV9MN8hx1Wgw7OsDTNac7ak3OIZZ0BXIheoIfwCGwQVAXz'); background-size: cover; background-position: center;">
+        <div class="absolute inset-0" style="background-color: rgba(28,20,14,0.78);"></div>
+
+        <div class="relative z-10 w-full max-w-3xl">
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="mb-6 flex items-start gap-3 rounded-xl px-6 py-4"
+                     style="background: rgba(162,123,92,0.18); border: 1px solid rgba(162,123,92,0.5);">
+                    <span class="material-symbols-outlined text-primary mt-0.5">check_circle</span>
+                    <p class="text-cream-custom font-medium">@TempData["Success"]</p>
+                </div>
+            }
+
+            <div class="rounded-2xl p-8 md:p-12 shadow-2xl"
+                 style="background-color: #F7F7F6; border: 2px solid #A27B5C; outline: 1px solid rgba(162,123,92,0.4); outline-offset: 4px;">
+
+                <div class="text-center mb-10">
+                    <span class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-2 block">Góc Lặng Café</span>
+                    <h1 class="vn-heading text-slate-custom text-3xl md:text-4xl font-black mb-4">Đặt Chỗ Của Bạn</h1>
+                    <div class="w-20 h-0.5 bg-primary mx-auto mb-5"></div>
+                    <p class="text-teal-custom max-w-md mx-auto text-sm italic" style="line-height: 1.9;">
+                        Hãy để chúng mình chuẩn bị một góc nhỏ thật ấm — chỉ dành riêng cho bạn.
+                    </p>
+                </div>
+
+                <form asp-action="Index" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Họ tên -->
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-slate-custom text-xs font-bold uppercase tracking-wider">Họ &amp; Tên</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary" style="font-size:18px;">person</span>
+                            <input asp-for="FullName"
+                                   class="w-full pl-9 pr-4 py-3 rounded-lg text-slate-custom text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                   style="background:#fff; border: 1px solid rgba(162,123,92,0.4);"
+                                   placeholder="Nguyễn Văn A" />
+                        </div>
+                        <span asp-validation-for="FullName" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <!-- Số điện thoại -->
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-slate-custom text-xs font-bold uppercase tracking-wider">Số Điện Thoại</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary" style="font-size:18px;">call</span>
+                            <input asp-for="Phone"
+                                   class="w-full pl-9 pr-4 py-3 rounded-lg text-slate-custom text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                   style="background:#fff; border: 1px solid rgba(162,123,92,0.4);"
+                                   placeholder="0901 234 567" />
+                        </div>
+                        <span asp-validation-for="Phone" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-slate-custom text-xs font-bold uppercase tracking-wider">Email</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary" style="font-size:18px;">mail</span>
+                            <input asp-for="Email"
+                                   class="w-full pl-9 pr-4 py-3 rounded-lg text-slate-custom text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                   style="background:#fff; border: 1px solid rgba(162,123,92,0.4);"
+                                   placeholder="email@gmail.com" />
+                        </div>
+                        <span asp-validation-for="Email" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <!-- Số khách -->
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-slate-custom text-xs font-bold uppercase tracking-wider">Số Khách</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary" style="font-size:18px;">groups</span>
+                            <select asp-for="GuestCount"
+                                    class="w-full pl-9 pr-4 py-3 rounded-lg text-slate-custom text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                    style="background:#fff; border: 1px solid rgba(162,123,92,0.4);">
+                                @for (int i = 1; i <= 10; i++)
+                                {
+                                    <option value="@i">@i người</option>
+                                }
+                                <option value="11">11 – 20 người (liên hệ trực tiếp)</option>
+                            </select>
+                        </div>
+                        <span asp-validation-for="GuestCount" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <!-- Ngày -->
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-slate-custom text-xs font-bold uppercase tracking-wider">Ngày Đặt</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary" style="font-size:18px;">calendar_month</span>
+                            <input asp-for="BookingDate" type="date"
+                                   class="w-full pl-9 pr-4 py-3 rounded-lg text-slate-custom text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                   style="background:#fff; border: 1px solid rgba(162,123,92,0.4);"
+                                   min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <span asp-validation-for="BookingDate" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <!-- Giờ -->
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-slate-custom text-xs font-bold uppercase tracking-wider">Giờ Đến</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary" style="font-size:18px;">schedule</span>
+                            <select asp-for="BookingTime"
+                                    class="w-full pl-9 pr-4 py-3 rounded-lg text-slate-custom text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                    style="background:#fff; border: 1px solid rgba(162,123,92,0.4);">
+                                <option value="">-- Chọn giờ --</option>
+                                <option>07:00</option>
+                                <option>07:30</option>
+                                <option>08:00</option>
+                                <option>08:30</option>
+                                <option>09:00</option>
+                                <option>09:30</option>
+                                <option>10:00</option>
+                                <option>10:30</option>
+                                <option>11:00</option>
+                                <option>14:00</option>
+                                <option>14:30</option>
+                                <option>15:00</option>
+                                <option>15:30</option>
+                                <option>16:00</option>
+                                <option>16:30</option>
+                                <option>17:00</option>
+                                <option>17:30</option>
+                                <option>18:00</option>
+                                <option>18:30</option>
+                                <option>19:00</option>
+                            </select>
+                        </div>
+                        <span asp-validation-for="BookingTime" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <!-- Dịp đặc biệt -->
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="text-slate-custom text-xs font-bold uppercase tracking-wider">Dịp Đặc Biệt (nếu có)</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary" style="font-size:18px;">celebration</span>
+                            <select asp-for="Occasion"
+                                    class="w-full pl-9 pr-4 py-3 rounded-lg text-slate-custom text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                    style="background:#fff; border: 1px solid rgba(162,123,92,0.4);">
+                                <option value="">-- Không có --</option>
+                                <option value="Sinh nhật">Sinh Nhật</option>
+                                <option value="Ky niem">Kỷ Niệm</option>
+                                <option value="Hen ho">Hẹn Hò</option>
+                                <option value="Hop nhom">Họp Nhóm</option>
+                                <option value="Khac">Dịp Khác</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Ghi chú -->
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="text-slate-custom text-xs font-bold uppercase tracking-wider">Ghi Chú / Yêu Cầu Thêm</label>
+                        <textarea asp-for="SpecialRequest" rows="3"
+                                  class="w-full px-4 py-3 rounded-lg text-slate-custom text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                  style="background:#fff; border: 1px solid rgba(162,123,92,0.4);"
+                                  placeholder="Dị ứng thực phẩm, vị trí ngồi yêu thích, trang trí bàn..."></textarea>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="md:col-span-2 mt-2">
+                        <button type="submit"
+                                class="w-full py-4 text-cream-custom font-bold uppercase tracking-[0.2em] rounded-full transition-all shadow-lg hover:opacity-90 active:scale-[0.98]"
+                                style="background-color: #2C3639;">
+                            Xác Nhận Đặt Chỗ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thông tin -->
+    <section class="py-20 px-6 md:px-20" style="background-color: #F7F7F6;">
+        <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-stretch">
+            <!-- Booking Info -->
+            <div class="rounded-2xl shadow-lg p-8 flex flex-col justify-center h-full bg-white border border-[rgba(162,123,92,0.13)]">
+                <h3 class="text-2xl font-black text-slate-custom mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary" style="font-size:28px;">info</span>
+                    Thông Tin Đặt Chỗ
+                </h3>
+                <ul class="space-y-4">
+                    <li class="flex gap-3 items-start">
+                        <span class="material-symbols-outlined text-primary shrink-0" style="font-size:22px; margin-top:2px;">check_circle</span>
+                        <span class="text-teal-custom text-sm" style="line-height:1.8;">Chỗ được giữ trong vòng <strong>15 phút</strong> kể từ giờ đặt. Vui lòng đến đúng giờ hoặc báo trước.</span>
+                    </li>
+                    <li class="flex gap-3 items-start">
+                        <span class="material-symbols-outlined text-primary shrink-0" style="font-size:22px; margin-top:2px;">check_circle</span>
+                        <span class="text-teal-custom text-sm" style="line-height:1.8;">Nhóm từ <strong>10 người trở lên</strong> vui lòng liên hệ trực tiếp qua điện thoại để được hỗ trợ tốt hơn.</span>
+                    </li>
+                    <li class="flex gap-3 items-start">
+                        <span class="material-symbols-outlined text-primary shrink-0" style="font-size:22px; margin-top:2px;">check_circle</span>
+                        <span class="text-teal-custom text-sm" style="line-height:1.8;">Hủy chỗ cần báo trước <strong>ít nhất 2 giờ</strong> để chúng mình sắp xếp lại.</span>
+                    </li>
+                    <li class="flex gap-3 items-start">
+                        <span class="material-symbols-outlined text-primary shrink-0" style="font-size:22px; margin-top:2px;">check_circle</span>
+                        <span class="text-teal-custom text-sm" style="line-height:1.8;">Chúng mình sẽ xác nhận qua <strong>điện thoại hoặc email</strong> trong vòng 30 phút.</span>
+                    </li>
+                </ul>
+            </div>
+            <!-- Contact Info -->
+            <div class="rounded-2xl shadow-lg p-8 flex flex-col justify-center h-full bg-[rgba(162,123,92,0.07)] border border-[rgba(162,123,92,0.2)]">
+                <h3 class="text-2xl font-black text-slate-custom mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary" style="font-size:28px;">policy</span>
+                    Liên Hệ Trực Tiếp
+                </h3>
+                <p class="text-teal-custom text-sm mb-6" style="line-height:1.9;">
+                    Bạn có yêu cầu đặc biệt hoặc cần hỗ trợ ngay? Đội ngũ Góc Lặng luôn sẵn sàng lắng nghe.
+                </p>
+                <div class="flex flex-col gap-4 pt-4 border-t" style="border-color: rgba(162,123,92,0.2);">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-size:22px;">call</span>
+                        <div>
+                            <p class="text-xs uppercase font-bold text-primary tracking-wider">Gọi ngay</p>
+                            <p class="text-slate-custom font-semibold">(028) 1234 5678</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-size:22px;">mail</span>
+                        <div>
+                            <p class="text-xs uppercase font-bold text-primary tracking-wider">Email</p>
+                            <p class="text-slate-custom font-semibold">hello@goclang.vn</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-size:22px;">location_on</span>
+                        <div>
+                            <p class="text-xs uppercase font-bold text-primary tracking-wider">Địa chỉ</p>
+                            <p class="text-slate-custom font-semibold">124 Đường Hoài Cổ, Quận 3, TP.HCM</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-size:22px;">schedule</span>
+                        <div>
+                            <p class="text-xs uppercase font-bold text-primary tracking-wider">Giờ mở cửa</p>
+                            <p class="text-slate-custom font-semibold">T2–T6: 7:00–19:00 | T7–CN: 8:00–20:00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

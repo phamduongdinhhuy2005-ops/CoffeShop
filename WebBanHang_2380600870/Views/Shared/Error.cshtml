@@ -1,0 +1,22 @@
+﻿@model WebBanHang_2380600870.ErrorViewModel
+@{
+    ViewData["Title"] = "Lỗi";
+}
+
+<main class="flex-1 flex items-center justify-center py-20 px-6">
+    <div class="text-center max-w-lg">
+        <span class="material-symbols-outlined text-primary" style="font-size: 64px;">error</span>
+        <h1 class="vn-heading text-slate-custom text-3xl font-black mt-4 mb-4">Có lỗi xảy ra</h1>
+        <p class="text-teal-custom mb-8">Xin lỗi, đã có lỗi trong quá trình xử lý yêu cầu của bạn.</p>
+        @if (Model?.ShowRequestId == true)
+        {
+            <p class="text-xs text-teal-custom/60 mb-6">
+                <strong>Request ID:</strong> <code>@Model.RequestId</code>
+            </p>
+        }
+        <a asp-controller="Home" asp-action="Index"
+           class="px-8 py-3 bg-primary text-white font-bold rounded-full uppercase tracking-widest hover:opacity-90 transition-all inline-block">
+            Về Trang Chủ
+        </a>
+    </div>
+</main>

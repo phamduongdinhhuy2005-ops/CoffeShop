@@ -1,0 +1,532 @@
+﻿@* Views/Product/Detail.cshtml *@
+@model WebBanHang_2380600870.Models.ProductDetailViewModel
+@{
+    ViewData["Title"] = Model.Product.Name + " | Góc Lặng";
+    Layout = "_Layout";
+    var p = Model.Product;
+    var categoryName = p.Category?.Name ?? "Thực đơn";
+    var catId = p.CategoryId; // 1=Trà&ThảoMộc, 2=Cà Phê, 3=Bánh Sáng
+    string PriceK(decimal price) => (price / 1000).ToString("0") + "k";
+
+    // ── Options theo category ────────────────────────────────
+    // Cà Phê (2): shot thêm, sữa yến mạch, trân châu, thêm đá
+    // Trà & Thảo Mộc (1): thêm đá, sữa yến mạch, mật ong thêm, chanh thêm
+    // Bánh Sáng (3): bơ thêm, mứt thêm, trứng thêm, đồ uống kèm
+    var toppings = catId == 2
+        ? new[] {
+            ("Thêm đá",         "+0k",  0),
+            ("Sữa yến mạch",    "+10k", 10000),
+            ("Shot espresso",   "+15k", 15000),
+            ("Trân châu đen",   "+15k", 15000),
+          }
+        : catId == 1
+        ? new[] {
+            ("Thêm đá",         "+0k",  0),
+            ("Sữa yến mạch",    "+10k", 10000),
+            ("Mật ong thêm",    "+5k",  5000),
+            ("Chanh tươi",      "+5k",  5000),
+          }
+        : new[] {
+            ("Bơ thêm",         "+5k",  5000),
+            ("Mứt dâu",         "+5k",  5000),
+            ("Trứng ốp la",     "+15k", 15000),
+            ("Cà phê kèm",      "+20k", 20000),
+          };
+
+    // Sugar options theo category (bánh không có độ ngọt)
+    bool hasSugar = catId != 3;
+
+    // Size label (bánh thì gọi khác)
+    var sizeLabel = catId == 3 ? "Phần" : "Kích Cỡ";
+    var sizeNames = catId == 3
+        ? new[] { "Nhỏ", "Vừa", "Lớn" }
+        : new[] { "Nhỏ", "Vừa", "Lớn" };
+}
+
+<style>
+    .thumb {
+        transition: all .2s;
+        cursor: pointer;
+    }
+
+        .thumb:hover, .thumb.active {
+            border-color: #A27B5C !important;
+            opacity: 1 !important;
+        }
+
+    .size-btn {
+        transition: all .18s;
+        cursor: pointer;
+    }
+
+        .size-btn.active {
+            background: rgba(162,123,92,0.1);
+            border-color: #A27B5C !important;
+            color: #A27B5C;
+            font-weight: 700;
+        }
+
+    .sugar-btn {
+        transition: all .18s;
+        cursor: pointer;
+    }
+
+        .sugar-btn.active {
+            background: #A27B5C !important;
+            color: #fff !important;
+            border-color: #A27B5C !important;
+        }
+
+    .topping-label {
+        transition: background .15s;
+    }
+
+        .topping-label:has(input:checked) {
+            background: rgba(162,123,92,0.08);
+            border-color: #A27B5C;
+        }
+
+    /* Price flash animation */
+    @@keyframes priceFlash {
+        0% {
+            transform: scale(1)
+        }
+
+        40% {
+            transform: scale(1.12)
+        }
+
+        100% {
+            transform: scale(1)
+        }
+    }
+
+    .price-flash {
+        animation: priceFlash .25s ease;
+    }
+</style>
+
+<main class="flex-1 max-w-7xl mx-auto w-full px-4 md:px-10 py-8 lg:py-12">
+
+    <!-- Breadcrumb -->
+    <nav class="flex text-xs font-bold text-teal-custom mb-6 tracking-wider uppercase items-center gap-1.5 flex-wrap">
+        <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">Trang Chủ</a>
+        <span class="opacity-40">/</span>
+        <a asp-controller="Menu" asp-action="Index" class="hover:text-primary transition-colors">Thực Đơn</a>
+        <span class="opacity-40">/</span>
+        <a asp-controller="Menu" asp-action="Index" asp-route-categoryId="@p.CategoryId"
+           class="hover:text-primary transition-colors">@categoryName</a>
+        <span class="opacity-40">/</span>
+        <span class="text-primary">@p.Name</span>
+    </nav>
+
+    <!-- Main grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+
+        <!-- ── LEFT: Ảnh ── -->
+        <div class="flex flex-col gap-4">
+            <div id="mainImg"
+                 class="w-full rounded-2xl overflow-hidden shadow-2xl"
+                 style="aspect-ratio:4/5; background:#e8e0d5; background-image:url('@p.ImageUrl'); background-size:cover; background-position:center; border:1px solid rgba(162,123,92,0.12);">
+            </div>
+            <div class="grid grid-cols-4 gap-3">
+                <div class="thumb active aspect-square rounded-xl"
+                     style="background-image:url('@p.ImageUrl'); background-size:cover; background-position:center; border:2px solid #A27B5C;"
+                     onclick="setMainImg('@p.ImageUrl', this)">
+                </div>
+                @foreach (var rp in Model.RelatedProducts.Take(3))
+                {
+                    <div class="thumb aspect-square rounded-xl opacity-60"
+                         style="background-image:url('@rp.ImageUrl'); background-size:cover; background-position:center; border:2px solid transparent;"
+                         onclick="setMainImg('@rp.ImageUrl', this)">
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- ── RIGHT ── -->
+        <div class="flex flex-col">
+            <h1 class="text-4xl lg:text-5xl font-black text-slate-custom mb-3 leading-tight"
+                style="font-family:'Playfair Display',serif;">
+                @p.Name
+            </h1>
+
+            <div class="flex items-center gap-3 mb-5">
+                <div class="flex" style="color:#A27B5C;">
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <span class="material-symbols-outlined" style="font-size:18px;">star</span>
+                    }
+                </div>
+                <span class="text-sm font-medium text-teal-custom opacity-70">@categoryName</span>
+                @if (p.IsOnSale && p.DiscountPercent.HasValue)
+                {
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#ef4444;color:#fff;">
+                        SALE -@p.DiscountPercent.Value.ToString("0")%
+                    </span>
+                }
+            </div>
+
+            <!-- Giá — cập nhật theo size và topping -->
+            <div class="flex items-baseline gap-3 mb-6">
+                @if (p.IsOnSale && p.SalePrice > 0)
+                {
+                    <p class="text-3xl font-black text-primary" id="priceDisplay">@PriceK(p.SalePrice)</p>
+                    <p class="text-lg text-gray-400 line-through">@PriceK(p.Price)</p>
+                }
+                else
+                {
+                    <p class="text-3xl font-black text-primary" id="priceDisplay">@PriceK(p.Price)</p>
+                }
+            </div>
+            <div class="h-px w-full mb-6" style="background:rgba(162,123,92,0.15);"></div>
+
+            <p class="text-teal-custom text-base leading-relaxed mb-8 italic">
+                @(string.IsNullOrWhiteSpace(p.Description)
+                                ? "Một ly đồ uống được chế tác tỉ mỉ, mang đến trải nghiệm khó quên tại Góc Lặng."
+                                : p.Description)
+            </p>
+
+            <!-- Customization -->
+            <div class="flex flex-col gap-7">
+
+                <!-- Size -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3">@sizeLabel</label>
+                    <div class="flex gap-3">
+                        @for (int i = 0; i < sizeNames.Length; i++)
+                        {
+                            <button type="button"
+                                    class="size-btn flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold @(i == 1 ? "active" : "text-teal-custom")"
+                                    style="border:2px solid @(i == 1 ? "#A27B5C" : "rgba(162,123,92,0.2)");"
+                                    data-size-index="@i"
+                                    onclick="selectSize(this)">
+                                @sizeNames[i]
+                            </button>
+                        }
+                    </div>
+                    <p class="text-xs mt-2 opacity-50" style="color:#3F4E4F;">
+                        @(catId == 3 ? "Nhỏ/Vừa/Lớn · ±7k mỗi bậc" : "Nhỏ/Vừa/Lớn · ±7k mỗi bậc")
+                    </p>
+                </div>
+
+                <!-- Độ ngọt (chỉ hiện cho đồ uống) -->
+                @if (hasSugar)
+                {
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3">Độ Ngọt</label>
+                        <div class="flex gap-2 flex-wrap">
+                            @{
+                                var sugars = new[] { "Không đường", "Ít ngọt", "Vừa", "Nhiều đường" };
+                            }
+                            @for (int i = 0; i < sugars.Length; i++)
+                            {
+                                <button type="button"
+                                        class="sugar-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold"
+                                        style="border:1.5px solid @(i == 2 ? "#A27B5C" : "rgba(162,123,92,0.25)");
+                                                       background:@(i == 2 ? "#A27B5C" : "transparent");
+                                                       color:@(i == 2 ? "#fff" : "#3F4E4F");"
+                                        onclick="selectSugar(this)">
+                                    @sugars[i]
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Topping theo category -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3">
+                        @(catId == 3 ? "Thêm Vào Phần Ăn" : "Topping Thêm")
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                        @foreach (var (name, priceStr, priceVal) in toppings)
+                        {
+                            <label class="topping-label flex items-center gap-3 p-3 rounded-xl cursor-pointer"
+                                   style="border:1.5px solid rgba(162,123,92,0.18);"
+                                   data-topping-price="@priceVal"
+                                   data-topping-name="@name">
+                                <input type="checkbox" class="topping-check w-4 h-4 rounded cursor-pointer"
+                                       style="accent-color:#A27B5C;" onchange="updateTotal()" />
+                                <span class="text-sm font-medium text-teal-custom flex-1">@name</span>
+                                <span class="text-xs font-bold text-primary">@priceStr</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Số lượng + Thêm vào giỏ -->
+            <div class="mt-10 flex flex-col sm:flex-row gap-4">
+                <div class="flex items-center rounded-xl" style="border:2px solid rgba(162,123,92,0.2);">
+                    <button type="button" class="p-3 text-teal-custom hover:text-primary transition-colors" onclick="changeQty(-1)">
+                        <span class="material-symbols-outlined">remove</span>
+                    </button>
+                    <span id="qtyDisplay" class="px-5 py-3 font-bold text-lg min-w-[3rem] text-center text-slate-custom">1</span>
+                    <button type="button" class="p-3 text-teal-custom hover:text-primary transition-colors" onclick="changeQty(1)">
+                        <span class="material-symbols-outlined">add</span>
+                    </button>
+                </div>
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <button type="button" id="addToCartBtn"
+                            onclick="addToCart(@p.Id)"
+                            class="flex-1 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                            style="background:#A27B5C; box-shadow:0 4px 18px rgba(162,123,92,0.3);">
+                        <span class="material-symbols-outlined">shopping_basket</span>
+                        <span id="addBtnText">Thêm Vào Giỏ — @PriceK(p.IsOnSale && p.SalePrice > 0 ? p.SalePrice : p.Price)</span>
+                    </button>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login"
+                       class="flex-1 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                       style="background:#2C3639; box-shadow:0 4px 18px rgba(44,54,57,0.25);">
+                        <span class="material-symbols-outlined">login</span>
+                        Đăng nhập để đặt hàng
+                    </a>
+                }
+            </div>
+
+            <!-- Ghi chú -->
+            <div class="mt-5">
+                <textarea id="noteInput" class="w-full rounded-xl text-sm text-teal-custom resize-none outline-none transition-all px-4 py-3"
+                          style="border:1.5px solid rgba(162,123,92,0.2); background:#F7F7F6; min-height:72px;"
+                          placeholder="Ghi chú thêm cho ly của bạn... (vd: ít đá, không whip)"
+                          onfocus="this.style.borderColor='#A27B5C'; this.style.background='#fff';"
+                          onblur="this.style.borderColor='rgba(162,123,92,0.2)'; this.style.background='#F7F7F6';"></textarea>
+            </div>
+
+            <!-- Thống kê mini -->
+            <div class="mt-8 grid grid-cols-3 gap-4 pt-6" style="border-top:1px solid rgba(162,123,92,0.12);">
+                @{
+                    var stats = catId == 3
+                    ? new[] {
+                                new { Label = "Nguyên liệu", Value = "Tươi" },
+                                new { Label = "Thủ công",    Value = "100%" },
+                                new { Label = "Nguồn gốc",   Value = "Local" },
+                    }
+                    : catId == 1
+                    ? new[] {
+                                new { Label = "Caffeine",    Value = "~0mg" },
+                                new { Label = "Antioxidant", Value = "Cao" },
+                                new { Label = "Nguồn gốc",   Value = "100%" },
+                    }
+                    : new[] {
+                                new { Label = "Calories",    Value = "~180" },
+                                new { Label = "Caffeine",    Value = "~120mg" },
+                                new { Label = "Nguồn gốc",   Value = "100%" },
+                    };
+                }
+                @foreach (var st in stats)
+                {
+                    <div class="text-center @(st != stats[0] ? "border-l" : "")"
+                         style="border-color:rgba(162,123,92,0.12);">
+                        <p class="text-xs font-bold uppercase tracking-wider text-teal-custom opacity-60 mb-1">@st.Label</p>
+                        <p class="text-lg font-black text-slate-custom">@st.Value</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Related products -->
+    @if (Model.RelatedProducts.Any())
+    {
+        <section class="mt-24 mb-16">
+            <div class="flex items-end justify-between mb-10">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-custom" style="font-family:'Playfair Display',serif;">
+                        Có Thể Bạn Cũng Thích
+                    </h2>
+                    <p class="text-teal-custom text-sm mt-1 opacity-70">Những lựa chọn tuyệt vời khác từ Góc Lặng</p>
+                </div>
+                <a asp-controller="Menu" asp-action="Index"
+                   class="text-primary font-bold flex items-center gap-1 hover:underline underline-offset-4 text-sm">
+                    Xem thực đơn
+                    <span class="material-symbols-outlined" style="font-size:18px;">arrow_right_alt</span>
+                </a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                @foreach (var rp in Model.RelatedProducts)
+                {
+                    <a asp-controller="Product" asp-action="Detail" asp-route-id="@rp.Id"
+                       class="group cursor-pointer" style="text-decoration:none;">
+                        <div class="aspect-square rounded-2xl overflow-hidden mb-4 shadow-md group-hover:shadow-xl transition-all duration-300 relative"
+                             style="background-image:url('@rp.ImageUrl'); background-size:cover; background-position:center; background-color:#e8e0d5;">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                 style="background:rgba(44,54,57,0.4);">
+                                <span class="text-white text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full"
+                                      style="border:1.5px solid rgba(255,255,255,0.7);">Xem thêm</span>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-slate-custom group-hover:text-primary transition-colors text-sm mb-1">@rp.Name</h3>
+                        <p class="text-xs text-teal-custom opacity-70 mb-1.5 italic">@rp.Description</p>
+                        <p class="font-bold text-primary">@PriceK(rp.Price)</p>
+                    </a>
+                }
+            </div>
+        </section>
+    }
+
+</main>
+
+@section Scripts {
+    <script>
+        var qty       = 1;
+        var sizeIndex = 1;   // 0=Nhỏ, 1=Vừa, 2=Lớn (mặc định Vừa)
+        var SIZE_DELTA = 7000; // ±7k mỗi bậc so với Vừa
+        var basePrice = @(p.IsOnSale && p.SalePrice > 0 ? p.SalePrice : p.Price);
+
+        // Tính giá hiện tại = basePrice + size delta + toppings
+        function calcPrice() {
+            var sizeDelta = (sizeIndex - 1) * SIZE_DELTA; // -7k / 0 / +7k
+            var toppingSum = 0;
+            document.querySelectorAll('.topping-check:checked').forEach(function(cb) {
+                toppingSum += parseInt(cb.closest('[data-topping-price]').getAttribute('data-topping-price')) || 0;
+            });
+            return basePrice + sizeDelta + toppingSum;
+        }
+
+        function updateTotal() {
+            var price   = calcPrice();
+            var total   = (price * qty / 1000).toFixed(0) + 'k';
+            var unitK   = (price / 1000).toFixed(0) + 'k';
+            var el = document.getElementById('addBtnText');
+            if (el) el.textContent = 'Thêm Vào Giỏ — ' + total;
+
+            // Flash giá đơn vị
+            var priceEl = document.getElementById('priceDisplay');
+            if (priceEl) {
+                priceEl.textContent = unitK;
+                priceEl.classList.remove('price-flash');
+                void priceEl.offsetWidth; // reflow
+                priceEl.classList.add('price-flash');
+            }
+        }
+
+        function changeQty(delta) {
+            qty = Math.max(1, qty + delta);
+            document.getElementById('qtyDisplay').textContent = qty;
+            updateTotal();
+        }
+
+        function selectSize(btn) {
+            document.querySelectorAll('.size-btn').forEach(function(b) {
+                b.classList.remove('active');
+                b.style.borderColor = 'rgba(162,123,92,0.2)';
+                b.style.color = '#3F4E4F';
+            });
+            btn.classList.add('active');
+            btn.style.borderColor = '#A27B5C';
+            btn.style.color = '#A27B5C';
+            sizeIndex = parseInt(btn.getAttribute('data-size-index'));
+            updateTotal();
+        }
+
+        function selectSugar(btn) {
+            document.querySelectorAll('.sugar-btn').forEach(function(b) {
+                b.classList.remove('active');
+                b.style.background = 'transparent';
+                b.style.borderColor = 'rgba(162,123,92,0.25)';
+                b.style.color = '#3F4E4F';
+            });
+            btn.classList.add('active');
+            btn.style.background = '#A27B5C';
+            btn.style.borderColor = '#A27B5C';
+            btn.style.color = '#fff';
+        }
+
+        function setMainImg(url, thumb) {
+            document.getElementById('mainImg').style.backgroundImage = "url('" + url + "')";
+            document.querySelectorAll('.thumb').forEach(function(t) {
+                t.classList.remove('active'); t.style.borderColor = 'transparent'; t.style.opacity = '0.6';
+            });
+            thumb.classList.add('active'); thumb.style.borderColor = '#A27B5C'; thumb.style.opacity = '1';
+        }
+
+        // ── Thêm vào giỏ hàng (gọi POST thật) ──────────────────
+        async function addToCart(productId) {
+            var btn = document.getElementById('addToCartBtn');
+            btn.disabled = true; btn.style.opacity = '0.7';
+
+            // Lấy sugar
+            var sugarBtn = document.querySelector('.sugar-btn.active');
+            var sugar    = sugarBtn ? sugarBtn.textContent.trim() : 'Vừa';
+
+            // Lấy toppings đã chọn
+            var selectedToppings = [];
+            document.querySelectorAll('.topping-check:checked').forEach(function(cb) {
+                selectedToppings.push(cb.closest('[data-topping-name]').getAttribute('data-topping-name'));
+            });
+
+            // Lấy size
+            var sizeBtn = document.querySelector('.size-btn.active');
+            var sizeMap = ['S','M','L'];
+            var size    = sizeMap[sizeIndex];
+
+            // Ghi chú
+            var note = document.getElementById('noteInput')?.value || '';
+            var toppingStr = selectedToppings.join(', ');
+            if (note) toppingStr = toppingStr ? toppingStr + ' | ' + note : note;
+
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                           || document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] || '';
+
+                const resp = await fetch('/Cart/Add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: new URLSearchParams({
+                        productId: productId,
+                        quantity:  qty,
+                        size:      size,
+                        sugarLevel: sugar,
+                        toppings:  toppingStr
+                    })
+                });
+
+                const data = await resp.json();
+                if (data.success) {
+                    showToast('✅ Đã thêm vào giỏ hàng!', 'success');
+                    // Cập nhật badge giỏ hàng nếu có
+                    var badge = document.getElementById('cart-badge') || document.querySelector('[data-cart-count]');
+                    if (badge) badge.textContent = data.cartCount;
+                } else {
+                    showToast(data.message || 'Có lỗi xảy ra', 'error');
+                }
+            } catch(e) {
+                showToast('Không thể kết nối. Vui lòng thử lại.', 'error');
+            }
+
+            btn.disabled = false; btn.style.opacity = '1';
+        }
+
+        function showToast(msg, type) {
+            var existing = document.getElementById('detail-toast');
+            if (existing) existing.remove();
+            var bg   = type === 'success' ? '#3F4E4F' : '#b91c1c';
+            var icon = type === 'success' ? 'check_circle' : 'error';
+            var t    = document.createElement('div');
+            t.id     = 'detail-toast';
+            t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:16px;background:'+bg+';color:#fff;font-size:14px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,0.18);max-width:320px;';
+            t.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px;color:#A27B5C;">'+icon+'</span>'+msg+
+                '<button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;"><span class="material-symbols-outlined" style="font-size:18px;">close</span></button>';
+            document.body.appendChild(t);
+            setTimeout(function() {
+                t.style.transition = 'opacity .5s'; t.style.opacity = '0';
+                setTimeout(function() { t.remove(); }, 500);
+            }, 3500);
+        }
+
+        // Thêm AntiForgery token vào trang (cần cho AJAX POST)
+        // Nếu không có trong DOM thì fetch sẽ tự dùng cookie
+    </script>
+
+    @* Hidden AntiForgery token cho AJAX *@
+    @Html.AntiForgeryToken()
+}

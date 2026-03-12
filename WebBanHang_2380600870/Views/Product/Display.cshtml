@@ -1,0 +1,132 @@
+﻿@* Views/Product/Display.cshtml — THAY THẾ TOÀN BỘ *@
+@model WebBanHang_2380600870.Models.Product
+@{
+    ViewData["Title"] = "Chi Tiết Sản Phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="p-6 max-w-4xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm flex items-center gap-2" style="font-family: 'Work Sans', sans-serif; color: #3F4E4F;">
+        <a href="/Admin" class="hover:opacity-70" style="color: #A27B5C;">Dashboard</a>
+        <span>›</span>
+        <a href="/Product" class="hover:opacity-70" style="color: #A27B5C;">Sản phẩm</a>
+        <span>›</span>
+        <span>@Model.Name</span>
+    </nav>
+
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b flex items-center justify-between" style="border-color: #DCD7C9;">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: #DCD7C9;">
+                    <span class="material-symbols-outlined" style="color: #A27B5C;">inventory_2</span>
+                </div>
+                <h1 class="font-bold text-xl" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                    Chi Tiết Sản Phẩm
+                </h1>
+            </div>
+            <div class="flex gap-2">
+                <a href="/Product/Edit/@Model.Id"
+                   class="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90"
+                   style="background-color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                    <span class="material-symbols-outlined text-base">edit</span> Chỉnh sửa
+                </a>
+                <a href="/Product"
+                   class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all hover:opacity-70"
+                   style="border-color: #DCD7C9; color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                    <span class="material-symbols-outlined text-base">arrow_back</span> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Ảnh -->
+            <div>
+                <div class="aspect-square rounded-2xl overflow-hidden mb-4" style="background-color: #F7F7F6;">
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <img src="@Model.ImageUrl" alt="@Model.Name"
+                             class="w-full h-full object-cover"
+                             onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full\'><span class=\'material-symbols-outlined text-5xl\' style=\'color:#DCD7C9\'>image</span></div>'" />
+                    }
+                    else
+                    {
+                        <div class="flex items-center justify-center h-full">
+                            <span class="material-symbols-outlined text-5xl" style="color: #DCD7C9;">image</span>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.Images != null && Model.Images.Any())
+                {
+                    <div class="grid grid-cols-4 gap-2">
+                        @foreach (var img in Model.Images)
+                        {
+                            <div class="aspect-square rounded-lg overflow-hidden" style="background-color: #F7F7F6;">
+                                <img src="@img.Url" class="w-full h-full object-cover" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Thông tin -->
+            <div class="space-y-5">
+                <div>
+                    <p class="text-xs uppercase tracking-widest mb-1" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                        @Model.Category?.Name
+                    </p>
+                    <h2 class="text-3xl font-bold mb-2" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                        @Model.Name
+                    </h2>
+                    <p class="text-2xl font-bold" style="color: #A27B5C; font-family: 'Playfair Display', serif;">
+                        @Model.Price.ToString("N0")đ
+                    </p>
+                </div>
+
+                <div class="w-full h-px" style="background-color: #DCD7C9;"></div>
+
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                        Mô tả
+                    </p>
+                    <p class="text-sm leading-relaxed" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                        @(Model.Description ?? "Chưa có mô tả.")
+                    </p>
+                </div>
+
+                <div class="w-full h-px" style="background-color: #DCD7C9;"></div>
+
+                <!-- Meta info -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="rounded-xl p-4" style="background-color: #F7F7F6;">
+                        <p class="text-xs uppercase tracking-wider mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">ID Sản phẩm</p>
+                        <p class="font-bold" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">#@Model.Id</p>
+                    </div>
+                    <div class="rounded-xl p-4" style="background-color: #F7F7F6;">
+                        <p class="text-xs uppercase tracking-wider mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Danh mục</p>
+                        <p class="font-bold" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">@(Model.Category?.Name ?? "—")</p>
+                    </div>
+                    <div class="rounded-xl p-4" style="background-color: #F7F7F6;">
+                        <p class="text-xs uppercase tracking-wider mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Số ảnh phụ</p>
+                        <p class="font-bold" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">@(Model.Images?.Count() ?? 0) ảnh</p>
+                    </div>
+                    <div class="rounded-xl p-4" style="background-color: #F7F7F6;">
+                        <p class="text-xs uppercase tracking-wider mb-1" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Trạng thái</p>
+                        <span class="text-xs px-2 py-1 rounded-full text-white font-medium" style="background-color: #10B981; font-family: 'Work Sans', sans-serif;">
+                            Đang hiển thị
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Nút xóa -->
+                <a href="/Product/Delete/@Model.Id"
+                   class="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium border transition-all hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                   style="border-color: #DCD7C9; color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                    <span class="material-symbols-outlined text-base">delete</span> Xóa sản phẩm này
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

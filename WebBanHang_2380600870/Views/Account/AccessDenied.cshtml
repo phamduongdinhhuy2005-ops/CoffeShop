@@ -1,0 +1,17 @@
+﻿@{
+    ViewData["Title"] = "Không có quyền truy cập";
+    Layout = "_Layout";
+}
+
+<main class="flex-1 flex items-center justify-center py-20 px-6" style="background-color: #F7F7F6;">
+    <div class="text-center max-w-lg">
+        <span class="material-symbols-outlined text-primary" style="font-size:64px;">lock</span>
+        <h1 class="vn-heading text-slate-custom text-3xl font-black mt-4 mb-4">Không Có Quyền</h1>
+        <p class="text-teal-custom mb-8">Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên nếu cần hỗ trợ.</p>
+        <a asp-controller="Home" asp-action="Index"
+           class="px-8 py-3 text-white font-bold rounded-full uppercase tracking-widest hover:opacity-90 transition-all inline-block"
+           style="background-color: #2C3639;">
+            Về Trang Chủ
+        </a>
+    </div>
+</main>

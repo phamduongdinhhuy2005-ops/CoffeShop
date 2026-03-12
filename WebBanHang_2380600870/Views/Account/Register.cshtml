@@ -1,0 +1,215 @@
+﻿@model WebBanHang_2380600870.Models.AccountRegisterViewModel
+@{
+    ViewData["Title"] = "Đăng Ký | Góc Lặng";
+    Layout = "_Layout";
+}
+
+<style>
+    .auth-input {
+        width: 100%;
+        padding: 13px 16px 13px 44px;
+        border-radius: 50px;
+        border: 1.5px solid rgba(162,123,92,0.25);
+        background: #F7F7F6;
+        font-size: 14px;
+        color: #2C3639;
+        outline: none;
+        transition: border-color .2s, background .2s, box-shadow .2s;
+        font-family: 'Work Sans', sans-serif;
+    }
+
+        .auth-input:focus {
+            border-color: #A27B5C;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(162,123,92,0.12);
+        }
+
+        .auth-input::placeholder {
+            color: rgba(63,78,79,0.4);
+        }
+
+    .auth-input-wrap {
+        position: relative;
+    }
+
+    .auth-input-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #A27B5C;
+        font-size: 17px;
+        pointer-events: none;
+    }
+
+    .auth-input-eye {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #3F4E4F;
+        font-size: 17px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        transition: color .2s;
+    }
+
+        .auth-input-eye:hover {
+            color: #A27B5C;
+        }
+</style>
+
+<main class="flex-grow flex items-center justify-center px-4 py-14" style="background:#EDEAE5;">
+
+    <div class="w-full max-w-[880px] grid grid-cols-1 md:grid-cols-[1.1fr_1fr] rounded-3xl shadow-2xl overflow-hidden"
+         style="border:1px solid rgba(162,123,92,0.12);">
+
+        <!-- LEFT -->
+        <div class="hidden md:flex flex-col justify-between p-12 relative overflow-hidden" style="background:#2C3639; min-height:560px;">
+            <div class="absolute inset-0 opacity-20"
+                 style="background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuBGJFZqLPUlnhR_k7UwNpbZzzz0QFkHBhYTZMdu3ds1fU0-ImhqJBb7Pj0hBWJ7QXDypzzJpI7E7EkfeBCr3_ne_cO7wbm3GqycYrDB8jEGVgrS8dOQ-l432PbNd-fTxqdqFEcN2PTGTkJBWljryUuR-9u9LjLdzM0KV-UPA1IWeom6L1K0DecBdV7z40afEQQGtd9tWKMvLC9MYHzvfLpa_WVOlqjLTqibYCOwuXoRnJ_RfSOejqkAmhchU2cL-vsUGfkHqaEoiOI9');
+                          background-size:cover; background-position:center;"></div>
+            <div class="absolute inset-0" style="background:linear-gradient(160deg,rgba(44,54,57,0.5) 0%,rgba(28,25,22,0.75) 100%);"></div>
+
+            <div class="relative z-10">
+                <span class="font-bold tracking-[0.28em] uppercase text-xs mb-5 block" style="color:#A27B5C;">Góc Lặng Café</span>
+                <h2 class="font-black leading-[1.15] mb-5" style="font-family:'Playfair Display',serif; color:#DCD7C9; font-size:clamp(2.2rem,4vw,3rem);">
+                    Gia Nhập<br />Cộng Đồng
+                </h2>
+                <p style="color:rgba(220,215,201,0.72); line-height:1.9; font-size:14px; max-width:260px;">
+                    Trở thành thành viên Góc Lặng — tận hưởng những ưu đãi độc quyền và hành trình cà phê thú vị.
+                </p>
+
+                <ul class="mt-7 flex flex-col gap-3.5">
+                    @{
+                        var perks = new[]{
+                                        ("card_membership","Ưu đãi thành viên độc quyền"),
+                                        ("event",          "Tham dự sự kiện đặc biệt"),
+                                        ("local_cafe",     "Đặt chỗ ưu tiên"),
+                                        };
+                    }
+                    @foreach (var (icon, text) in perks)
+                    {
+                        <li class="flex items-center gap-3">
+                            <span class="material-symbols-outlined" style="font-size:17px; color:#A27B5C;">@icon</span>
+                            <span style="color:rgba(220,215,201,0.78); font-size:13px; font-weight:500;">@text</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <div class="relative z-10">
+                <div class="h-px w-full mb-6" style="background:rgba(162,123,92,0.25);"></div>
+                <div class="flex items-center gap-3">
+                    <div class="flex -space-x-2">
+                        @foreach (var (letter, bg) in new[] { ("A", "#A27B5C"), ("M", "#3F4E4F"), ("T", "#A27B5C") })
+                        {
+                            <div class="w-9 h-9 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white shrink-0"
+                                 style="border-color:#2C3639; background:@bg;">
+                                @letter
+                            </div>
+                        }
+                    </div>
+                    <p style="color:rgba(220,215,201,0.5); font-size:12px;">Hơn 1,200 thành viên đang thưởng thức</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="p-8 md:p-10 flex flex-col justify-center" style="background:#fff;">
+
+            <h3 class="font-black text-slate-custom mb-1" style="font-family:'Playfair Display',serif; font-size:1.75rem;">Tạo Tài Khoản</h3>
+            <p class="text-sm mb-6" style="color:#3F4E4F; line-height:1.8;">Bắt đầu hành trình cùng chúng mình hôm nay.</p>
+
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+            {
+                <div class="mb-4 px-4 py-3 rounded-2xl text-sm flex gap-2 items-start"
+                     style="background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.22); color:#b91c1c;">
+                    <span class="material-symbols-outlined shrink-0" style="font-size:17px;margin-top:1px;">error</span>
+                    <div asp-validation-summary="ModelOnly"></div>
+                </div>
+            }
+
+            <form asp-action="Register" method="post" class="flex flex-col gap-4">
+                @Html.AntiForgeryToken()
+
+                <!-- Họ tên -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold uppercase tracking-widest" style="color:#2C3639;">Họ & Tên</label>
+                    <div class="auth-input-wrap">
+                        <span class="material-symbols-outlined auth-input-icon">person</span>
+                        <input asp-for="FullName" class="auth-input" placeholder="Nguyễn Văn A" />
+                    </div>
+                    <span asp-validation-for="FullName" class="text-red-500 text-xs px-1"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold uppercase tracking-widest" style="color:#2C3639;">Email</label>
+                    <div class="auth-input-wrap">
+                        <span class="material-symbols-outlined auth-input-icon">mail</span>
+                        <input asp-for="Email" type="email" class="auth-input" placeholder="email@gmail.com" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-red-500 text-xs px-1"></span>
+                </div>
+
+                <!-- Password row -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold uppercase tracking-widest" style="color:#2C3639;">Mật Khẩu</label>
+                        <div class="auth-input-wrap">
+                            <span class="material-symbols-outlined auth-input-icon">lock</span>
+                            <input asp-for="Password" type="password" id="p1" class="auth-input" placeholder="••••••••" style="padding-right:40px;" />
+                            <button type="button" class="auth-input-eye" onclick="togglePwd('p1','e1')">
+                                <span class="material-symbols-outlined" id="e1" style="font-size:17px;">visibility</span>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-red-500 text-xs px-1"></span>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold uppercase tracking-widest" style="color:#2C3639;">Xác Nhận</label>
+                        <div class="auth-input-wrap">
+                            <span class="material-symbols-outlined auth-input-icon">shield</span>
+                            <input asp-for="ConfirmPassword" type="password" id="p2" class="auth-input" placeholder="••••••••" style="padding-right:40px;" />
+                            <button type="button" class="auth-input-eye" onclick="togglePwd('p2','e2')">
+                                <span class="material-symbols-outlined" id="e2" style="font-size:17px;">visibility</span>
+                            </button>
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="text-red-500 text-xs px-1"></span>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full py-3.5 rounded-full font-bold text-sm uppercase tracking-widest text-white transition-all hover:opacity-90 active:scale-[0.98] mt-1"
+                        style="background:#A27B5C; box-shadow:0 4px 18px rgba(162,123,92,0.28); letter-spacing:.15em;">
+                    Tạo Tài Khoản
+                </button>
+
+                <div class="flex items-center gap-3 my-1">
+                    <div class="flex-1 h-px" style="background:rgba(162,123,92,0.15);"></div>
+                    <span class="text-xs uppercase tracking-wider" style="color:#3F4E4F;">hoặc</span>
+                    <div class="flex-1 h-px" style="background:rgba(162,123,92,0.15);"></div>
+                </div>
+
+                <p class="text-center text-sm" style="color:#3F4E4F;">
+                    Đã có tài khoản?
+                    <a asp-controller="Account" asp-action="Login" class="font-bold hover:underline" style="color:#A27B5C;">Đăng nhập</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function togglePwd(id, iconId) {
+            var i = document.getElementById(id), ic = document.getElementById(iconId);
+            i.type = i.type === 'password' ? 'text' : 'password';
+            ic.textContent = i.type === 'password' ? 'visibility' : 'visibility_off';
+        }
+    </script>
+}

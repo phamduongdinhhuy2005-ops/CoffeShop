@@ -1,0 +1,138 @@
+﻿@model IEnumerable<WebBanHang_2380600870.Models.Booking>
+@{
+    ViewData["Title"] = "Quản Lý Đặt Chỗ";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "Booking";
+    ViewData["Breadcrumb"] = "Đặt chỗ";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div id="hcToast" style="position:fixed;top:1.5rem;right:1.5rem;z-index:9999;background:#fff;border:1px solid rgba(162,123,92,.3);border-left:4px solid #a27b5c;border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 8px 24px rgba(44,54,57,.12);animation:toastIn .3s ease;">
+        <span class="material-symbols-outlined" style="color:#a27b5c;font-size:22px;">check_circle</span>
+        <span style="font-size:.875rem;font-weight:500;color:#2c3639;">@TempData["Success"]</span>
+        <button onclick="document.getElementById('hcToast').remove()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#94a3b8;" class="material-symbols-outlined">close</button>
+    </div>
+}
+<style>
+    @@keyframes toastIn {
+        from {
+            transform: translateX(110%);
+            opacity: 0
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1
+        }
+    }
+</style>
+
+@* Stats *@
+@{
+    var total = Model.Count();
+    var pending = Model.Count(b => b.Status == WebBanHang_2380600870.Models.BookingStatus.Pending);
+    var confirmed = Model.Count(b => b.Status == WebBanHang_2380600870.Models.BookingStatus.Confirmed);
+    var cancelled = Model.Count(b => b.Status == WebBanHang_2380600870.Models.BookingStatus.Cancelled);
+}
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
+    @foreach (var (label, val, icon, bg) in new[]{
+        ("Tổng đặt chỗ", total.ToString(), "event_seat", "rgba(162,123,92,.1)"),
+        ("Chờ xác nhận", pending.ToString(), "pending", "rgba(251,191,36,.12)"),
+        ("Đã xác nhận", confirmed.ToString(), "event_available", "rgba(34,197,94,.1)"),
+        ("Đã hủy", cancelled.ToString(), "event_busy", "rgba(239,68,68,.1)")
+        })
+    {
+        <div style="background:#fff;border-radius:14px;padding:1.1rem 1.25rem;border:1px solid rgba(162,123,92,.15);display:flex;align-items:center;gap:.85rem;">
+            <div style="width:40px;height:40px;border-radius:10px;background:@bg;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="color:#a27b5c;font-size:20px;">@icon</span>
+            </div>
+            <div>
+                <div style="font-size:1.4rem;font-weight:800;color:#2c3639;line-height:1;">@val</div>
+                <div style="font-size:.72rem;color:#94a3b8;">@label</div>
+            </div>
+        </div>
+    }
+</div>
+
+@* Table *@
+<div style="background:#fff;border-radius:16px;border:1px solid rgba(162,123,92,.15);overflow:hidden;">
+    @if (!Model.Any())
+    {
+        <div style="text-align:center;padding:5rem;color:#94a3b8;font-style:italic;">
+            <span class="material-symbols-outlined" style="font-size:48px;display:block;margin-bottom:.75rem;opacity:.3;">event_seat</span>
+            Chưa có đặt chỗ nào.
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+                <thead>
+                    <tr style="background:rgba(162,123,92,.07);border-bottom:2px solid rgba(162,123,92,.15);">
+                        @foreach (var h in new[] { "Khách hàng", "SĐT", "Ngày / Giờ", "Khách", "Dịp", "Trạng thái", "Cập nhật" })
+                        {
+                            <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">@h</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.OrderByDescending(x => x.CreatedAt))
+                    {
+                        var (statusClr, statusBg, statusLabel) = b.Status switch
+                        {
+                            WebBanHang_2380600870.Models.BookingStatus.Pending => ("#92400e", "rgba(251,191,36,.15)", "Chờ XN"),
+                            WebBanHang_2380600870.Models.BookingStatus.Confirmed => ("#166534", "rgba(34,197,94,.12)", "Đã XN"),
+                            WebBanHang_2380600870.Models.BookingStatus.Cancelled => ("#991b1b", "rgba(239,68,68,.1)", "Đã hủy"),
+                            _ => ("#64748b", "rgba(100,116,139,.1)", b.Status.ToString())
+                        };
+                        <tr style="border-bottom:1px solid rgba(162,123,92,.09);transition:background .12s;" onmouseover="this.style.background='rgba(162,123,92,.03)'" onmouseout="this.style.background='transparent'">
+                            <td style="padding:1rem 1.25rem;">
+                                <div style="font-weight:600;color:#2c3639;">@b.FullName</div>
+                                <div style="font-size:.75rem;color:#94a3b8;">@b.Email</div>
+                            </td>
+                            <td style="padding:1rem 1.25rem;color:#64748b;">@b.Phone</td>
+                            <td style="padding:1rem 1.25rem;white-space:nowrap;">
+                                <div style="color:#2c3639;font-weight:600;">@b.BookingDate.ToString("dd/MM/yyyy")</div>
+                                <div style="font-size:.78rem;color:#94a3b8;">@b.BookingTime</div>
+                            </td>
+                            <td style="padding:1rem 1.25rem;color:#2c3639;font-weight:600;">@b.GuestCount người</td>
+                            <td style="padding:1rem 1.25rem;color:#64748b;">@(b.Occasion ?? "—")</td>
+                            <td style="padding:1rem 1.25rem;">
+                                <span style="display:inline-block;padding:.3rem .7rem;border-radius:99px;font-size:.72rem;font-weight:800;text-transform:uppercase;background:@statusBg;color:@statusClr;">
+                                    @statusLabel
+                                </span>
+                            </td>
+                            <td style="padding:1rem 1.25rem;">
+                                <form asp-action="UpdateBookingStatus" method="post" style="display:flex;gap:.4rem;align-items:center;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="bookingId" value="@b.Id" />
+                                    <select name="status"
+                                            style="padding:.4rem .65rem;border:1.5px solid rgba(162,123,92,.3);border-radius:8px;font-family:'Work Sans',sans-serif;font-size:.78rem;color:#2c3639;background:#fafaf9;outline:none;cursor:pointer;">
+                                        @foreach (var s in Enum.GetValues<WebBanHang_2380600870.Models.BookingStatus>())
+                                        {
+                                            <option value="@s" selected="@(b.Status == s)">@s</option>
+                                        }
+                                    </select>
+                                    <button type="submit"
+                                            style="padding:.4rem .65rem;background:#a27b5c;color:#fff;border:none;border-radius:8px;font-family:'Work Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;">
+                                        Lưu
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        setTimeout(() => {
+            const t = document.getElementById('hcToast');
+            if (t) { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }
+        }, 4000);
+    </script>
+}

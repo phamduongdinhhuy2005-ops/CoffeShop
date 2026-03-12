@@ -1,0 +1,295 @@
+﻿@model IEnumerable<WebBanHang_2380600870.Models.Category>
+
+@{
+    ViewData["Title"] = "Quản lý danh mục";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+@* ── STYLES (nhúng thẳng, không cần file riêng) ── *@
+<style>
+    .modal-overlay {
+        transition: opacity .2s ease;
+    }
+
+    .modal-box {
+        transition: transform .2s ease, opacity .2s ease;
+    }
+
+    .toast-item {
+        animation: toastIn .3s ease, toastOut .3s ease 2.7s forwards;
+    }
+
+    @@keyframes toastIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1
+        }
+    }
+
+    @@@@keyframes toastOut {
+        to {
+            transform: translateX(100%);
+            opacity: 0
+        }
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(162,123,92,.12);
+    }
+
+    .stat-card {
+        transition: transform .2s, box-shadow .2s;
+    }
+</style>
+
+@* ── TOAST CONTAINER ── *@
+<div id="toastContainer" class="position-fixed top-0 end-0 p-4" style="z-index:1100"></div>
+
+@* ── TempData success → JS toast ── *@
+@if (TempData["Success"] != null)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', () =>
+            showToast('@Html.Raw(TempData["Success"])', 'check_circle', 'text-success'));
+    </script>
+}
+
+@* ════════════════════════════════════
+   STAT CARDS
+════════════════════════════════════ *@
+<div class="row g-4 mb-4">
+    @{
+        int totalCats = Model.Count();
+        int totalProds = Model.Sum(c => c.Products?.Count() ?? 0);
+        double avg = totalCats > 0 ? (double)totalProds / totalCats : 0;
+    }
+    <div class="col-12 col-md-4">
+        <div class="stat-card card border-0 rounded-4 shadow-sm p-4 d-flex flex-row align-items-center gap-3">
+            <div class="rounded-3 d-flex align-items-center justify-content-center"
+                 style="width:52px;height:52px;background:rgba(162,123,92,.12)">
+                <span class="material-symbols-outlined fs-4" style="color:#a27b5c">category</span>
+            </div>
+            <div>
+                <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing:.08em">Tổng danh mục</div>
+                <div class="fw-bold fs-3 lh-1" style="color:#2c3639">@totalCats</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="stat-card card border-0 rounded-4 shadow-sm p-4 d-flex flex-row align-items-center gap-3">
+            <div class="rounded-3 d-flex align-items-center justify-content-center"
+                 style="width:52px;height:52px;background:#f0fdf4">
+                <span class="material-symbols-outlined fs-4 text-success">inventory_2</span>
+            </div>
+            <div>
+                <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing:.08em">Tổng sản phẩm</div>
+                <div class="fw-bold fs-3 lh-1" style="color:#2c3639">@totalProds</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="stat-card card border-0 rounded-4 shadow-sm p-4 d-flex flex-row align-items-center gap-3">
+            <div class="rounded-3 d-flex align-items-center justify-content-center"
+                 style="width:52px;height:52px;background:#eff6ff">
+                <span class="material-symbols-outlined fs-4 text-primary">trending_up</span>
+            </div>
+            <div>
+                <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing:.08em">TB SP / danh mục</div>
+                <div class="fw-bold fs-3 lh-1" style="color:#2c3639">@avg.ToString("0.##")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ════════════════════════════════════
+   TABLE CARD
+════════════════════════════════════ *@
+<div class="card border-0 rounded-4 shadow-sm overflow-hidden">
+
+    @* Card header *@
+    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-4 px-4"
+         style="border-color:#dcd7c9!important">
+        <div>
+            <h5 class="mb-0 fw-bold" style="color:#2c3639">Danh mục hiện có</h5>
+            <small class="text-muted">Tổng quan tất cả nhóm menu hiện tại</small>
+        </div>
+        <div class="d-flex gap-2">
+            @* Search *@
+            <div class="input-group" style="width:240px">
+                <span class="input-group-text bg-white border-end-0" style="border-color:#dcd7c9">
+                    <span class="material-symbols-outlined text-muted" style="font-size:18px">search</span>
+                </span>
+                <input id="searchInput" type="text" class="form-control border-start-0 ps-0"
+                       placeholder="Tìm danh mục..." style="border-color:#dcd7c9;box-shadow:none"
+                       oninput="filterRows()" />
+            </div>
+            @* Add button *@
+            <a asp-action="Add"
+               class="btn fw-bold d-flex align-items-center gap-2 px-4"
+               style="background:#a27b5c;color:#fff;box-shadow:0 4px 12px rgba(162,123,92,.3);border-radius:.6rem">
+                <span class="material-symbols-outlined" style="font-size:20px">add_circle</span>
+                Thêm danh mục
+            </a>
+        </div>
+    </div>
+
+    @* Table *@
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead style="background:rgba(220,215,201,.25)">
+                <tr>
+                    <th class="px-4 py-3 text-uppercase small fw-bold" style="color:#3f4e4f;letter-spacing:.07em">ID</th>
+                    <th class="px-4 py-3 text-uppercase small fw-bold" style="color:#3f4e4f;letter-spacing:.07em">Tên danh mục</th>
+                    <th class="px-4 py-3 text-uppercase small fw-bold" style="color:#3f4e4f;letter-spacing:.07em">Số sản phẩm</th>
+                    <th class="px-4 py-3 text-uppercase small fw-bold text-end" style="color:#3f4e4f;letter-spacing:.07em">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="categoryTableBody" style="border-color:#dcd7c9">
+                @if (!Model.Any())
+                {
+                    <tr id="emptyRow">
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <span class="material-symbols-outlined d-block mb-2" style="font-size:48px">folder_off</span>
+                            Chưa có danh mục nào.
+                        </td>
+                    </tr>
+                }
+                @foreach (var category in Model)
+                {
+                    <tr class="category-row" data-name="@category.Name.ToLower()">
+                        <td class="px-4 py-3">
+                            <span class="font-monospace fw-semibold" style="color:#a27b5c">
+                                #HC-@category.Id.ToString("D3")
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 fw-semibold" style="color:#2c3639">@category.Name</td>
+                        <td class="px-4 py-3">
+                            <span class="badge rounded-pill fw-bold px-3 py-2"
+                                  style="background:rgba(162,123,92,.12);color:#a27b5c;font-size:.78rem">
+                                @((category.Products?.Count() ?? 0).ToString("D2")) Sản phẩm
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a asp-action="Update" asp-route-id="@category.Id"
+                                   class="btn btn-sm d-flex align-items-center justify-content-center"
+                                   style="width:36px;height:36px;border:1px solid #dcd7c9;border-radius:.5rem;color:#3f4e4f;padding:0"
+                                   title="Chỉnh sửa">
+                                    <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@category.Id"
+                                   class="btn btn-sm d-flex align-items-center justify-content-center"
+                                   style="width:36px;height:36px;border:1px solid #fee2e2;border-radius:.5rem;color:#ef4444;padding:0"
+                                   title="Xóa"
+                                   onclick="return confirmDelete(event, '@category.Name')">
+                                    <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* Empty state for search *@
+    <div id="searchEmpty" class="d-none text-center py-5 text-muted">
+        <span class="material-symbols-outlined d-block mb-2" style="font-size:48px">search_off</span>
+        Không tìm thấy danh mục nào.
+    </div>
+
+    @* Footer *@
+    <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4"
+         style="border-color:#dcd7c9!important">
+        <small class="text-muted" id="rowCount">Hiển thị @Model.Count() danh mục</small>
+    </div>
+</div>
+
+@* ════════════════════════════════════
+   DELETE CONFIRM MODAL
+════════════════════════════════════ *@
+<div id="deleteModal" class="position-fixed top-0 start-0 w-100 h-100 d-none"
+     style="z-index:1050;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)"
+     onclick="cancelDelete()">
+    <div class="d-flex align-items-center justify-content-center h-100 p-3">
+        <div class="bg-white rounded-4 shadow-lg p-5 text-center" style="max-width:420px;width:100%"
+             onclick="event.stopPropagation()">
+            <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4"
+                 style="width:64px;height:64px;background:#fef2f2">
+                <span class="material-symbols-outlined text-danger" style="font-size:36px">delete_forever</span>
+            </div>
+            <h5 class="fw-bold mb-2" style="color:#2c3639">Xác nhận xóa</h5>
+            <p class="text-muted small mb-1">Bạn có chắc muốn xóa danh mục</p>
+            <p class="fw-bold mb-1" id="deleteTargetName" style="color:#2c3639">"..."</p>
+            <p class="text-danger small mb-4">Hành động này không thể hoàn tác.</p>
+            <div class="d-flex gap-3">
+                <button onclick="cancelDelete()"
+                        class="btn flex-fill fw-bold py-2"
+                        style="border:1px solid #dcd7c9;color:#3f4e4f;border-radius:.6rem">
+                    Hủy
+                </button>
+                <a id="deleteConfirmLink" href="#"
+                   class="btn flex-fill fw-bold py-2 text-white"
+                   style="background:#ef4444;border-radius:.6rem">
+                    Xóa danh mục
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ════════════════════════════════════
+   SCRIPTS
+════════════════════════════════════ *@
+<script>
+    /* ── Search filter ── */
+    function filterRows() {
+        const q = document.getElementById('searchInput').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.category-row');
+        let visible = 0;
+        rows.forEach(r => {
+            const match = r.dataset.name.includes(q);
+            r.classList.toggle('d-none', !match);
+            if (match) visible++;
+        });
+        document.getElementById('rowCount').textContent = `Hiển thị ${visible} danh mục`;
+        document.getElementById('searchEmpty').classList.toggle('d-none', visible > 0);
+    }
+
+    /* ── Delete confirm modal ── */
+    let pendingDeleteUrl = null;
+
+    function confirmDelete(e, name) {
+        e.preventDefault();
+        pendingDeleteUrl = e.currentTarget.href;
+        document.getElementById('deleteTargetName').textContent = `"${name}"`;
+        document.getElementById('deleteConfirmLink').href = pendingDeleteUrl;
+        const modal = document.getElementById('deleteModal');
+        modal.classList.remove('d-none');
+        modal.style.opacity = 0;
+        requestAnimationFrame(() => { modal.style.transition = 'opacity .2s'; modal.style.opacity = 1; });
+        return false;
+    }
+
+    function cancelDelete() {
+        const modal = document.getElementById('deleteModal');
+        modal.style.opacity = 0;
+        setTimeout(() => modal.classList.add('d-none'), 200);
+    }
+
+    /* ── Toast ── */
+    function showToast(msg, icon, iconClass) {
+        const el = document.createElement('div');
+        el.className = 'toast-item d-flex align-items-center gap-3 bg-white rounded-4 shadow px-4 py-3 mb-2';
+        el.style.minWidth = '280px';
+        el.innerHTML = `<span class="material-symbols-outlined ${iconClass}">${icon}</span>
+                        <span class="small fw-semibold" style="color:#2c3639">${msg}</span>`;
+        document.getElementById('toastContainer').appendChild(el);
+        setTimeout(() => el.remove(), 3200);
+    }
+</script>

@@ -1,0 +1,170 @@
+﻿@* Views/Home/CauChuyen.cshtml *@
+@{
+    ViewData["Title"] = "Câu Chuyện Của Chúng Mình";
+}
+
+<!-- Hero -->
+<section class="relative h-[70vh] flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat"
+         style="background-image: url('/images/story-hero.jpg'); filter: brightness(0.45);"></div>
+    <div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(44,54,57,0.3) 0%, rgba(44,54,57,0.7) 100%);"></div>
+    <div class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto">
+        <p class="text-sm tracking-[0.3em] uppercase mb-4 opacity-80" style="font-family: 'Work Sans', sans-serif;">
+            Góc Lặng · 2018
+        </p>
+        <h1 class="text-5xl md:text-7xl font-bold leading-tight mb-6" style="font-family: 'Playfair Display', serif;">
+            Câu Chuyện<br />Của Chúng Mình
+        </h1>
+        <p class="text-lg opacity-85" style="font-family: 'Work Sans', sans-serif; font-weight: 300; letter-spacing: 0.05em;">
+            Mỗi tách cà phê là một khoảnh khắc để trở về với chính mình
+        </p>
+    </div>
+</section>
+
+<!-- Phần 1: Khởi đầu -->
+<section class="py-24 px-4" style="background-color: #F7F7F6;">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+        <div>
+            <p class="text-sm tracking-[0.2em] uppercase mb-4" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                Khởi Đầu
+            </p>
+            <h2 class="text-4xl font-bold mb-6 leading-snug" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                Từ một góc nhỏ<br />trong thành phố ồn ào
+            </h2>
+            <p class="text-base leading-relaxed mb-5" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                Góc Lặng ra đời năm 2018, từ ước mơ giản dị của một người yêu cà phê — tạo ra một không gian nơi mà bạn có thể thở chậm lại, nghe rõ tiếng của chính mình giữa nhịp sống hối hả.
+            </p>
+            <p class="text-base leading-relaxed" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                Chúng mình không chỉ bán đồ uống. Chúng mình bán những khoảnh khắc — khoảng lặng quý giá mà ai cũng cần nhưng ít ai tìm được.
+            </p>
+        </div>
+        <div class="relative">
+            <div class="w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl"
+                 style="background-color: #DCD7C9;">
+                <img src="/images/story-1.jpg" alt="Góc Lặng Café khởi đầu"
+                     class="w-full h-full object-cover"
+                     onerror="this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.justifyContent='center';this.style.display='none';" />
+                <span class="material-symbols-outlined text-6xl" style="color: #A27B5C; display: none;">local_cafe</span>
+            </div>
+            <div class="absolute -bottom-6 -left-6 w-32 h-32 rounded-2xl shadow-lg flex items-center justify-center"
+                 style="background-color: #A27B5C;">
+                <div class="text-center text-white">
+                    <div class="text-3xl font-bold" style="font-family: 'Playfair Display', serif;">6+</div>
+                    <div class="text-xs" style="font-family: 'Work Sans', sans-serif;">năm yêu thương</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Phần 2: Triết lý -->
+<section class="py-24 px-4" style="background-color: #2C3639;">
+    <div class="max-w-4xl mx-auto text-center text-white">
+        <p class="text-sm tracking-[0.3em] uppercase mb-6 opacity-60" style="font-family: 'Work Sans', sans-serif;">
+            Triết Lý
+        </p>
+        <blockquote class="text-3xl md:text-4xl font-light leading-relaxed mb-8 italic"
+                    style="font-family: 'Playfair Display', serif; color: #DCD7C9;">
+            "Chúng mình tin rằng một tách trà tốt, một chiếc ghế thoải mái, và sự im lặng đúng lúc có thể chữa lành nhiều điều hơn bạn nghĩ."
+        </blockquote>
+        <div class="w-16 h-px mx-auto mb-6" style="background-color: #A27B5C;"></div>
+        <p class="opacity-60 text-sm" style="font-family: 'Work Sans', sans-serif; letter-spacing: 0.1em;">
+            — Người sáng lập Góc Lặng
+        </p>
+    </div>
+</section>
+
+<!-- Phần 3: Giá trị cốt lõi -->
+<section class="py-24 px-4" style="background-color: #F7F7F6;">
+    <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-16">
+            <p class="text-sm tracking-[0.2em] uppercase mb-3" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                Những Gì Chúng Mình Tin
+            </p>
+            <h2 class="text-4xl font-bold" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                Giá Trị Cốt Lõi
+            </h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            @{
+                var values = new[]
+                {
+                        new { icon = "eco", title = "Nguyên Liệu Thuần Tự Nhiên", desc = "Mọi nguyên liệu được chọn lọc kỹ từ những vùng đất tốt nhất — trà từ Đà Lạt, cà phê từ Buôn Ma Thuột, thảo mộc từ Sapa." },
+                        new { icon = "self_improvement", title = "Không Gian Để Lắng Nghe", desc = "Góc Lặng được thiết kế để bạn thoát ra khỏi tiếng ồn — ánh sáng nhẹ, âm nhạc khẽ, ghế ngồi đủ sâu để bạn đắm chìm vào khoảnh khắc." },
+                        new { icon = "favorite", title = "Phục Vụ Bằng Tâm", desc = "Mỗi ly được pha với sự chú tâm. Chúng mình không vội, vì bạn xứng đáng được phục vụ theo cách bạn muốn." }
+                        };
+            }
+            @foreach (var v in values)
+            {
+                <div class="bg-white rounded-2xl p-8 shadow-sm text-center group hover:shadow-md transition-shadow">
+                    <div class="w-14 h-14 mx-auto mb-5 rounded-full flex items-center justify-center transition-all group-hover:scale-110"
+                         style="background-color: #DCD7C9;">
+                        <span class="material-symbols-outlined text-2xl" style="color: #A27B5C;">@v.icon</span>
+                    </div>
+                    <h3 class="font-bold text-lg mb-3" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                        @v.title
+                    </h3>
+                    <p class="text-sm leading-relaxed" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                        @v.desc
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Phần 4: Team -->
+<section class="py-24 px-4" style="background-color: #DCD7C9;">
+    <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-16">
+            <p class="text-sm tracking-[0.2em] uppercase mb-3" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                Con Người
+            </p>
+            <h2 class="text-4xl font-bold" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                Những Người Pha Cà Phê Cho Bạn
+            </h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            @{
+                var team = new[]
+                {
+                        new { name = "Minh Khánh", role = "Người sáng lập · Head Barista", emoji = "☕" },
+                        new { name = "Thảo Nguyên", role = "Bếp trưởng · Món ngọt", emoji = "🍰" },
+                        new { name = "Đức Anh", role = "Quản lý trải nghiệm", emoji = "🌿" }
+                        };
+            }
+            @foreach (var member in team)
+            {
+                <div class="text-center">
+                    <div class="w-32 h-32 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl shadow-md"
+                         style="background-color: #F7F7F6;">
+                        @member.emoji
+                    </div>
+                    <h3 class="font-bold text-xl mb-1" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                        @member.name
+                    </h3>
+                    <p class="text-sm" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                        @member.role
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 px-4 text-center" style="background-color: #3F4E4F;">
+    <div class="max-w-xl mx-auto text-white">
+        <h2 class="text-4xl font-bold mb-4" style="font-family: 'Playfair Display', serif;">
+            Đến Thăm Chúng Mình
+        </h2>
+        <p class="mb-8 opacity-80" style="font-family: 'Work Sans', sans-serif;">
+            Đặt chỗ trước để có trải nghiệm tốt nhất tại Góc Lặng.
+        </p>
+        <a href="/Booking"
+           class="inline-block px-10 py-4 rounded-full font-semibold transition-all duration-300 hover:opacity-90 hover:shadow-xl"
+           style="background-color: #A27B5C; color: white; font-family: 'Work Sans', sans-serif;">
+            Đặt Chỗ Ngay
+        </a>
+    </div>
+</section>

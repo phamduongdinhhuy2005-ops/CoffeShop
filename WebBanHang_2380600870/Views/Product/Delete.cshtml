@@ -1,0 +1,85 @@
+﻿@* Views/Product/Delete.cshtml — THAY THẾ TOÀN BỘ *@
+@model WebBanHang_2380600870.Models.Product
+@{
+    ViewData["Title"] = "Xóa Sản Phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="p-6 max-w-2xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm" style="font-family: 'Work Sans', sans-serif; color: #3F4E4F;">
+        <a href="/Admin" class="hover:opacity-70" style="color: #A27B5C;">Dashboard</a>
+        <span class="mx-2">›</span>
+        <a href="/Product" class="hover:opacity-70" style="color: #A27B5C;">Sản phẩm</a>
+        <span class="mx-2">›</span>
+        <span>Xóa sản phẩm</span>
+    </nav>
+
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <!-- Header đỏ -->
+        <div class="px-6 py-5 border-b flex items-center gap-3" style="background-color: #FEF2F2; border-color: #FECACA;">
+            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-red-500">warning</span>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg text-red-700" style="font-family: 'Playfair Display', serif;">
+                    Xác Nhận Xóa Sản Phẩm
+                </h1>
+                <p class="text-sm text-red-500" style="font-family: 'Work Sans', sans-serif;">
+                    Hành động này không thể hoàn tác
+                </p>
+            </div>
+        </div>
+
+        <!-- Thông tin sản phẩm -->
+        <div class="p-6">
+            <div class="flex gap-5 p-4 rounded-xl mb-6" style="background-color: #F7F7F6;">
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl" alt="@Model.Name"
+                         class="w-20 h-20 object-cover rounded-xl flex-shrink-0"
+                         onerror="this.src='/images/placeholder.jpg'" />
+                }
+                <div>
+                    <h2 class="font-bold text-xl mb-1" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                        @Model.Name
+                    </h2>
+                    <p class="text-sm mb-2" style="color: #A27B5C; font-family: 'Work Sans', sans-serif; font-weight: 600;">
+                        @Model.Price.ToString("N0")đ
+                    </p>
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <p class="text-sm line-clamp-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                            @Model.Description
+                        </p>
+                    }
+                </div>
+            </div>
+
+            <div class="rounded-xl p-4 mb-6" style="background-color: #FEF2F2; border: 1px solid #FECACA;">
+                <p class="text-sm text-red-600" style="font-family: 'Work Sans', sans-serif;">
+                    <strong>Lưu ý:</strong> Xóa sản phẩm sẽ đồng thời xóa toàn bộ ảnh liên quan. Dữ liệu không thể phục hồi sau khi xóa.
+                </p>
+            </div>
+
+            <!-- Form xóa -->
+            <form asp-action="Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div class="flex gap-3">
+                    <button type="submit"
+                            class="flex-1 py-3 rounded-xl text-white font-semibold transition-all hover:bg-red-700 hover:shadow-md"
+                            style="background-color: #EF4444; font-family: 'Work Sans', sans-serif;">
+                        <span class="material-symbols-outlined text-base align-middle mr-1">delete</span>
+                        Xóa Sản Phẩm
+                    </button>
+                    <a href="/Product"
+                       class="flex-1 py-3 rounded-xl text-center font-semibold border transition-all hover:opacity-70"
+                       style="border-color: #DCD7C9; color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                        Hủy Bỏ
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

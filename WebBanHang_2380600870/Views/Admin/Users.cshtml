@@ -1,0 +1,173 @@
+﻿@model IEnumerable<WebBanHang_2380600870.Models.AppUser>
+@{
+    ViewData["Title"] = "Quản Lý Tài Khoản";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "User";
+    ViewData["Breadcrumb"] = "Tài khoản";
+    var userRoles = ViewBag.UserRoles as Dictionary<string, IList<string>>;
+}
+
+@* Toast *@
+@if (TempData["Success"] != null)
+{
+    <div id="hcToast"
+         style="position:fixed;top:1.5rem;right:1.5rem;z-index:9999;background:#fff;border:1px solid rgba(162,123,92,.3);border-left:4px solid #a27b5c;border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 8px 24px rgba(44,54,57,.12);min-width:280px;animation:toastIn .3s ease;">
+        <span class="material-symbols-outlined" style="color:#a27b5c;font-size:22px;">check_circle</span>
+        <span style="font-size:.875rem;font-weight:500;color:#2c3639;">@TempData["Success"]</span>
+        <button onclick="document.getElementById('hcToast').remove()"
+                style="margin-left:auto;background:none;border:none;cursor:pointer;color:#94a3b8;font-size:18px;line-height:1;" class="material-symbols-outlined">
+            close
+        </button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div id="hcToastErr"
+         style="position:fixed;top:1.5rem;right:1.5rem;z-index:9999;background:#fff;border:1px solid rgba(239,68,68,.3);border-left:4px solid #ef4444;border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 8px 24px rgba(44,54,57,.12);min-width:280px;animation:toastIn .3s ease;">
+        <span class="material-symbols-outlined" style="color:#ef4444;font-size:22px;">error</span>
+        <span style="font-size:.875rem;font-weight:500;color:#2c3639;">@TempData["Error"]</span>
+        <button onclick="document.getElementById('hcToastErr').remove()"
+                style="margin-left:auto;background:none;border:none;cursor:pointer;color:#94a3b8;font-size:18px;line-height:1;" class="material-symbols-outlined">
+            close
+        </button>
+    </div>
+}
+
+<style>
+    @@keyframes toastIn {
+        from {
+            transform: translateX(110%);
+            opacity: 0
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1
+        }
+    }
+</style>
+
+@* Stat header *@
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
+    @{
+        var total = Model.Count();
+        var admins = userRoles?.Values.Count(r => r.Contains("Admin")) ?? 0;
+        var users = total - admins;
+    }
+    @foreach (var (label, val, icon, clr) in new[]{
+        ("Tổng tài khoản", total.ToString(), "group", "#a27b5c"),
+        ("Admin", admins.ToString(), "admin_panel_settings", "#3f4e4f"),
+        ("User", users.ToString(), "person", "#64748b")
+        })
+    {
+        <div style="background:#fff;border-radius:14px;padding:1.25rem 1.5rem;border:1px solid rgba(162,123,92,.15);display:flex;align-items:center;gap:1rem;">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(162,123,92,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="color:@clr;font-size:22px;">@icon</span>
+            </div>
+            <div>
+                <div style="font-size:1.5rem;font-weight:800;color:#2c3639;line-height:1;">@val</div>
+                <div style="font-size:.75rem;color:#94a3b8;margin-top:2px;">@label</div>
+            </div>
+        </div>
+    }
+</div>
+
+@* Search *@
+<div style="background:#fff;border-radius:14px;border:1px solid rgba(162,123,92,.15);padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;">
+    <span class="material-symbols-outlined" style="color:#a27b5c;font-size:20px;">search</span>
+    <input id="searchInput" oninput="filterRows()" placeholder="Tìm theo tên hoặc email..."
+           style="flex:1;border:none;outline:none;font-family:'Work Sans',sans-serif;font-size:.9rem;color:#2c3639;background:transparent;" />
+    <span id="rowCount" style="font-size:.78rem;color:#94a3b8;white-space:nowrap;">@total tài khoản</span>
+</div>
+
+@* Table *@
+<div style="background:#fff;border-radius:16px;border:1px solid rgba(162,123,92,.15);overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:.875rem;" id="userTable">
+        <thead>
+            <tr style="background:rgba(162,123,92,.07);border-bottom:2px solid rgba(162,123,92,.15);">
+                <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Tài khoản</th>
+                <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Email</th>
+                <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Ngày tạo</th>
+                <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Quyền</th>
+                <th style="text-align:center;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                var roles = userRoles != null && userRoles.ContainsKey(user.Id) ? userRoles[user.Id] : new List<string>();
+                var isAdmin = roles.Contains("Admin");
+                var initial = (user.FullName ?? user.Email ?? "?")[0].ToString().ToUpper();
+                <tr style="border-bottom:1px solid rgba(162,123,92,.09);transition:background .12s;" onmouseover="this.style.background='rgba(162,123,92,.03)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding:1rem 1.25rem;">
+                        <div style="display:flex;align-items:center;gap:.75rem;">
+                            <div style="width:36px;height:36px;border-radius:50%;background:@(isAdmin ? "#a27b5c" : "#2c3639");display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;font-size:.8rem;color:#fff;">
+                                @initial
+                            </div>
+                            <span style="font-weight:600;color:#2c3639;">@(user.FullName ?? "—")</span>
+                        </div>
+                    </td>
+                    <td style="padding:1rem 1.25rem;color:#64748b;">@user.Email</td>
+                    <td style="padding:1rem 1.25rem;color:#94a3b8;white-space:nowrap;">@user.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td style="padding:1rem 1.25rem;">
+                        <span style="display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .75rem;border-radius:99px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:@(isAdmin ? "rgba(162,123,92,.15);color:#7a5c3e" : "rgba(44,54,57,.08);color:#2c3639")">
+                            <span class="material-symbols-outlined" style="font-size:13px;">@(isAdmin ? "admin_panel_settings" : "person")</span>
+                            @(isAdmin ? "Admin" : "User")
+                        </span>
+                    </td>
+                    <td style="padding:1rem 1.25rem;">
+                        <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;">
+                            <form asp-action="ToggleRole" method="post"
+                                  onsubmit="return confirm('Đổi quyền tài khoản @(user.FullName ?? user.Email)?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <button type="submit"
+                                        style="padding:.45rem .85rem;border-radius:8px;border:1.5px solid rgba(162,123,92,.3);background:rgba(162,123,92,.08);color:#a27b5c;font-family:'Work Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:background .15s;"
+                                        onmouseover="this.style.background='rgba(162,123,92,.18)'" onmouseout="this.style.background='rgba(162,123,92,.08)'">
+                                    @(isAdmin ? "Hạ User" : "Nâng Admin")
+                                </button>
+                            </form>
+                            <form asp-action="DeleteUser" method="post"
+                                  onsubmit="return confirm('Xóa tài khoản này? Không thể hoàn tác!')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <button type="submit"
+                                        style="padding:.45rem .75rem;border-radius:8px;border:1.5px solid rgba(239,68,68,.2);background:rgba(239,68,68,.07);color:#b91c1c;font-family:'Work Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:background .15s;"
+                                        onmouseover="this.style.background='rgba(239,68,68,.15)'" onmouseout="this.style.background='rgba(239,68,68,.07)'">
+                                    <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">delete</span>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (!Model.Any())
+    {
+        <div style="text-align:center;padding:4rem;color:#94a3b8;font-style:italic;">Chưa có tài khoản nào.</div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function filterRows() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#userTable tbody tr');
+            let visible = 0;
+            rows.forEach(r => {
+                const match = r.textContent.toLowerCase().includes(q);
+                r.style.display = match ? '' : 'none';
+                if (match) visible++;
+            });
+            document.getElementById('rowCount').textContent = visible + ' tài khoản';
+        }
+        // Auto-dismiss toast
+        setTimeout(() => {
+            ['hcToast', 'hcToastErr'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.opacity = '0', el.style.transition = 'opacity .4s', setTimeout(() => el.remove(), 400);
+            });
+        }, 4000);
+    </script>
+}

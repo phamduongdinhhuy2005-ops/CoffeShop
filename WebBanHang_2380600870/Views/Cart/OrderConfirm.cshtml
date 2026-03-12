@@ -1,0 +1,72 @@
+﻿@* Views/Cart/OrderConfirm.cshtml *@
+@model WebBanHang_2380600870.Models.Order
+@{
+    ViewData["Title"] = "Đặt Hàng Thành Công";
+}
+
+<section class="min-h-screen pt-28 pb-20 flex items-center" style="background-color: #F7F7F6;">
+    <div class="max-w-2xl mx-auto px-4 w-full">
+        <div class="bg-white rounded-3xl p-10 shadow-sm text-center">
+
+            <!-- Icon thành công -->
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
+                 style="background-color: #DCD7C9;">
+                <span class="material-symbols-outlined text-4xl" style="color: #A27B5C;">check_circle</span>
+            </div>
+
+            <p class="text-sm tracking-[0.2em] uppercase mb-2" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                Cảm ơn bạn đã đặt hàng!
+            </p>
+            <h1 class="text-3xl font-bold mb-2" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                Đặt Hàng Thành Công
+            </h1>
+            <p class="mb-8" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                Đơn hàng <strong>#@Model.Id</strong> của bạn đã được tiếp nhận. Chúng mình sẽ liên hệ xác nhận sớm nhất.
+            </p>
+
+            <!-- Chi tiết đơn -->
+            <div class="rounded-2xl p-6 text-left mb-8" style="background-color: #F7F7F6;">
+                <h2 class="font-semibold mb-4 text-base" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">
+                    Chi tiết đơn hàng
+                </h2>
+                <div class="space-y-3">
+                    @foreach (var detail in Model.OrderDetails)
+                    {
+                        <div class="flex justify-between text-sm" style="font-family: 'Work Sans', sans-serif; color: #3F4E4F;">
+                            <span>@detail.Product?.Name × @detail.Quantity</span>
+                            <span>@((detail.UnitPrice * detail.Quantity).ToString("N0"))đ</span>
+                        </div>
+                    }
+                </div>
+                <div class="border-t mt-4 pt-4 flex justify-between font-bold" style="border-color: #DCD7C9; color: #2C3639;">
+                    <span style="font-family: 'Work Sans', sans-serif;">Tổng cộng</span>
+                    <span style="color: #A27B5C; font-family: 'Playfair Display', serif;">
+                        @Model.TotalAmount.ToString("N0")đ
+                    </span>
+                </div>
+            </div>
+
+            <!-- Trạng thái -->
+            <div class="flex items-center justify-center gap-2 mb-8">
+                <span class="w-2 h-2 rounded-full animate-pulse" style="background-color: #A27B5C;"></span>
+                <span class="text-sm" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                    Trạng thái: <strong style="color: #A27B5C;">Đang chờ xác nhận</strong>
+                </span>
+            </div>
+
+            <!-- Nút -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="/Menu"
+                   class="px-8 py-3 rounded-full font-medium transition-all duration-300 hover:opacity-90"
+                   style="background-color: #A27B5C; color: white; font-family: 'Work Sans', sans-serif;">
+                    Tiếp Tục Mua Hàng
+                </a>
+                <a href="/Account/UserAccount"
+                   class="px-8 py-3 rounded-full font-medium border transition-all duration-300 hover:opacity-70"
+                   style="border-color: #A27B5C; color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                    Xem Đơn Hàng
+                </a>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,401 @@
+﻿
+@* FILE: Views/Shared/_AdminLayout.cshtml *@
+@* THAY THẾ TOÀN BỘ FILE CŨ *@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Góc Lặng Admin</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap" />
+
+    <style>
+        :root {
+            --clr-primary: #a27b5c;
+            --clr-secondary: #2c3639;
+            --clr-accent: #3f4e4f;
+            --clr-neutral: #dcd7c9;
+            --clr-bg: #f7f7f6;
+            --sidebar-w: 17rem;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: var(--clr-bg);
+            color: var(--clr-secondary);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* SIDEBAR */
+        .hc-sidebar {
+            width: var(--sidebar-w);
+            background: var(--clr-secondary);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+        }
+
+        .hc-sidebar-brand {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(63,78,79,.3);
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+            .hc-sidebar-brand:hover {
+                opacity: 0.8;
+            }
+
+        .hc-brand-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: .6rem;
+            background: var(--clr-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+            .hc-brand-icon .material-symbols-outlined {
+                font-size: 28px;
+                color: var(--clr-neutral);
+            }
+
+        .hc-brand-name {
+            color: var(--clr-neutral);
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .hc-brand-sub {
+            color: var(--clr-primary);
+            font-size: .65rem;
+            text-transform: uppercase;
+            letter-spacing: .18em;
+            margin-top: 4px;
+        }
+
+        .hc-nav {
+            flex: 1;
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: .25rem;
+            overflow-y: auto;
+        }
+
+        .hc-nav-group-label {
+            font-size: .65rem;
+            font-weight: 700;
+            color: rgba(220,215,201,.35);
+            text-transform: uppercase;
+            letter-spacing: .2em;
+            padding: 1.25rem 1rem .5rem;
+        }
+
+        .hc-nav-link {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .75rem 1rem;
+            border-radius: .6rem;
+            color: rgba(220,215,201,.65);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: .9rem;
+            transition: background .15s, color .15s;
+        }
+
+            .hc-nav-link:hover {
+                background: rgba(63,78,79,.35);
+                color: var(--clr-neutral);
+            }
+
+            .hc-nav-link.active {
+                background: var(--clr-primary);
+                color: #fff;
+            }
+
+            .hc-nav-link .material-symbols-outlined {
+                font-size: 22px;
+            }
+
+        .hc-sidebar-footer {
+            border-top: 1px solid rgba(63,78,79,.3);
+            padding: 1rem;
+        }
+
+        .hc-user-card {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .75rem 1rem;
+            border-radius: .6rem;
+        }
+
+        .hc-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--clr-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: .85rem;
+            flex-shrink: 0;
+        }
+
+        .hc-user-name {
+            color: var(--clr-neutral);
+            font-size: .875rem;
+            font-weight: 600;
+        }
+
+        .hc-user-role {
+            color: rgba(220,215,201,.45);
+            font-size: .75rem;
+        }
+
+        .hc-logout-btn {
+            margin-left: auto;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: rgba(220,215,201,.45);
+            font-size: 18px;
+            transition: color .15s;
+            padding: 0;
+        }
+
+            .hc-logout-btn:hover {
+                color: #fca5a5;
+            }
+
+        /* MAIN */
+        .hc-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .hc-topbar {
+            height: 72px;
+            background: #fff;
+            border-bottom: 1px solid var(--clr-neutral);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            flex-shrink: 0;
+        }
+
+        .hc-page-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--clr-secondary);
+            line-height: 1;
+        }
+
+        .hc-page-sub {
+            font-size: .75rem;
+            color: #94a3b8;
+            margin-top: 3px;
+        }
+
+        .hc-topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .hc-btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--clr-primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+            .hc-btn-home:hover {
+                background: #8b6a4f;
+                color: white;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(162, 123, 92, 0.2);
+            }
+
+            .hc-btn-home .material-symbols-outlined {
+                font-size: 18px;
+            }
+
+        .hc-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        /* BREADCRUMB */
+        .hc-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            font-size: .78rem;
+            color: #94a3b8;
+            margin-bottom: 1.5rem;
+        }
+
+            .hc-breadcrumb a {
+                color: var(--clr-primary);
+                text-decoration: none;
+            }
+
+            .hc-breadcrumb .material-symbols-outlined {
+                font-size: 14px;
+            }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--clr-neutral);
+            border-radius: 99px;
+        }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <aside class="hc-sidebar">
+        <a asp-controller="Home" asp-action="Index" class="hc-sidebar-brand">
+            <div class="hc-brand-icon">
+                <span class="material-symbols-outlined">coffee</span>
+            </div>
+            <div>
+                <div class="hc-brand-name">Góc Lặng</div>
+                <div class="hc-brand-sub">Admin Portal</div>
+            </div>
+        </a>
+
+        <nav class="hc-nav">
+            <div class="hc-nav-group-label">Quản lý</div>
+
+            <a asp-controller="Admin" asp-action="Index"
+               class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")">
+                <span class="material-symbols-outlined">dashboard</span> Dashboard
+            </a>
+            <a asp-controller="Product" asp-action="Index"
+               class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Product" ? "active" : "")">
+                <span class="material-symbols-outlined">inventory_2</span> Sản phẩm
+            </a>
+            <a asp-controller="Category" asp-action="Index"
+               class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Category" ? "active" : "")">
+                <span class="material-symbols-outlined">category</span> Danh mục
+            </a>
+            <a asp-controller="Admin" asp-action="CategoryOptions"
+               class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "CategoryOptions" ? "active" : "")"
+               style="padding-left:2.25rem;font-size:.82rem;">
+                <span class="material-symbols-outlined" style="font-size:17px;">tune</span> Tùy chọn SP
+            </a>
+            <a asp-controller="Admin" asp-action="Orders"
+               class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Order" ? "active" : "")">
+                <span class="material-symbols-outlined">shopping_cart</span> Đơn hàng
+            </a>
+            <a asp-controller="Admin" asp-action="Bookings"
+               class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Booking" ? "active" : "")">
+                <span class="material-symbols-outlined">event_seat</span> Đặt chỗ
+            </a>
+            <a asp-controller="Admin" asp-action="Users"
+               class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "User" ? "active" : "")">
+                <span class="material-symbols-outlined">group</span> Người dùng
+            </a>
+        </nav>
+
+        <div class="hc-sidebar-footer">
+            <div class="hc-user-card">
+                <div class="hc-avatar">
+                    @((User?.Identity?.Name ?? "A")[0].ToString().ToUpper())
+                </div>
+                <div>
+                    <div class="hc-user-name">@(User?.Identity?.Name ?? "Admin")</div>
+                    <div class="hc-user-role">Quản lý</div>
+                </div>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="margin-left:auto;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="hc-logout-btn material-symbols-outlined" title="Đăng xuất">logout</button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <div class="hc-main">
+        <header class="hc-topbar">
+            <div>
+                <div class="hc-page-title">@ViewData["Title"]</div>
+                <div class="hc-page-sub">Góc Lặng Admin Portal</div>
+            </div>
+            <div class="hc-topbar-actions">
+                <a asp-controller="Home" asp-action="Index" class="hc-btn-home">
+                    <span class="material-symbols-outlined">home</span>
+                    Về Trang Chủ
+                </a>
+                @await RenderSectionAsync("TopbarRight", required: false)
+            </div>
+        </header>
+
+        <main class="hc-content">
+            @if (ViewData["Breadcrumb"] != null)
+            {
+                <div class="hc-breadcrumb">
+                    <a asp-controller="Admin" asp-action="Index">
+                        <span class="material-symbols-outlined">home</span>
+                    </a>
+                    <span class="material-symbols-outlined">chevron_right</span>
+                    @Html.Raw(ViewData["Breadcrumb"])
+                </div>
+            }
+
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

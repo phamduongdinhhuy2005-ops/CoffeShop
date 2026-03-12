@@ -1,0 +1,271 @@
+﻿@model WebBanHang_2380600870.Models.Product
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Thêm Sản Phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "Product";
+    ViewData["Breadcrumb"] = "<a href='/Product'>Sản phẩm</a> <span class='material-symbols-outlined'>chevron_right</span> Thêm mới";
+}
+
+<style>
+    .hc-form-label {
+        display: block;
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #2c3639;
+        margin-bottom: .5rem;
+    }
+
+    .hc-input {
+        width: 100%;
+        padding: .7rem 1rem;
+        border: 1.5px solid rgba(162,123,92,.35);
+        border-radius: 10px;
+        font-family: 'Work Sans', sans-serif;
+        font-size: .9rem;
+        color: #2c3639;
+        background: #fafaf9;
+        outline: none;
+        transition: border-color .15s;
+        box-sizing: border-box;
+    }
+
+        .hc-input:focus {
+            border-color: #a27b5c;
+        }
+
+    .hc-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.75rem;
+        box-shadow: 0 1px 4px rgba(44,54,57,.06);
+        border: 1px solid rgba(162,123,92,.15);
+    }
+
+    .hc-toast {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 9999;
+        background: #fff;
+        border: 1px solid rgba(162,123,92,.3);
+        border-left: 4px solid #a27b5c;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        box-shadow: 0 8px 24px rgba(44,54,57,.12);
+        transform: translateX(110%);
+        opacity: 0;
+        transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s ease;
+        max-width: 360px;
+    }
+
+        .hc-toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .hc-toast.error {
+            border-left-color: #ef4444;
+        }
+
+            .hc-toast.error .hc-toast-icon {
+                color: #ef4444;
+            }
+
+    .hc-toast-icon {
+        color: #a27b5c;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .hc-toast-msg {
+        font-size: .875rem;
+        font-weight: 500;
+        color: #2c3639;
+    }
+
+    .hc-toast-close {
+        margin-left: auto;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #94a3b8;
+        flex-shrink: 0;
+    }
+</style>
+
+@* Toast container *@
+<div class="hc-toast" id="hcToast">
+    <span class="material-symbols-outlined hc-toast-icon" id="hcToastIcon">check_circle</span>
+    <span class="hc-toast-msg" id="hcToastMsg">Thành công!</span>
+    <button class="hc-toast-close material-symbols-outlined" onclick="hideToast()">close</button>
+</div>
+
+<form asp-action="Add" method="post" enctype="multipart/form-data" id="addForm">
+    @Html.AntiForgeryToken()
+
+    <div style="display:grid; grid-template-columns:1fr 340px; gap:1.5rem; align-items:start;">
+
+        @* Cột trái *@
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+            <div class="hc-card">
+                <div style="font-size:.9rem;font-weight:700;color:#2c3639;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem;">
+                    <span class="material-symbols-outlined" style="color:#a27b5c;font-size:20px;">info</span>
+                    Thông tin cơ bản
+                </div>
+
+                @* Validation summary *@
+                @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+                {
+                    <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;color:#b91c1c;font-size:.85rem;">
+                        <div asp-validation-summary="ModelOnly"></div>
+                    </div>
+                }
+
+                <div style="margin-bottom:1rem;">
+                    <label asp-for="Name" class="hc-form-label">Tên sản phẩm <span style="color:#ef4444;">*</span></label>
+                    <input asp-for="Name" class="hc-input" placeholder="Ví dụ: Cà Phê Trứng Hà Nội" />
+                    <span asp-validation-for="Name" style="color:#ef4444;font-size:.78rem;margin-top:.25rem;display:block;"></span>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                    <div>
+                        <label asp-for="Price" class="hc-form-label">Giá (đ) <span style="color:#ef4444;">*</span></label>
+                        <input asp-for="Price" class="hc-input" placeholder="65000" type="number" min="0" step="1000" />
+                        <span asp-validation-for="Price" style="color:#ef4444;font-size:.78rem;margin-top:.25rem;display:block;"></span>
+                    </div>
+                    <div>
+                        <label asp-for="CategoryId" class="hc-form-label">Danh mục <span style="color:#ef4444;">*</span></label>
+                        <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="hc-input" style="cursor:pointer;">
+                            <option value="">-- Chọn --</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" style="color:#ef4444;font-size:.78rem;margin-top:.25rem;display:block;"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label asp-for="Description" class="hc-form-label">Mô tả</label>
+                    <textarea asp-for="Description" class="hc-input" rows="4"
+                              placeholder="Mô tả ngắn về sản phẩm..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        @* Cột phải *@
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+            <div class="hc-card">
+                <div style="font-size:.9rem;font-weight:700;color:#2c3639;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem;">
+                    <span class="material-symbols-outlined" style="color:#a27b5c;font-size:20px;">image</span>
+                    Hình ảnh
+                </div>
+
+                @* Preview *@
+                <div id="imgPreviewWrap"
+                     style="width:100%;aspect-ratio:1;border-radius:12px;border:2px dashed rgba(162,123,92,.3);background:#fafaf9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;margin-bottom:1rem;overflow:hidden;cursor:pointer;"
+                     onclick="document.getElementById('imageFileInput').click()">
+                    <img id="imgPreview" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:10px;" />
+                    <span id="imgPlaceholder" class="material-symbols-outlined" style="font-size:40px;color:rgba(162,123,92,.4);">add_photo_alternate</span>
+                    <span id="imgPlaceholderTxt" style="font-size:.78rem;color:#94a3b8;">Nhấn để chọn ảnh</span>
+                </div>
+
+                <input type="file" id="imageFileInput" name="ImageFile" accept="image/*" style="display:none;"
+                       onchange="previewImg(this)" />
+                <button type="button" onclick="document.getElementById('imageFileInput').click()"
+                        style="width:100%;padding:.65rem;border:1.5px solid rgba(162,123,92,.35);border-radius:10px;background:transparent;color:#a27b5c;font-family:'Work Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s;margin-bottom:.75rem;"
+                        onmouseover="this.style.background='rgba(162,123,92,.06)'" onmouseout="this.style.background='transparent'">
+                    <span class="material-symbols-outlined" style="font-size:18px;">upload</span> Chọn ảnh từ máy
+                </button>
+
+                @* URL input *@
+                <div>
+                    <label class="hc-form-label" style="margin-bottom:.4rem;">Hoặc dán URL ảnh</label>
+                    <input type="text" id="urlInput" name="ImageUrl" class="hc-input"
+                           placeholder="https://..." oninput="previewFromUrl(this.value)" />
+                </div>
+            </div>
+
+            @* Actions *@
+            <div class="hc-card">
+                <button type="submit"
+                        style="width:100%;padding:.8rem;background:#a27b5c;color:#fff;border:none;border-radius:10px;font-family:'Work Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:opacity .15s;margin-bottom:.75rem;"
+                        onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+                    <span class="material-symbols-outlined" style="font-size:20px;">save</span> Lưu sản phẩm
+                </button>
+                <a asp-action="Index"
+                   style="width:100%;padding:.75rem;border:1.5px solid rgba(44,54,57,.2);border-radius:10px;color:#2c3639;text-decoration:none;font-size:.9rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s;"
+                   onmouseover="this.style.background='rgba(44,54,57,.05)'" onmouseout="this.style.background='transparent'">
+                    <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span> Hủy
+                </a>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // ── Xem trước ảnh từ file ────────────────────────────
+        function previewImg(input) {
+            const file = input.files[0];
+            if (!file) return;
+            // Khi chọn file, xóa URL input
+            document.getElementById('urlInput').value = '';
+            const reader = new FileReader();
+            reader.onload = e => showPreview(e.target.result);
+            reader.readAsDataURL(file);
+        }
+
+        // ── Xem trước ảnh từ URL ─────────────────────────────
+        function previewFromUrl(url) {
+            if (url.trim()) {
+                // Khi nhập URL, xóa file input
+                document.getElementById('imageFileInput').value = '';
+                showPreview(url.trim());
+            }
+        }
+
+        function showPreview(src) {
+            const img = document.getElementById('imgPreview');
+            img.src = src;
+            img.style.display = 'block';
+            document.getElementById('imgPlaceholder').style.display = 'none';
+            document.getElementById('imgPlaceholderTxt').style.display = 'none';
+        }
+
+        // ── Toast ────────────────────────────────────────────
+        function showToast(msg, isError = false) {
+            const t    = document.getElementById('hcToast');
+            const icon = document.getElementById('hcToastIcon');
+            document.getElementById('hcToastMsg').textContent = msg;
+            t.classList.toggle('error', isError);
+            icon.textContent = isError ? 'error' : 'check_circle';
+            t.classList.add('show');
+            setTimeout(hideToast, 4000);
+        }
+        function hideToast() {
+            document.getElementById('hcToast').classList.remove('show');
+        }
+
+        // ── Hiển thị TempData nếu có ─────────────────────────
+        @if (TempData["Success"] != null)
+        {
+                <text>setTimeout(() => showToast('@Html.Raw(TempData["Success"])'), 200);</text>
+        }
+        @if (TempData["Error"] != null)
+        {
+                <text>setTimeout(() => showToast('@Html.Raw(TempData["Error"])', true), 200);</text>
+        }
+
+        // ── Hiện validation summary nếu có lỗi ───────────────
+        const vs = document.querySelector('[data-valmsg-summary]');
+        if (vs && vs.querySelector('li')) vs.closest('div[style]')?.style && (vs.closest('div').style.display = 'block');
+    </script>
+}

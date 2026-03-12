@@ -1,0 +1,447 @@
+﻿@model IEnumerable<WebBanHang_2380600870.Models.Product>
+@{
+    ViewData["Title"] = "Quản Lý Sản Phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "Product";
+    ViewData["Breadcrumb"] = "Sản phẩm";
+}
+
+@* Toast *@
+@if (TempData["Success"] != null)
+{
+    <div id="hcToast" style="position:fixed;top:1.5rem;right:1.5rem;z-index:9999;background:#fff;border:1px solid rgba(162,123,92,.3);border-left:4px solid #a27b5c;border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 8px 24px rgba(44,54,57,.12);animation:toastIn .3s ease;">
+        <span class="material-symbols-outlined" style="color:#a27b5c;font-size:22px;">check_circle</span>
+        <span style="font-size:.875rem;font-weight:500;color:#2c3639;">@TempData["Success"]</span>
+        <button onclick="document.getElementById('hcToast').remove()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#94a3b8;" class="material-symbols-outlined">close</button>
+    </div>
+}
+
+<style>
+    @@keyframes toastIn {
+        from {
+            transform: translateX(110%);
+            opacity: 0
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1
+        }
+    }
+
+    .pi-product-img {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1.5px solid #e2e8f0;
+        background: #f7f7f6;
+    }
+
+    .pi-product-img-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: rgba(162,123,92,.08);
+        border: 1.5px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .pi-product-img-placeholder .material-symbols-outlined {
+            font-size: 20px;
+            color: rgba(162,123,92,.4);
+        }
+
+    .pi-product-name {
+        font-size: .9rem;
+        font-weight: 700;
+        color: #2c3639;
+    }
+
+    .pi-product-id {
+        font-size: .72rem;
+        color: rgba(63,78,79,.45);
+        margin-top: 2px;
+    }
+
+    .pi-cat-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 99px;
+        font-size: .72rem;
+        font-weight: 700;
+    }
+
+        .pi-cat-badge.cat-1 {
+            background: rgba(16,185,129,.1);
+            color: #059669;
+        }
+
+        .pi-cat-badge.cat-2 {
+            background: rgba(162,123,92,.1);
+            color: #92400e;
+        }
+
+        .pi-cat-badge.cat-3 {
+            background: rgba(249,115,22,.1);
+            color: #c2410c;
+        }
+
+        .pi-cat-badge.cat-0 {
+            background: rgba(162,123,92,.1);
+            color: #a27b5c;
+        }
+
+    .pi-price {
+        font-size: .9rem;
+        font-weight: 700;
+        color: #a27b5c;
+    }
+
+    .pi-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: .4rem;
+        opacity: 0;
+        transition: opacity .15s;
+    }
+
+    .pi-table tbody tr:hover .pi-actions {
+        opacity: 1;
+    }
+
+    .pi-act-btn {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .4rem .75rem;
+        border-radius: 8px;
+        border: none;
+        font-size: .78rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background .15s,transform .12s;
+        font-family: 'Work Sans',sans-serif;
+    }
+
+        .pi-act-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .pi-act-btn .material-symbols-outlined {
+            font-size: 15px;
+        }
+
+    .pi-act-edit {
+        background: rgba(162,123,92,.1);
+        color: #a27b5c;
+    }
+
+        .pi-act-edit:hover {
+            background: rgba(162,123,92,.2);
+            color: #a27b5c;
+        }
+
+    .pi-act-delete {
+        background: rgba(239,68,68,.08);
+        color: #dc2626;
+    }
+
+        .pi-act-delete:hover {
+            background: rgba(239,68,68,.16);
+        }
+
+    .pi-filter-btn {
+        padding: .45rem 1rem;
+        border-radius: 99px;
+        border: 1.5px solid rgba(162,123,92,.25);
+        background: transparent;
+        color: #a27b5c;
+        font-family: 'Work Sans',sans-serif;
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .15s;
+    }
+
+        .pi-filter-btn.active, .pi-filter-btn:hover {
+            background: #a27b5c;
+            color: #fff;
+            border-color: #a27b5c;
+        }
+
+    .pi-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.5);
+        backdrop-filter: blur(3px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .25s;
+    }
+
+        .pi-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+    .pi-modal {
+        background: #fff;
+        border-radius: 18px;
+        padding: 2rem;
+        width: 380px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.18);
+        transform: scale(.92);
+        transition: transform .25s;
+    }
+
+    .pi-overlay.show .pi-modal {
+        transform: scale(1);
+    }
+
+    .pi-modal-icon {
+        width: 52px;
+        height: 52px;
+        background: #fef2f2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+        .pi-modal-icon .material-symbols-outlined {
+            font-size: 26px;
+            color: #dc2626;
+        }
+
+    .pi-modal h3 {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #2c3639;
+        margin-bottom: .5rem;
+    }
+
+    .pi-modal p {
+        font-size: .85rem;
+        color: rgba(63,78,79,.6);
+        line-height: 1.6;
+        margin-bottom: 1.25rem;
+    }
+
+    .pi-modal-actions {
+        display: flex;
+        gap: .6rem;
+        justify-content: flex-end;
+    }
+
+    .pi-btn-cancel {
+        padding: .55rem 1.1rem;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #3f4e4f;
+        font-size: .85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .15s;
+        font-family: 'Work Sans',sans-serif;
+    }
+
+        .pi-btn-cancel:hover {
+            background: #f7f7f6;
+        }
+
+    .pi-btn-del {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .55rem 1.1rem;
+        border-radius: 10px;
+        border: none;
+        background: #dc2626;
+        color: #fff;
+        font-size: .85rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: 'Work Sans',sans-serif;
+        transition: background .15s;
+    }
+
+        .pi-btn-del:hover {
+            background: #b91c1c;
+        }
+
+        .pi-btn-del .material-symbols-outlined {
+            font-size: 16px;
+        }
+</style>
+
+@* Topbar actions *@
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+    <div>
+        <div style="font-size:1.15rem;font-weight:800;color:#2c3639;">Danh sách sản phẩm</div>
+        <div style="font-size:.78rem;color:#94a3b8;margin-top:2px;" id="rowCount">@Model.Count() sản phẩm</div>
+    </div>
+    <a asp-action="Add"
+       style="display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;border-radius:12px;background:#a27b5c;color:#fff;font-size:.875rem;font-weight:700;text-decoration:none;transition:opacity .15s;box-shadow:0 4px 14px rgba(162,123,92,.3);"
+       onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+        <span class="material-symbols-outlined" style="font-size:20px;">add</span> Thêm Sản Phẩm
+    </a>
+</div>
+
+@* Search + filter *@
+<div style="background:#fff;border-radius:14px;border:1px solid rgba(162,123,92,.15);padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+    <div style="position:relative;flex:1;min-width:180px;">
+        <span class="material-symbols-outlined" style="position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:18px;color:rgba(63,78,79,.4);pointer-events:none;">search</span>
+        <input id="searchInput" oninput="filterTable()" placeholder="Tìm theo tên sản phẩm..."
+               style="width:100%;padding:.6rem .9rem .6rem 2.5rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;font-family:'Work Sans',sans-serif;font-size:.875rem;color:#2c3639;outline:none;transition:border-color .15s;"
+               onfocus="this.style.borderColor='#a27b5c'" onblur="this.style.borderColor='rgba(162,123,92,.25)'" />
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <button class="pi-filter-btn active" onclick="filterCat(0,this)">Tất Cả</button>
+        <button class="pi-filter-btn" onclick="filterCat(1,this)">Trà & Thảo Mộc</button>
+        <button class="pi-filter-btn" onclick="filterCat(2,this)">Cà Phê</button>
+        <button class="pi-filter-btn" onclick="filterCat(3,this)">Bánh Sáng</button>
+    </div>
+</div>
+
+@* Table *@
+<div style="background:#fff;border-radius:16px;border:1px solid rgba(162,123,92,.15);overflow:hidden;">
+    @if (!Model.Any())
+    {
+        <div style="padding:4rem 2rem;text-align:center;">
+            <div style="width:56px;height:56px;border-radius:50%;background:rgba(162,123,92,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+                <span class="material-symbols-outlined" style="font-size:26px;color:rgba(162,123,92,.4);">inventory_2</span>
+            </div>
+            <p style="font-size:.95rem;font-weight:700;color:#2c3639;">Chưa có sản phẩm nào</p>
+            <p style="font-size:.82rem;color:rgba(63,78,79,.5);">Bấm "Thêm Sản Phẩm" để bắt đầu.</p>
+        </div>
+    }
+    else
+    {
+        <div style="overflow-x:auto;">
+            <table class="pi-table" id="productTable" style="width:100%;border-collapse:collapse;font-size:.875rem;">
+                <thead>
+                    <tr style="background:rgba(162,123,92,.07);border-bottom:2px solid rgba(162,123,92,.15);">
+                        <th style="padding:.875rem 1.25rem;text-align:left;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;width:64px;">Ảnh</th>
+                        <th style="padding:.875rem 1.25rem;text-align:left;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Tên Sản Phẩm</th>
+                        <th style="padding:.875rem 1.25rem;text-align:left;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Danh Mục</th>
+                        <th style="padding:.875rem 1.25rem;text-align:left;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Giá</th>
+                        <th style="padding:.875rem 1.25rem;text-align:right;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model)
+                    {
+                        <tr data-name="@p.Name.ToLower()" data-cat="@p.CategoryId"
+                            style="border-bottom:1px solid rgba(162,123,92,.09);transition:background .12s;"
+                            onmouseover="this.style.background='rgba(162,123,92,.03)'" onmouseout="this.style.background='transparent'">
+                            <td style="padding:.875rem 1.25rem;">
+                                @if (!string.IsNullOrEmpty(p.ImageUrl))
+                                {
+                                    <img src="@p.ImageUrl" alt="@p.Name" class="pi-product-img" />
+                                }
+                                else
+                                {
+                                    <div class="pi-product-img-placeholder">
+                                        <span class="material-symbols-outlined">image</span>
+                                    </div>
+                                }
+                            </td>
+                            <td style="padding:.875rem 1.25rem;">
+                                <div class="pi-product-name">@p.Name</div>
+                                <div class="pi-product-id">ID #@p.Id</div>
+                            </td>
+                            <td style="padding:.875rem 1.25rem;">
+                                <span class="pi-cat-badge cat-@p.CategoryId">@(p.Category?.Name ?? "—")</span>
+                            </td>
+                            <td style="padding:.875rem 1.25rem;">
+                                <span class="pi-price">@p.Price.ToString("N0")₫</span>
+                            </td>
+                            <td style="padding:.875rem 1.25rem;">
+                                <div class="pi-actions">
+                                    <a href="@Url.Action("Edit", "Product", new { id = p.Id })" class="pi-act-btn pi-act-edit">
+                                        <span class="material-symbols-outlined">edit</span> Sửa
+                                    </a>
+                                    <button class="pi-act-btn pi-act-delete" onclick="showDelete(@p.Id, '@p.Name.Replace("'", "\\'")')">
+                                        <span class="material-symbols-outlined">delete</span> Xóa
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-top:1px solid rgba(162,123,92,.1);font-size:.78rem;color:rgba(63,78,79,.5);">
+            <span id="tableCount">Hiển thị @Model.Count() sản phẩm</span>
+        </div>
+    }
+</div>
+
+@* Delete modal *@
+<div class="pi-overlay" id="deleteOverlay">
+    <div class="pi-modal">
+        <div class="pi-modal-icon"><span class="material-symbols-outlined">delete_forever</span></div>
+        <h3>Xóa sản phẩm này?</h3>
+        <p>Hành động không thể hoàn tác. Sản phẩm <strong id="deleteName"></strong> sẽ bị xóa vĩnh viễn.</p>
+        <div class="pi-modal-actions">
+            <button class="pi-btn-cancel" onclick="closeDelete()">Hủy bỏ</button>
+            <form id="deleteForm" method="post" style="display:inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteId" />
+                <button type="submit" class="pi-btn-del">
+                    <span class="material-symbols-outlined">delete</span> Xác nhận xóa
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('#productTable tbody tr').forEach(r => {
+                r.style.display = (r.dataset.name || '').includes(q) ? '' : 'none';
+            });
+            updateCount();
+        }
+        let activeCat = 0;
+        function filterCat(cat, btn) {
+            activeCat = cat;
+            document.querySelectorAll('.pi-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('#productTable tbody tr').forEach(r => {
+                r.style.display = (cat === 0 || parseInt(r.dataset.cat) === cat) ? '' : 'none';
+            });
+            updateCount();
+        }
+        function updateCount() {
+            const v = [...document.querySelectorAll('#productTable tbody tr')].filter(r => r.style.display !== 'none').length;
+            document.getElementById('rowCount').textContent = v + ' sản phẩm';
+            document.getElementById('tableCount').textContent = 'Hiển thị ' + v + ' sản phẩm';
+        }
+        function showDelete(id, name) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteName').textContent = name;
+            document.getElementById('deleteForm').action = '/Product/Delete';
+            document.getElementById('deleteOverlay').classList.add('show');
+        }
+        function closeDelete() {
+            document.getElementById('deleteOverlay').classList.remove('show');
+        }
+        setTimeout(() => {
+            const t = document.getElementById('hcToast');
+            if (t) { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }
+        }, 4000);
+    </script>
+}

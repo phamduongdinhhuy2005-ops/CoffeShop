@@ -1,0 +1,293 @@
+﻿@* Views/Home/Index.cshtml *@
+@model IEnumerable<WebBanHang_2380600870.Models.Product>
+@{
+    ViewData["Title"] = "Góc Lặng — Nơi Dừng Chân Giữa Ngày";
+    var allProducts = Model.ToList();
+    var featured = allProducts.Where(p => p.CategoryId == 1).Take(4).ToList();
+    var coffee = allProducts.Where(p => p.CategoryId == 2).Take(4).ToList();
+    var pastry = allProducts.Where(p => p.CategoryId == 3).Take(4).ToList();
+}
+
+<main class="flex-1">
+
+    <!-- HERO -->
+    <div class="px-4 md:px-10 py-6">
+        <div class="relative w-full min-h-[600px] rounded-xl overflow-hidden flex flex-col items-center justify-center text-center"
+             style="background-image: linear-gradient(rgba(28,20,14,0.65), rgba(28,20,14,0.45)),
+                    url('https://lh3.googleusercontent.com/aida-public/AB6AXuCPbbxfASi-rYqxHYCVtSGTQZ--TMdNj0FDJXsoBmVNsIrwIgCkDv76iaZtRyoSzvUU7ec7JZaEksl2kYREjaoay-G9FrYRwkszVe_Ey30DncbScTSARonXPv-ngaFaREZRO4F3fVb0UA2PWvnzQrsUPppz5XyGqLDfGEqwSrFSrVZlL5ox9Cl-10U2epsiMo819tJ9LIE6TLVxFhPg0YudTrnNV1qTPu5GDjny5_-oJA3qbLwu9X5Eg18Eb2939imxAWVNPu9DfREz');
+                    background-size: cover; background-position: center;">
+            <div class="relative z-10 flex flex-col items-center gap-5 max-w-3xl px-6">
+                <span class="text-primary font-semibold tracking-[0.35em] uppercase text-xs">Thành lập bởi những người bạn — vì niềm đam mê</span>
+                <h1 class="vn-heading-xl text-cream-custom text-4xl md:text-5xl font-black tracking-tight"
+                    style="text-shadow: 0 2px 24px rgba(0,0,0,0.5);">
+                    Dừng lại một chút,<br />bạn xứng đáng được nghỉ ngơi.
+                </h1>
+                <p class="vn-body text-cream-custom text-lg md:text-xl font-light max-w-2xl" style="opacity:0.85;">
+                    Một buổi sáng chậm rãi, một ly cà phê đúng vị, một không gian cổ điển — Góc Lặng là nơi chúng mình tạo ra để mọi người có thể thở giữa thế giới vội vã này.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4 mt-2">
+                    <a asp-controller="Menu" asp-action="Index"
+                       class="flex min-w-[160px] items-center justify-center rounded-full h-14 px-8 bg-primary text-white text-sm font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg">
+                        Xem Thực Đơn
+                    </a>
+                    <a asp-controller="Booking" asp-action="Index"
+                       class="flex min-w-[160px] items-center justify-center rounded-full h-14 px-8 text-white text-sm font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-slate-custom"
+                       style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(8px);">
+                        Đặt Chỗ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST subscribe feedback -->
+    @if (TempData["SubscribeSuccess"] != null)
+    {
+        <div id="toast-ok" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-xl text-white text-sm font-semibold"
+             style="background:#3F4E4F; max-width:340px;">
+            <span class="material-symbols-outlined" style="font-size:20px; color:#A27B5C;">check_circle</span>
+            @TempData["SubscribeSuccess"]
+            <button type="button" onclick="this.parentElement.remove()" class="ml-auto opacity-60 hover:opacity-100">
+                <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+            </button>
+        </div>
+    }
+    @if (TempData["SubscribeError"] != null)
+    {
+        <div id="toast-err" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-xl text-white text-sm font-semibold"
+             style="background:#b91c1c; max-width:340px;">
+            <span class="material-symbols-outlined" style="font-size:20px;">error</span>
+            @TempData["SubscribeError"]
+            <button type="button" onclick="this.parentElement.remove()" class="ml-auto opacity-60 hover:opacity-100">
+                <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+            </button>
+        </div>
+    }
+
+    <!-- CÂU CHUYỆN -->
+    <section class="py-20 px-6 md:px-20" style="background-color: rgba(245,240,232,0.2);">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+            <div class="order-2 md:order-1">
+                <div class="relative">
+                    <div class="absolute -top-4 -left-4 w-full h-full border-2 border-primary rounded-xl"></div>
+                    <img alt="Không gian Góc Lặng"
+                         class="relative z-10 rounded-xl shadow-2xl w-full object-cover"
+                         style="height: 500px;"
+                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnAnQXXrRhCmWzm2WbFHv44wDwIiTd6_BFDKWnoC9xFVrKv9MTM1kNzGOu0bQ7AGkEcyynl1cMwROAsA1H_mAapTFq6GKIhPwxSn-KSUHDYczHhUUyMzi13Gd_ysPHsJ_DJ4eDGYWOF2YP8vbkEqcdj5L_Ao89-cYC7bQTi0xvA0XWeiqzI3ShMUhP6RmS-P-8i104PKOfp0N5n6mLS-cHxNuqaUfAjLmEYr7sV3pIQRb2cya6uzWoAODjlMwAiLwoDGe50ilVutUC" />
+                </div>
+            </div>
+            <div class="order-1 md:order-2 flex flex-col gap-6">
+                <h3 class="text-primary font-bold tracking-widest uppercase text-sm">Câu chuyện của chúng mình</h3>
+                <h2 class="vn-heading-xl text-slate-custom text-3xl md:text-4xl font-bold">Bắt đầu từ<br />một niềm đam mê</h2>
+                <p class="vn-body text-teal-custom text-lg">
+                    Góc Lặng không ra đời từ kế hoạch kinh doanh — mà từ những buổi chiều tà mà một nhóm bạn ngồi lại với nhau, pha cà phê, nghe nhạc cổ điển, và ước có một nơi như thế này giữa lòng thành phố.
+                </p>
+                <p class="vn-body text-teal-custom text-lg">
+                    Mỗi món đồ uống ở đây đều đơn giản, nhưng được làm thật chỉnh chu. Mỗi góc nhỏ đều được chăm chút như ngôi nhà của chính mình. Vì với chúng mình — đây <em>là</em> nhà.
+                </p>
+                <div>
+                    <a asp-controller="Home" asp-action="CauChuyen"
+                       class="inline-flex items-center gap-2 text-primary font-bold border-b-2 border-primary pb-1 hover:opacity-70 transition-all">
+                        Đọc thêm về chúng mình →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SẢN PHẨM — 3 TAB -->
+    <section class="py-20 px-6 md:px-20 max-w-[1200px] mx-auto">
+        <div class="text-center mb-4">
+            <h2 class="vn-heading text-slate-custom text-3xl md:text-4xl font-bold mb-6">Những thứ chúng mình làm bằng tâm huyết</h2>
+            <div class="w-24 h-1 bg-primary mx-auto mb-10"></div>
+
+            <div style="display:flex; justify-content:center; border-bottom:1px solid rgba(139,90,43,0.15); margin-bottom:2.5rem;">
+                <button onclick="switchTab('tra')" id="tab-tra"
+                        style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                               width:200px;padding:0.75rem 1rem 1.25rem;border:none;background:transparent;
+                               cursor:pointer;border-bottom:3px solid #8B5A2B;color:#2c2420;transition:all 0.2s;">
+                    <span class="material-symbols-outlined" style="font-size:26px;color:#8B5A2B;margin-bottom:6px;">emoji_food_beverage</span>
+                    <p style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0;">Trà & Thảo Mộc</p>
+                </button>
+                <button onclick="switchTab('caphe')" id="tab-caphe"
+                        style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                               width:200px;padding:0.75rem 1rem 1.25rem;border:none;background:transparent;
+                               cursor:pointer;border-bottom:3px solid transparent;color:rgba(74,103,100,0.55);transition:all 0.2s;">
+                    <span class="material-symbols-outlined" style="font-size:26px;margin-bottom:6px;">coffee</span>
+                    <p style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0;">Cà Phê</p>
+                </button>
+                <button onclick="switchTab('banh')" id="tab-banh"
+                        style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                               width:200px;padding:0.75rem 1rem 1.25rem;border:none;background:transparent;
+                               cursor:pointer;border-bottom:3px solid transparent;color:rgba(74,103,100,0.55);transition:all 0.2s;">
+                    <span class="material-symbols-outlined" style="font-size:26px;margin-bottom:6px;">cake</span>
+                    <p style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0;">Bánh Sáng</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- Panel: Trà & Thảo Mộc -->
+        <div id="panel-tra" style="display:grid; grid-template-columns:repeat(4,1fr); gap:2rem;">
+            @foreach (var product in featured)
+            {
+                <a asp-controller="Product" asp-action="Detail" asp-route-id="@product.Id"
+                   class="flex flex-col gap-4 group cursor-pointer" style="text-decoration:none;">
+                    <div class="relative overflow-hidden rounded-xl" style="aspect-ratio:1/1; background:#e8e0d5;">
+                        <img alt="@product.Name"
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                             src="@product.ImageUrl"
+                             onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;\'>Không có ảnh</div>'" />
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                             style="background:rgba(44,54,57,0.45);">
+                            <span class="text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full"
+                                  style="border:1.5px solid rgba(255,255,255,0.7);">Xem thêm</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex-1">
+                            <h4 class="text-slate-custom text-base font-bold">@product.Name</h4>
+                            <p class="text-teal-custom text-xs font-medium italic mt-1">@product.Description</p>
+                        </div>
+                        <p class="text-primary font-bold whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                    </div>
+                </a>
+            }
+            @if (!featured.Any())
+            {
+                <div class="col-span-4 py-12 text-center text-teal-custom text-sm italic opacity-60">Chưa có sản phẩm.</div>
+            }
+        </div>
+
+        <!-- Panel: Cà Phê -->
+        <div id="panel-caphe" style="display:none; grid-template-columns:repeat(4,1fr); gap:2rem;">
+            @foreach (var product in coffee)
+            {
+                <a asp-controller="Product" asp-action="Detail" asp-route-id="@product.Id"
+                   class="flex flex-col gap-4 group cursor-pointer" style="text-decoration:none;">
+                    <div class="relative overflow-hidden rounded-xl" style="aspect-ratio:1/1; background:#e8e0d5;">
+                        <img alt="@product.Name"
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                             src="@product.ImageUrl"
+                             onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;\'>Không có ảnh</div>'" />
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                             style="background:rgba(44,54,57,0.45);">
+                            <span class="text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full"
+                                  style="border:1.5px solid rgba(255,255,255,0.7);">Xem thêm</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex-1">
+                            <h4 class="text-slate-custom text-base font-bold">@product.Name</h4>
+                            <p class="text-teal-custom text-xs font-medium italic mt-1">@product.Description</p>
+                        </div>
+                        <p class="text-primary font-bold whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                    </div>
+                </a>
+            }
+            @if (!coffee.Any())
+            {
+                <div class="col-span-4 py-12 text-center text-teal-custom text-sm italic opacity-60">Chưa có sản phẩm.</div>
+            }
+        </div>
+
+        <!-- Panel: Bánh Sáng -->
+        <div id="panel-banh" style="display:none; grid-template-columns:repeat(4,1fr); gap:2rem;">
+            @foreach (var product in pastry)
+            {
+                <a asp-controller="Product" asp-action="Detail" asp-route-id="@product.Id"
+                   class="flex flex-col gap-4 group cursor-pointer" style="text-decoration:none;">
+                    <div class="relative overflow-hidden rounded-xl" style="aspect-ratio:1/1; background:#e8e0d5;">
+                        <img alt="@product.Name"
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                             src="@product.ImageUrl"
+                             onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;\'>Không có ảnh</div>'" />
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                             style="background:rgba(44,54,57,0.45);">
+                            <span class="text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full"
+                                  style="border:1.5px solid rgba(255,255,255,0.7);">Xem thêm</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex-1">
+                            <h4 class="text-slate-custom text-base font-bold">@product.Name</h4>
+                            <p class="text-teal-custom text-xs font-medium italic mt-1">@product.Description</p>
+                        </div>
+                        <p class="text-primary font-bold whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                    </div>
+                </a>
+            }
+            @if (!pastry.Any())
+            {
+                <div class="col-span-4 py-12 text-center text-teal-custom text-sm italic opacity-60">Chưa có sản phẩm.</div>
+            }
+        </div>
+
+        <div class="mt-16 text-center">
+            <a asp-controller="Menu" asp-action="Index"
+               class="px-10 py-4 border-2 border-teal-custom text-teal-custom font-bold rounded-full uppercase tracking-widest hover:bg-teal-custom hover:text-cream-custom transition-all inline-block">
+                Xem Toàn Bộ Thực Đơn
+            </a>
+        </div>
+    </section>
+
+    <!-- CTA / NEWSLETTER -->
+    <section class="bg-slate-custom text-cream-custom py-24 px-6 relative overflow-hidden">
+        <div class="absolute left-6 top-6 select-none pointer-events-none"
+             style="font-family:'Playfair Display',serif;font-size:140px;line-height:1;color:rgba(255,255,255,0.04);">
+            "
+        </div>
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <p class="text-primary font-semibold tracking-widest uppercase text-xs mb-4">Góc Lặng nhắn gửi</p>
+            <h2 class="vn-heading-xl text-2xl md:text-4xl font-bold mb-10">
+                Thế giới có thể vội —<br />nhưng buổi sáng của bạn thì không cần phải vậy.
+            </h2>
+            <p class="vn-body text-lg mb-12 max-w-2xl mx-auto font-light" style="color:rgba(245,240,232,0.75);">
+                Để lại email để chúng mình kể bạn nghe những câu chuyện nhỏ từ Góc Lặng — thực đơn mới, buổi chiều nhạc sống, hay đơn giản là một lời nhắc: hãy uống cà phê chậm thôi.
+            </p>
+            <form asp-controller="Home" asp-action="Subscribe" method="post"
+                  class="flex flex-col md:flex-row gap-4 max-w-xl mx-auto">
+                @Html.AntiForgeryToken()
+                <input name="email" type="email" required
+                       class="flex-1 px-6 py-4 rounded-full border-none focus:outline-none text-cream-custom"
+                       style="background:rgba(74,103,100,0.6);"
+                       placeholder="Email của bạn..." />
+                <button type="submit"
+                        class="bg-primary text-white font-bold px-8 py-4 rounded-full uppercase tracking-widest whitespace-nowrap hover:opacity-90 transition-all">
+                    Theo Dõi
+                </button>
+            </form>
+        </div>
+    </section>
+
+</main>
+
+@section Scripts {
+    <script>
+        var PRIMARY = '#8B5A2B';
+        var MUTED   = 'rgba(74,103,100,0.55)';
+        var DARK    = '#2c2420';
+
+        function switchTab(name) {
+            ['tra','caphe','banh'].forEach(function(id) {
+                document.getElementById('panel-' + id).style.display = 'none';
+                var btn = document.getElementById('tab-' + id);
+                btn.style.borderBottom = '3px solid transparent';
+                btn.style.color = MUTED;
+                btn.querySelector('span').style.color = '';
+            });
+            document.getElementById('panel-' + name).style.display = 'grid';
+            var active = document.getElementById('tab-' + name);
+            active.style.borderBottom = '3px solid ' + PRIMARY;
+            active.style.color = DARK;
+            active.querySelector('span').style.color = PRIMARY;
+        }
+
+        // Auto-dismiss toast sau 5 giây
+        setTimeout(function() {
+            ['toast-ok','toast-err'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) { el.style.transition = 'opacity 0.5s'; el.style.opacity = '0'; setTimeout(function(){ el.remove(); }, 500); }
+            });
+        }, 5000);
+    </script>
+}

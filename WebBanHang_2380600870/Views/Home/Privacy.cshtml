@@ -1,0 +1,78 @@
+﻿@* Views/Home/Privacy.cshtml — THAY THẾ TOÀN BỘ *@
+@{
+    ViewData["Title"] = "Chính Sách Bảo Mật";
+}
+
+<section class="min-h-screen pt-28 pb-20" style="background-color: #F7F7F6;">
+    <div class="max-w-3xl mx-auto px-4">
+
+        <div class="mb-12 text-center">
+            <p class="text-sm tracking-[0.2em] uppercase mb-3" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                Minh Bạch & Tin Cậy
+            </p>
+            <h1 class="text-4xl font-bold" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                Chính Sách Bảo Mật
+            </h1>
+            <p class="mt-4 text-sm" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                Cập nhật lần cuối: Tháng 3, 2025
+            </p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-8 space-y-8" style="font-family: 'Work Sans', sans-serif; color: #3F4E4F;">
+
+            @{
+                var sections = new[]
+                {
+                        new {
+                        icon = "info",
+                        title = "1. Thông Tin Chúng Mình Thu Thập",
+                        content = "Khi bạn sử dụng dịch vụ của Góc Lặng Café, chúng mình có thể thu thập các thông tin sau: Họ tên, địa chỉ email, số điện thoại khi bạn đăng ký tài khoản hoặc đặt chỗ. Thông tin đặt hàng bao gồm địa chỉ giao hàng và lịch sử mua hàng. Thông tin kỹ thuật như địa chỉ IP, loại trình duyệt, và hành vi truy cập trang web."
+                        },
+                        new {
+                        icon = "verified_user",
+                        title = "2. Cách Chúng Mình Sử Dụng Thông Tin",
+                        content = "Thông tin bạn cung cấp được sử dụng để: Xử lý đơn hàng và giao hàng đến bạn. Liên hệ xác nhận đặt chỗ hoặc cập nhật trạng thái đơn hàng. Cải thiện chất lượng dịch vụ dựa trên phản hồi và hành vi sử dụng. Gửi thông tin khuyến mãi (chỉ khi bạn đồng ý nhận)."
+                        },
+                        new {
+                        icon = "lock",
+                        title = "3. Bảo Mật Thông Tin",
+                        content = "Chúng mình cam kết bảo vệ thông tin cá nhân của bạn. Dữ liệu được lưu trữ trên hệ thống bảo mật với mã hóa SSL. Chúng mình không bán, trao đổi, hay chuyển giao thông tin cá nhân của bạn cho bên thứ ba mà không có sự đồng ý của bạn, ngoại trừ các trường hợp yêu cầu từ cơ quan pháp luật."
+                        },
+                        new {
+                        icon = "cookie",
+                        title = "4. Cookies",
+                        content = "Trang web sử dụng cookies để ghi nhớ phiên đăng nhập và giỏ hàng của bạn. Bạn có thể tắt cookies trong cài đặt trình duyệt, tuy nhiên điều này có thể ảnh hưởng đến một số tính năng của trang web."
+                        },
+                        new {
+                        icon = "manage_accounts",
+                        title = "5. Quyền Của Bạn",
+                        content = "Bạn có quyền yêu cầu xem, sửa đổi, hoặc xóa thông tin cá nhân mà chúng mình lưu giữ. Để thực hiện các quyền này, vui lòng liên hệ với chúng mình qua email hoặc đến trực tiếp quán."
+                        },
+                        new {
+                        icon = "contact_mail",
+                        title = "6. Liên Hệ",
+                        content = "Nếu bạn có bất kỳ câu hỏi nào về chính sách bảo mật này, vui lòng liên hệ: Email: hello@goclang.vn | Điện thoại: 028 1234 5678 | Địa chỉ: 42 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh."
+                        }
+                        };
+            }
+
+            @foreach (var s in sections)
+            {
+                <div>
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: #DCD7C9;">
+                            <span class="material-symbols-outlined text-base" style="color: #A27B5C;">@s.icon</span>
+                        </div>
+                        <h2 class="font-bold text-lg" style="font-family: 'Playfair Display', serif; color: #2C3639;">
+                            @s.title
+                        </h2>
+                    </div>
+                    <p class="text-sm leading-relaxed pl-11">
+                        @s.content
+                    </p>
+                </div>
+                <div class="w-full h-px" style="background-color: #F7F7F6;"></div>
+            }
+        </div>
+    </div>
+</section>

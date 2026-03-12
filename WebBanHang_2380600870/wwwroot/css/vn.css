@@ -1,0 +1,31 @@
+.vn-heading {
+    font-family: 'Playfair Display', serif;
+    line-height: 58px;
+}
+
+@media (min-width: 768px) {
+    .vn-heading {
+        line-height: 68px;
+    }
+}
+
+.vn-heading-xl {
+    font-family: 'Playfair Display', serif;
+    line-height: 68px;
+}
+
+@media (min-width: 768px) {
+    .vn-heading-xl {
+        line-height: 88px;
+    }
+}
+
+.vn-body {
+    line-height: 2.0;
+}
+
+.nav-active {
+    color: #A27B5C !important;
+    border-bottom: 2px solid #A27B5C;
+    padding-bottom: 2px;
+}
