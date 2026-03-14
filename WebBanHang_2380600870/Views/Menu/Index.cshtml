@@ -1,4 +1,5 @@
-﻿@* Views/Menu/Index.cshtml *@
+﻿@* FILE: Views/Menu/Index.cshtml *@
+@* REDESIGN v6: 8 sản phẩm/trang · pagination dùng tp-dot/tp-arrow từ Product/Detail *@
 @model IEnumerable<WebBanHang_2380600870.Models.Product>
 @{
     ViewData["Title"] = "Thực Đơn | Góc Lặng";
@@ -8,111 +9,681 @@
                      ?? Enumerable.Empty<WebBanHang_2380600870.Models.Category>();
     var products = Model.ToList();
     string PriceK(decimal price) => (price / 1000).ToString("0") + "k";
+    string activeCatName = activeCategory != null
+        ? (categories.FirstOrDefault(c => c.Id == activeCategory)?.Name ?? "")
+        : "Tất Cả";
 }
 
-<main class="flex-1">
+@section Styles {
+<style>
+/* ════════════════════════════════════════════════
+   HERO — cinematic photo
+════════════════════════════════════════════════ */
+.mn-hero {
+    position: relative; min-height: 88vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; overflow: hidden; isolation: isolate;
+}
+.mn-hero__bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-size: cover; background-position: center;
+    transform: scale(1.04);
+    transition: transform 12s ease;
+}
+.mn-hero:hover .mn-hero__bg { transform: scale(1.08); }
+.mn-hero__overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background:
+        linear-gradient(to bottom, rgba(22,18,14,.55) 0%, rgba(30,24,18,.3) 40%, rgba(22,18,14,.72) 100%),
+        radial-gradient(ellipse 80% 60% at 50% 60%, rgba(162,123,92,.18) 0%, transparent 65%);
+}
+.mn-hero__grain {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+    opacity: .55;
+}
+.mn-hero__inner { position: relative; z-index: 3; max-width: 720px; margin: 0 auto; padding: 7rem 1.5rem 6rem; }
+.mn-hero__eyebrow {
+    display: inline-flex; align-items: center; gap: .7rem;
+    font-family: 'Work Sans', sans-serif; font-size: .62rem; font-weight: 600;
+    letter-spacing: .38em; text-transform: uppercase; color: rgba(162,123,92,.9); margin-bottom: 1.8rem;
+    animation: mnFadeUp .8s ease both;
+}
+.mn-hero__eyebrow::before,.mn-hero__eyebrow::after {
+    content: ''; display: block; width: 28px; height: 1px; background: #A27B5C; opacity: .6; flex-shrink: 0;
+}
+.mn-hero__h1 {
+    font-family: 'Playfair Display', serif; font-size: clamp(3.2rem,8vw,6rem); font-weight: 700;
+    color: #F2EDE4; line-height: 1.05; margin-bottom: .2rem; letter-spacing: -.015em;
+    animation: mnFadeUp .85s .08s ease both;
+}
+.mn-hero__h1-italic {
+    font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; color: #C69B7B;
+    display: block; font-size: clamp(2.6rem,6.5vw,5rem); line-height: 1.1;
+    animation: mnFadeUp .85s .14s ease both;
+}
+.mn-hero__ornament {
+    display: flex; align-items: center; justify-content: center; gap: .85rem;
+    margin: 2rem auto 2.2rem; max-width: 200px; animation: mnFadeIn .9s .22s ease both;
+}
+.mn-orn-l { width: 55px; height: 1px; background: linear-gradient(to right, transparent, rgba(162,123,92,.55)); }
+.mn-orn-r { width: 55px; height: 1px; background: linear-gradient(to left, transparent, rgba(162,123,92,.55)); }
+.mn-orn-d { width: 4px; height: 4px; background: #A27B5C; transform: rotate(45deg); flex-shrink: 0; }
+.mn-hero__sub {
+    font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-style: italic;
+    color: rgba(242,237,228,.65); line-height: 1.9; max-width: 480px; margin: 0 auto 2.5rem;
+    animation: mnFadeUp .9s .28s ease both;
+}
+.mn-hero__scroll {
+    position: absolute; bottom: 2.2rem; left: 50%; transform: translateX(-50%); z-index: 3;
+    display: flex; flex-direction: column; align-items: center; gap: .4rem;
+    animation: mnFadeIn 1s .6s ease both;
+}
+.mn-hero__scroll-line {
+    width: 1px; height: 36px; background: linear-gradient(to bottom, #A27B5C, transparent);
+    animation: mnScrollPulse 2s ease-in-out infinite;
+}
+.mn-hero__scroll-label {
+    font-family: 'Work Sans', sans-serif; font-size: .55rem;
+    letter-spacing: .25em; text-transform: uppercase; color: rgba(162,123,92,.55);
+}
+@@keyframes mnFadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@@keyframes mnFadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+}
+@@keyframes mnScrollPulse {
+    0%,100% { opacity: .4; transform: scaleY(1); }
+    50%      { opacity: 1; transform: scaleY(1.15); }
+}
 
-    <!-- Hero mini -->
-    <div class="py-14 px-6 text-center" style="background:linear-gradient(135deg,#2C3639 0%,#3F4E4F 100%);">
-        <p class="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-3">Góc Lặng Café</p>
-        <h1 class="font-black text-4xl mb-3" style="font-family:'Playfair Display',serif; color:#DCD7C9;">Thực Đơn</h1>
-        <p style="color:rgba(220,215,201,0.65); font-size:15px; max-width:480px; margin:0 auto; line-height:1.9;">
-            Mỗi món được chọn lọc kỹ càng — từ những nguyên liệu tươi ngon nhất, pha chế bằng tâm huyết.
+/* ════════════════════════════════════════════════
+   FILTER BAR — tab underline, sticky
+════════════════════════════════════════════════ */
+.mn-filter {
+    position: sticky; top: 70px; z-index: 40;
+    background: rgba(247,247,246,.96);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(162,123,92,.12);
+}
+.mn-filter__inner {
+    max-width: 1280px; margin: 0 auto; padding: 0 2rem;
+    display: flex; align-items: stretch; gap: 0;
+    overflow-x: auto; scrollbar-width: none;
+}
+.mn-filter__inner::-webkit-scrollbar { display: none; }
+.mn-filter__section-label {
+    font-family: 'Work Sans', sans-serif; font-size: .58rem; font-weight: 700;
+    letter-spacing: .25em; text-transform: uppercase; color: #3F4E4F; opacity: .35;
+    padding: 1.1rem 1.2rem 1.1rem 0; white-space: nowrap;
+    display: flex; align-items: center;
+    border-right: 1px solid rgba(44,54,57,.1); margin-right: .9rem; flex-shrink: 0;
+}
+.mn-filter__tab {
+    display: inline-flex; align-items: center; padding: 1.1rem .9rem;
+    font-family: 'Work Sans', sans-serif; font-size: .78rem; font-weight: 600;
+    letter-spacing: .04em; text-decoration: none; white-space: nowrap;
+    color: #3F4E4F; opacity: .5;
+    transition: opacity .2s, color .2s;
+    border-bottom: 2.5px solid transparent; margin-bottom: -1px;
+    flex-shrink: 0; cursor: pointer;
+    border-top: none; border-left: none; border-right: none; background: transparent;
+}
+.mn-filter__tab:hover { opacity: .82; color: #2C3639; }
+.mn-filter__tab--active { opacity: 1; color: #A27B5C; border-bottom-color: #A27B5C; font-weight: 700; }
+.mn-filter__tab-count {
+    font-family: 'Playfair Display', serif; font-style: italic;
+    font-size: .63rem; font-weight: 400;
+    background: rgba(162,123,92,.1); color: #A27B5C;
+    padding: .08rem .42rem; border-radius: 9999px; margin-left: .4rem; line-height: 1.7;
+}
+.mn-filter__tab--active .mn-filter__tab-count { background: rgba(162,123,92,.18); }
+
+/* ════════════════════════════════════════════════
+   CONTENT
+════════════════════════════════════════════════ */
+.mn-content { background: #F7F7F6; min-height: 50vh; }
+.mn-content__inner {
+    max-width: 1280px; margin: 0 auto; padding: 2.5rem 2rem 6rem;
+}
+@@media (max-width: 640px) { .mn-content__inner { padding: 1.8rem 1rem 4rem; } }
+
+/* Meta row */
+.mn-meta {
+    display: flex; align-items: baseline; gap: .6rem;
+    padding: 0 0 1.4rem; border-bottom: 1px solid rgba(162,123,92,.09); margin-bottom: 2rem;
+}
+.mn-meta__count {
+    font-family: 'Playfair Display', serif; font-style: italic;
+    font-size: 2rem; font-weight: 700; color: #A27B5C; line-height: 1;
+}
+.mn-meta__slash { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: rgba(162,123,92,.28); line-height: 1; }
+.mn-meta__label-wrap { display: flex; flex-direction: column; gap: .1rem; }
+.mn-meta__label-top {
+    font-family: 'Work Sans', sans-serif; font-size: .6rem; font-weight: 600;
+    letter-spacing: .18em; text-transform: uppercase; color: #3F4E4F; opacity: .4; line-height: 1;
+}
+.mn-meta__label-cat { font-family: 'Playfair Display', serif; font-size: .95rem; font-weight: 700; color: #2C3639; line-height: 1.2; }
+
+/* Grid fade */
+.mn-grid-wrap { transition: opacity .26s ease, transform .26s ease; }
+.mn-grid-wrap.mn-fading { opacity: 0; transform: translateY(8px); pointer-events: none; }
+
+/* ════════════════════════════════════════════════
+   GRID
+════════════════════════════════════════════════ */
+.mn-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 2rem 1rem; }
+@@media (min-width: 640px)  { .mn-grid { grid-template-columns: repeat(4,1fr); gap: 2.4rem 1.4rem; } }
+@@media (min-width: 1024px) { .mn-grid { grid-template-columns: repeat(4,1fr); gap: 2.8rem 1.8rem; } }
+
+/* ════════════════════════════════════════════════
+   CARD
+════════════════════════════════════════════════ */
+.mn-card {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; text-decoration: none; color: inherit; cursor: pointer;
+}
+.mn-card__frame {
+    position: relative; width: 100%; aspect-ratio: 4/5; overflow: hidden;
+    border-radius: .875rem; background: #e5ddd3; margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(44,54,57,.07);
+    transition: box-shadow .55s cubic-bezier(.22,1,.36,1), transform .55s cubic-bezier(.22,1,.36,1);
+}
+.mn-card:hover .mn-card__frame {
+    box-shadow: 0 18px 48px rgba(44,54,57,.17), 0 0 0 2.5px rgba(162,123,92,.2);
+    transform: translateY(-5px);
+}
+.mn-card__photo {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    transition: transform .8s cubic-bezier(.22,1,.36,1);
+}
+.mn-card:hover .mn-card__photo { transform: scale(1.07); }
+.mn-card__vignette {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 60%;
+    background: linear-gradient(to top,rgba(22,18,14,.6) 0%,rgba(22,18,14,0) 100%);
+    z-index: 1; opacity: 0; transition: opacity .4s;
+}
+.mn-card:hover .mn-card__vignette { opacity: 1; }
+.mn-card__reveal {
+    position: absolute; bottom: .9rem; left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    z-index: 2; opacity: 0; white-space: nowrap;
+    transition: opacity .3s, transform .42s cubic-bezier(.22,1,.36,1);
+}
+.mn-card:hover .mn-card__reveal { opacity: 1; transform: translateX(-50%) translateY(0); }
+.mn-card__cta-pill {
+    font-family: 'Work Sans', sans-serif; font-size: .6rem; font-weight: 700;
+    letter-spacing: .2em; text-transform: uppercase; color: #fff;
+    padding: .38rem 1rem; border-radius: 9999px; border: 1px solid rgba(255,255,255,.65);
+    background: rgba(22,18,14,.28); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.mn-card__chip {
+    position: absolute; top: .65rem; left: .65rem; z-index: 3;
+    font-family: 'Work Sans', sans-serif; font-size: .58rem; font-weight: 700;
+    letter-spacing: .07em; text-transform: uppercase;
+    padding: .18rem .6rem; border-radius: 9999px;
+    background: rgba(44,54,57,.62); color: #DCD7C9;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.mn-card__sale {
+    position: absolute; top: .65rem; right: .65rem; z-index: 3;
+    font-family: 'Playfair Display', serif; font-style: italic; font-size: .65rem; font-weight: 700;
+    padding: .18rem .58rem; border-radius: 9999px; background: #ef4444; color: #fff;
+}
+.mn-card__body { width: 100%; display: flex; flex-direction: column; align-items: center; gap: .22rem; }
+.mn-card__name {
+    font-family: 'Playfair Display', serif; font-size: .95rem; font-weight: 700;
+    color: #2C3639; line-height: 1.35; transition: color .2s; padding: 0 .2rem;
+}
+.mn-card:hover .mn-card__name { color: #A27B5C; }
+.mn-card__desc {
+    font-family: 'Cormorant Garamond', serif; font-size: .95rem; font-style: italic;
+    color: #3F4E4F; opacity: .78; line-height: 1.55;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    padding: 0 .3rem; margin-bottom: .1rem;
+}
+.mn-card__price-block { display: flex; flex-direction: column; align-items: center; gap: .12rem; margin-top: .2rem; }
+.mn-card__price-row { display: flex; align-items: center; justify-content: center; gap: .42rem; }
+.mn-card__price-line { width: 14px; height: 1px; background: rgba(162,123,92,.35); flex-shrink: 0; }
+.mn-card__price { font-family: 'Playfair Display', serif; font-size: .92rem; font-weight: 700; font-style: italic; color: #A27B5C; }
+.mn-card__price-original {
+    font-family: 'Cormorant Garamond', serif; font-size: .78rem;
+    color: #94a3b8; text-decoration: line-through; font-style: italic; opacity: .7; line-height: 1;
+}
+.mn-card__price-sale-row { display: flex; align-items: center; justify-content: center; gap: .4rem; }
+.mn-card__price-sale { font-family: 'Playfair Display', serif; font-size: .95rem; font-weight: 700; font-style: italic; color: #A27B5C; }
+
+/* ════════════════════════════════════════════════
+   PAGINATION — đồng nhất với Product/Detail tp-dot/tp-arrow
+════════════════════════════════════════════════ */
+#mn-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .375rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(162,123,92,.1);
+}
+
+/* Dot — identical to .tp-dot in Detail page */
+.mn-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(162,123,92,.25);
+    cursor: pointer;
+    transition: background .2s, transform .2s;
+    border: none;
+    padding: 0;
+    flex-shrink: 0;
+}
+.mn-dot.active {
+    background: #A27B5C;
+    transform: scale(1.3);
+}
+
+/* Arrow — identical to .tp-arrow in Detail page */
+.mn-arrow {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(162,123,92,.3);
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #A27B5C;
+    transition: background .15s, border-color .15s;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.mn-arrow:hover:not(:disabled) {
+    background: rgba(162,123,92,.08);
+    border-color: #A27B5C;
+}
+.mn-arrow:disabled {
+    opacity: .3;
+    cursor: default;
+}
+
+/* Page info label */
+.mn-page-label {
+    font-family: 'Playfair Display', serif; font-style: italic;
+    font-size: .78rem; color: rgba(162,123,92,.6);
+    margin: 0 .5rem;
+    white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════════
+   EMPTY / REVEAL
+════════════════════════════════════════════════ */
+.mn-empty { padding: 6rem 0; text-align: center; }
+.mn-empty .material-symbols-outlined { font-size: 2.6rem; color: #A27B5C; opacity: .22; display: block; margin-bottom: .6rem; }
+.mn-empty__text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1rem; color: #3F4E4F; opacity: .5; }
+.mn-note { text-align: center; margin-top: 2.5rem; }
+.mn-note__gem { width: 5px; height: 5px; background: #A27B5C; transform: rotate(45deg); margin: 0 auto .9rem; opacity: .35; }
+.mn-note__text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: .95rem; color: #3F4E4F; opacity: .45; max-width: 360px; margin: 0 auto; line-height: 2; }
+.mn-reveal { opacity: 0; transform: translateY(20px); transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1); }
+.mn-reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+}
+
+<!-- ══════════════ HERO ══════════════ -->
+<div class="mn-hero">
+    <div class="mn-hero__bg" style="background-image:url('/images/menu-hero.jpg');"></div>
+    <div class="mn-hero__overlay"></div>
+    <div class="mn-hero__grain"></div>
+    <div class="mn-hero__inner">
+        <span class="mn-hero__eyebrow">Góc Lặng Café</span>
+        <h1 class="mn-hero__h1">
+            Thực Đơn
+            <span class="mn-hero__h1-italic">Thủ Công</span>
+        </h1>
+        <div class="mn-hero__ornament">
+            <div class="mn-orn-l"></div><div class="mn-orn-d"></div><div class="mn-orn-r"></div>
+        </div>
+        <p class="mn-hero__sub">
+            Hương vị tinh hoa kết tinh từ những nguyên liệu thượng hạng,
+            mang đến sự bình lặng tuyệt đối cho tâm hồn trong từng ngụm thưởng thức.
         </p>
     </div>
+    <div class="mn-hero__scroll">
+        <div class="mn-hero__scroll-line"></div>
+        <span class="mn-hero__scroll-label">Khám phá</span>
+    </div>
+</div>
 
-    <div class="max-w-7xl mx-auto px-6 md:px-10 py-12">
+<!-- ══════════════ FILTER BAR ══════════════ -->
+<div class="mn-filter" id="mn-filter-bar">
+    <div class="mn-filter__inner">
+        <span class="mn-filter__section-label">Danh Mục</span>
+        <button class="mn-filter__tab @(activeCategory == null ? "mn-filter__tab--active" : "")"
+                data-cat-id="" data-cat-name="Tất Cả"
+                onclick="mnSwitchCat(this)">
+            Tất Cả
+            <span class="mn-filter__tab-count">@Model.Count()</span>
+        </button>
+        @foreach (var cat in categories)
+        {
+            int catCount = Model.Count(p => p.CategoryId == cat.Id);
+            <button class="mn-filter__tab @(activeCategory == cat.Id ? "mn-filter__tab--active" : "")"
+                    data-cat-id="@cat.Id" data-cat-name="@cat.Name"
+                    onclick="mnSwitchCat(this)">
+                @cat.Name
+                <span class="mn-filter__tab-count">@catCount</span>
+            </button>
+        }
+    </div>
+</div>
 
-        <!-- Category filter nav -->
-        <div class="flex flex-wrap gap-2 mb-10">
-            <a asp-controller="Menu" asp-action="Index"
-               class="px-5 py-2.5 rounded-full text-sm font-bold transition-all"
-               style="@(activeCategory == null
-                                                 ? "background:#2C3639; color:#DCD7C9;"
-                                                 : "background:rgba(44,54,57,0.08); color:#3F4E4F; border:1.5px solid rgba(44,54,57,0.15);")">
-                Tất Cả
-            </a>
-            @foreach (var cat in categories)
+<!-- ══════════════ CONTENT ══════════════ -->
+<div class="mn-content">
+    <div class="mn-content__inner">
+
+        <!-- Meta -->
+        <div class="mn-meta">
+            <div class="mn-meta__count" id="mn-meta-count">@products.Count</div>
+            <div class="mn-meta__slash">/</div>
+            <div class="mn-meta__label-wrap">
+                <span class="mn-meta__label-top">sản phẩm trong</span>
+                <span class="mn-meta__label-cat" id="mn-meta-cat">@activeCatName</span>
+            </div>
+        </div>
+
+        <!-- Grid + Pager wrapper -->
+        <div class="mn-grid-wrap" id="mn-grid-wrap">
+            @if (!products.Any())
             {
-                <a asp-controller="Menu" asp-action="Index" asp-route-categoryId="@cat.Id"
-                   class="px-5 py-2.5 rounded-full text-sm font-bold transition-all"
-                   style="@(activeCategory == cat.Id
-                                                             ? "background:#A27B5C; color:#fff;"
-                                                             : "background:rgba(162,123,92,0.08); color:#3F4E4F; border:1.5px solid rgba(162,123,92,0.18);")">
-                    @cat.Name
-                </a>
+                <div class="mn-empty">
+                    <span class="material-symbols-outlined">coffee</span>
+                    <p class="mn-empty__text">Chưa có sản phẩm trong danh mục này.</p>
+                </div>
+            }
+            else
+            {
+                <div class="mn-grid" id="mn-grid"></div>
+                <div id="mn-pager"></div>
+                <div class="mn-note" id="mn-note">
+                    <div class="mn-note__gem"></div>
+                    <p class="mn-note__text">
+                        Mỗi sản phẩm được chọn lọc và pha chế bằng tâm huyết —<br>
+                        chúng mình tin rằng một ly ngon xứng đáng được thưởng thức trong sự bình yên.
+                    </p>
+                </div>
             }
         </div>
 
-        <!-- Product count -->
-        <p class="text-sm text-teal-custom mb-6 opacity-70">
-            @products.Count sản phẩm
-            @if (activeCategory != null)
-            {
-                <span>trong <strong>@(categories.FirstOrDefault(c => c.Id == activeCategory)?.Name ?? "")</strong></span>
-            }
-        </p>
-
-        <!-- Product grid -->
-        @if (!products.Any())
-        {
-            <div class="py-24 text-center">
-                <span class="material-symbols-outlined text-5xl text-primary opacity-30">coffee</span>
-                <p class="text-teal-custom mt-4 italic">Chưa có sản phẩm trong danh mục này.</p>
-            </div>
-        }
-        else
-        {
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-                @foreach (var product in products)
-                {
-                    <a asp-controller="Product" asp-action="Detail" asp-route-id="@product.Id"
-                       class="group flex flex-col gap-3 cursor-pointer" style="text-decoration:none;">
-                        <div class="relative overflow-hidden rounded-2xl shadow-sm group-hover:shadow-xl transition-all duration-300"
-                             style="aspect-ratio:1/1; background:#e8e0d5;
-                                                    background-image:url('@product.ImageUrl');
-                                                    background-size:cover; background-position:center;">
-                            <!-- Hover overlay -->
-                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                 style="background:rgba(44,54,57,0.45);">
-                                <span class="text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full"
-                                      style="border:1.5px solid rgba(255,255,255,0.75);">Xem chi tiết</span>
-                            </div>
-                            <!-- Category badge -->
-                            @if (product.Category != null)
-                            {
-                                <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-bold"
-                                      style="background:rgba(44,54,57,0.75); color:#DCD7C9; backdrop-filter:blur(4px);">
-                                    @product.Category.Name
-                                </span>
-                            }
-                        </div>
-                        <div class="flex justify-between items-start gap-2 px-1">
-                            <div class="flex-1">
-                                <h3 class="text-slate-custom font-bold text-sm group-hover:text-primary transition-colors">@product.Name</h3>
-                                @if (!string.IsNullOrWhiteSpace(product.Description))
-                                {
-                                    <p class="text-teal-custom text-xs italic mt-0.5 opacity-70 line-clamp-2">@product.Description</p>
-                                }
-                            </div>
-                            @* FIX: Hiện giá sale nếu đang khuyến mãi *@
-                            <div class="flex items-center gap-1.5 flex-wrap justify-end">
-                                @if (product.IsOnSale && product.SalePrice > 0 && product.SalePrice < product.Price)
-                                {
-                                    <span class="text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:#ef4444;color:#fff;line-height:1.3;">-@(product.DiscountPercent?.ToString("0"))%</span>
-                                    <p class="text-primary font-black whitespace-nowrap text-sm">@PriceK(product.SalePrice)</p>
-                                    <p class="text-xs text-gray-400 line-through whitespace-nowrap">@PriceK(product.Price)</p>
-                                }
-                                else
-                                {
-                                    <p class="text-primary font-black whitespace-nowrap text-sm">@PriceK(product.Price)</p>
-                                }
-                            </div>
-                        </div>
-                    </a>
-                }
-            </div>
-        }
-
     </div>
-</main>
+</div>
+
+<!-- Embed all product data as JSON -->
+<script id="mn-products-data" type="application/json">
+@{
+    var allForJs = Model.Select(p => new {
+        id        = p.Id,
+        catId     = p.CategoryId,
+        catName   = p.Category?.Name ?? "",
+        name      = p.Name,
+        desc      = p.Description ?? "",
+        img       = p.ImageUrl ?? "/images/placeholder.jpg",
+        price     = (int)(p.Price / 1000),
+        onSale    = p.IsOnSale && p.SalePrice > 0 && p.SalePrice < p.Price,
+        salePrice = (int)(p.SalePrice / 1000),
+        discount  = p.DiscountPercent.HasValue ? (int)p.DiscountPercent.Value : 0,
+        detailUrl = Url.Action("Detail", "Product", new { id = p.Id })
+    });
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allForJs))
+}
+</script>
+
+@section Scripts {
+<script>
+(function () {
+    /* ── Constants ── */
+    var PAGE_SIZE     = 8;                     /* 8 sản phẩm / trang */
+    var ALL_PRODUCTS  = JSON.parse(document.getElementById('mn-products-data').textContent);
+
+    /* ── State ── */
+    var currentProducts = ALL_PRODUCTS.slice(); /* filtered list */
+    var currentPage     = 0;
+    var currentCatName  = '@Html.Raw(activeCatName)';
+
+    /* ── DOM refs ── */
+    var wrap      = document.getElementById('mn-grid-wrap');
+    var grid      = document.getElementById('mn-grid');
+    var pager     = document.getElementById('mn-pager');
+    var metaCount = document.getElementById('mn-meta-count');
+    var metaCat   = document.getElementById('mn-meta-cat');
+
+    /* ════════════════════════════════
+       INIT — render first page
+    ════════════════════════════════ */
+    if (grid) {
+        /* Set initial category filter if URL had one */
+        var initCatId = '@(activeCategory?.ToString() ?? "")';
+        if (initCatId !== '') {
+            currentProducts = ALL_PRODUCTS.filter(function(p){ return String(p.catId) === initCatId; });
+        }
+        renderPage(0);
+    }
+
+    /* ════════════════════════════════
+       CATEGORY SWITCH — no reload
+    ════════════════════════════════ */
+    window.mnSwitchCat = function (btn) {
+        /* Update active tab */
+        document.querySelectorAll('.mn-filter__tab').forEach(function(t){
+            t.classList.remove('mn-filter__tab--active');
+        });
+        btn.classList.add('mn-filter__tab--active');
+
+        var catId   = btn.dataset.catId;
+        var catName = btn.dataset.catName;
+        currentCatName = catName;
+
+        /* Filter */
+        currentProducts = catId === ''
+            ? ALL_PRODUCTS.slice()
+            : ALL_PRODUCTS.filter(function(p){ return String(p.catId) === catId; });
+
+        /* Fade → rebuild → fade in */
+        wrap.classList.add('mn-fading');
+        setTimeout(function(){
+            metaCount.textContent = currentProducts.length;
+            metaCat.textContent   = catName;
+            renderPage(0);
+            wrap.classList.remove('mn-fading');
+        }, 240);
+    };
+
+    /* ════════════════════════════════
+       PAGINATION — goto page
+    ════════════════════════════════ */
+    window.mnGotoPage = function (page) {
+        var totalPages = Math.ceil(currentProducts.length / PAGE_SIZE);
+        if (page < 0 || page >= totalPages) return;
+
+        /* Smooth scroll to content top */
+        var contentEl = document.querySelector('.mn-content__inner');
+        if (contentEl) contentEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        /* Small fade then render */
+        grid.style.transition = 'opacity .18s ease';
+        grid.style.opacity = '0';
+        setTimeout(function(){
+            renderPage(page);
+            grid.style.opacity = '1';
+        }, 180);
+    };
+
+    /* ════════════════════════════════
+       RENDER: grid + pager
+    ════════════════════════════════ */
+    function renderPage(page) {
+        if (!grid || !pager) return;
+
+        var total      = currentProducts.length;
+        var totalPages = Math.ceil(total / PAGE_SIZE);
+        if (page >= totalPages) page = Math.max(0, totalPages - 1);
+        currentPage = page;
+
+        var start = page * PAGE_SIZE;
+        var slice = currentProducts.slice(start, start + PAGE_SIZE);
+
+        /* Render cards */
+        grid.innerHTML = slice.map(function(p, idx){
+            var delay    = (idx % 4) * 80;
+            var chipHtml = p.catName ? '<span class="mn-card__chip">' + esc(p.catName) + '</span>' : '';
+            var saleHtml = p.onSale  ? '<span class="mn-card__sale">−' + p.discount + '%</span>' : '';
+            var descHtml = p.desc    ? '<p class="mn-card__desc">' + esc(p.desc) + '</p>' : '';
+
+            var priceHtml;
+            if (p.onSale) {
+                priceHtml =
+                    '<div class="mn-card__sale-price-wrap" style="display:flex;flex-direction:column;align-items:center;gap:.1rem;">' +
+                        '<span class="mn-card__price-original">' + p.price + 'k</span>' +
+                        '<div class="mn-card__price-sale-row">' +
+                            '<div class="mn-card__price-line"></div>' +
+                            '<span class="mn-card__price-sale">' + p.salePrice + 'k</span>' +
+                            '<div class="mn-card__price-line"></div>' +
+                        '</div>' +
+                    '</div>';
+            } else {
+                priceHtml =
+                    '<div class="mn-card__price-row">' +
+                        '<div class="mn-card__price-line"></div>' +
+                        '<span class="mn-card__price">' + p.price + 'k</span>' +
+                        '<div class="mn-card__price-line"></div>' +
+                    '</div>';
+            }
+
+            return '<a href="' + p.detailUrl + '" class="mn-card mn-reveal" style="transition-delay:' + delay + 'ms;">' +
+                '<div class="mn-card__frame">' +
+                    '<div class="mn-card__photo" style="background-image:url(\'' + esc(p.img) + '\');"></div>' +
+                    '<div class="mn-card__vignette"></div>' +
+                    '<div class="mn-card__reveal"><span class="mn-card__cta-pill">Xem Chi Tiết</span></div>' +
+                    chipHtml + saleHtml +
+                '</div>' +
+                '<div class="mn-card__body">' +
+                    '<div class="mn-card__name">' + esc(p.name) + '</div>' +
+                    descHtml +
+                    '<div class="mn-card__price-block">' + priceHtml + '</div>' +
+                '</div>' +
+            '</a>';
+        }).join('');
+
+        /* Trigger reveal */
+        requestAnimationFrame(function(){
+            requestAnimationFrame(function(){
+                document.querySelectorAll('.mn-reveal').forEach(function(el){
+                    el.classList.add('visible');
+                });
+            });
+        });
+
+        /* Render pager — identical pattern to tp-dot/tp-arrow in Detail */
+        renderPager(page, totalPages, total);
+    }
+
+    /* ════════════════════════════════
+       RENDER PAGER
+       Design: ‹  ● ○ ○  › + page label
+       Identical CSS classes as Detail page topping pager
+    ════════════════════════════════ */
+    function renderPager(page, totalPages, total) {
+        if (!pager) return;
+
+        /* Hide pager + note when only 1 page */
+        var noteEl = document.getElementById('mn-note');
+
+        if (totalPages <= 1) {
+            pager.innerHTML = '';
+            pager.style.display = 'none';
+            return;
+        }
+
+        pager.style.display = 'flex';
+
+        /* Prev arrow */
+        var html = '<button class="mn-arrow" onclick="mnGotoPage(' + (page - 1) + ')"' +
+            (page === 0 ? ' disabled' : '') + '>' +
+            '<span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span>' +
+            '</button>';
+
+        /* Dots — show max 7, collapse with ellipsis for large sets */
+        var maxDots = 7;
+        if (totalPages <= maxDots) {
+            for (var i = 0; i < totalPages; i++) {
+                html += '<button class="mn-dot' + (i === page ? ' active' : '') + '"' +
+                    ' onclick="mnGotoPage(' + i + ')" title="Trang ' + (i+1) + '"></button>';
+            }
+        } else {
+            /* Always show first, last, current ±1 */
+            var dots = buildDotSet(page, totalPages);
+            var prev = -1;
+            for (var j = 0; j < dots.length; j++) {
+                var d = dots[j];
+                if (d === -1) {
+                    /* Ellipsis dot — smaller, non-clickable */
+                    html += '<button class="mn-dot" style="opacity:.3;cursor:default;" disabled title="..."></button>';
+                } else {
+                    html += '<button class="mn-dot' + (d === page ? ' active' : '') + '"' +
+                        ' onclick="mnGotoPage(' + d + ')" title="Trang ' + (d+1) + '"></button>';
+                }
+                prev = d;
+            }
+        }
+
+        /* Page label */
+        html += '<span class="mn-page-label">' + (page + 1) + '/' + totalPages + '</span>';
+
+        /* Next arrow */
+        html += '<button class="mn-arrow" onclick="mnGotoPage(' + (page + 1) + ')"' +
+            (page >= totalPages - 1 ? ' disabled' : '') + '>' +
+            '<span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>' +
+            '</button>';
+
+        pager.innerHTML = html;
+    }
+
+    /* Build dot set with ellipsis (-1) for large page counts */
+    function buildDotSet(page, total) {
+        var set = new Set([0, total - 1, page]);
+        if (page > 0) set.add(page - 1);
+        if (page < total - 1) set.add(page + 1);
+        var arr = Array.from(set).sort(function(a,b){ return a-b; });
+        var result = [];
+        for (var i = 0; i < arr.length; i++) {
+            if (i > 0 && arr[i] - arr[i-1] > 1) result.push(-1); /* gap */
+            result.push(arr[i]);
+        }
+        return result;
+    }
+
+    /* ════════════════════════════════
+       SCROLL REVEAL
+    ════════════════════════════════ */
+    var ro = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if (e.isIntersecting){ e.target.classList.add('visible'); ro.unobserve(e.target); }
+        });
+    }, { threshold: 0.06 });
+    function observeReveal() {
+        document.querySelectorAll('.mn-reveal:not(.visible)').forEach(function(el){ ro.observe(el); });
+    }
+    /* Cards already revealed in renderPage via rAF, but also observe for safety */
+    observeReveal();
+
+    /* ── XSS-safe escape ── */
+    function esc(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+}());
+</script>
+}

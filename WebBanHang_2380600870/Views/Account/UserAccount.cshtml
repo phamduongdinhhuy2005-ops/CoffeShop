@@ -7,6 +7,7 @@
     Layout = "_Layout";
     var user = ViewBag.User as WebBanHang_2380600870.Models.AppUser;
     var orders = ViewBag.Orders as List<WebBanHang_2380600870.Models.Order> ?? new();
+    var bookings = ViewBag.Bookings as List<WebBanHang_2380600870.Models.Booking> ?? new();
     var activeTab = TempData["ActiveTab"]?.ToString() ?? "profile";
     var joinedStr = user?.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy") ?? "";
 
@@ -32,6 +33,18 @@
         WebBanHang_2380600870.Models.OrderStatus.Cancelled => "ua-status ua-status-cancelled",
         _ => "ua-status ua-status-pending"
     };
+    string BStatusLabel(WebBanHang_2380600870.Models.BookingStatus s) => s switch {
+        WebBanHang_2380600870.Models.BookingStatus.Pending   => "Chờ xác nhận",
+        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "Đã xác nhận",
+        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "Đã hủy",
+        _ => "Không rõ"
+    };
+    string BStatusCss(WebBanHang_2380600870.Models.BookingStatus s) => s switch {
+        WebBanHang_2380600870.Models.BookingStatus.Pending   => "ua-bstatus-pending",
+        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "ua-bstatus-confirmed",
+        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "ua-bstatus-cancelled",
+        _ => "ua-bstatus-pending"
+    };
     string OrderItems(WebBanHang_2380600870.Models.Order o)
     {
         if (o.OrderDetails == null || !o.OrderDetails.Any()) return "";
@@ -51,7 +64,7 @@
 <style>
     /* ── Page shell ───────────────────────────────────────────── */
     .ua-page {
-        background: #F2EFE9;
+        background: #F7F7F6;
         min-height: 100vh;
         padding: 2.5rem 1rem 4rem;
     }
@@ -343,7 +356,7 @@
         }
 
         .ua-input:disabled {
-            background: #F0EDE8;
+            background: #F7F7F6;
             color: rgba(63,78,79,0.5);
             cursor: not-allowed;
         }
@@ -656,50 +669,94 @@
     }
 
     /* ── Booking cards ────────────────────────────────────────── */
+    .ua-booking-list { display: flex; flex-direction: column; gap: .75rem; }
+
     .ua-booking-card {
-        padding: 1.25rem 2rem;
-        border-bottom: 1px solid rgba(162,123,92,0.08);
-        transition: background .15s;
+        background: #fff;
+        border: 1px solid rgba(162,123,92,.14);
+        border-radius: 16px;
+        padding: 1.1rem 1.25rem;
+        transition: border-color .2s, box-shadow .2s;
     }
 
-        .ua-booking-card:last-child {
-            border-bottom: none;
+        .ua-booking-card:hover {
+            border-color: rgba(162,123,92,.32);
+            box-shadow: 0 4px 18px rgba(44,54,57,.08);
         }
 
-        .ua-booking-card:hover {
-            background: rgba(162,123,92,0.03);
-        }
+    /* Status accent bar on left */
+    .ua-booking-card.bc-pending  { border-left: 3.5px solid #f59e0b; }
+    .ua-booking-card.bc-confirmed{ border-left: 3.5px solid #10b981; }
+    .ua-booking-card.bc-cancelled{ border-left: 3.5px solid #ef4444; }
 
     .ua-booking-top {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
         gap: .75rem;
         flex-wrap: wrap;
         margin-bottom: .75rem;
     }
 
+    .ua-booking-datetime {
+        display: flex; align-items: center; gap: .45rem;
+    }
+
     .ua-booking-date {
         font-family: 'Playfair Display', serif;
-        font-size: 1rem;
+        font-size: .95rem;
         font-weight: 700;
         color: #2C3639;
+    }
+
+    .ua-booking-time-chip {
+        font-family: 'Work Sans', sans-serif;
+        font-size: .7rem; font-weight: 700;
+        background: rgba(162,123,92,.1); color: #A27B5C;
+        padding: .15rem .55rem; border-radius: 99px;
+        white-space: nowrap;
     }
 
     .ua-booking-meta {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: .4rem .75rem;
-        font-size: .82rem;
+        gap: .35rem .75rem;
+        font-size: .8rem;
+        margin-bottom: .6rem;
     }
 
-        .ua-booking-meta span {
-            color: rgba(63,78,79,0.45);
+        .ua-booking-meta-item {
+            display: flex; align-items: center; gap: .3rem;
         }
 
-        .ua-booking-meta strong {
-            color: #2C3639;
+        .ua-booking-meta-label {
+            color: rgba(63,78,79,.5);
+            font-family: 'Work Sans', sans-serif;
+            font-size: .75rem;
+            white-space: nowrap;
         }
+
+        .ua-booking-meta-val {
+            color: #2C3639;
+            font-family: 'Work Sans', sans-serif;
+            font-weight: 600;
+            font-size: .8rem;
+        }
+
+    .ua-booking-note {
+        display: flex; align-items: flex-start; gap: .4rem;
+        background: rgba(162,123,92,.06);
+        border-radius: 8px; padding: .5rem .75rem;
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic; font-size: .88rem;
+        color: #3F4E4F; opacity: .85;
+        margin-top: .5rem;
+    }
+
+    /* Status badge — same as before */
+    .ua-bstatus-pending  { background: rgba(234,179,8,.12);  color: #b45309; }
+    .ua-bstatus-confirmed{ background: rgba(16,185,129,.12); color: #065f46; }
+    .ua-bstatus-cancelled{ background: rgba(239,68,68,.1);   color: #b91c1c; }
 
     /* responsive */
     @@media (max-width: 600px) {
@@ -817,10 +874,14 @@
                 <button class="ua-nav-item" onclick="uaTab('bookings',this)" id="nav-bookings">
                     <span class="material-symbols-outlined">event_seat</span>
                     Lịch Đặt Chỗ
+                    @if (bookings.Count > 0)
+                    {
+                        <span class="ua-nav-badge">@bookings.Count</span>
+                    }
                 </button>
                 <div class="ua-nav-sep"></div>
                 <a asp-controller="Booking" asp-action="Index"
-                   class="ua-nav-item" style="text-decoration:none;">
+                       class="ua-nav-item" style="text-decoration:none;">
                     <span class="material-symbols-outlined">add_circle</span>
                     Đặt Chỗ Mới
                 </a>
@@ -922,7 +983,7 @@
                         @if (orders.Count > 3)
                         {
                             <a asp-controller="Cart" asp-action="OrderHistory"
-                               style="font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#A27B5C;text-decoration:none;">
+                                   style="font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#A27B5C;text-decoration:none;">
                                 Xem Tất Cả
                             </a>
                         }
@@ -977,8 +1038,6 @@
                 </div>
 
                 @* ── TAB: LỊCH ĐẶT CHỖ ── *@
-                @* QUAN TRỌNG: Tab này chỉ hiển thị link tới MyBookings để tránh SqlException *@
-                @* Bookings sẽ được load ở trang riêng /Booking/MyBookings *@
                 <div class="ua-panel ua-card" id="panel-bookings">
                     <div class="ua-card-header">
                         <span class="ua-card-title">Lịch Sử Đặt Chỗ</span>
@@ -987,20 +1046,113 @@
                             Xem Tất Cả
                         </a>
                     </div>
-                    <div class="ua-empty">
-                        <span class="material-symbols-outlined">event_seat</span>
-                        <p class="ua-empty-title">Quản lý lịch đặt chỗ của bạn</p>
-                        <p class="ua-empty-sub">Xem toàn bộ lịch đặt chỗ, trạng thái xác nhận và đặt chỗ mới.</p>
-                        <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
-                            <a asp-controller="Booking" asp-action="MyBookings" class="ua-empty-link">
-                                Xem Lịch Đặt Chỗ
-                            </a>
+
+                    @if (!bookings.Any())
+                    {
+                        <div class="ua-empty">
+                            <span class="material-symbols-outlined">event_seat</span>
+                            <p class="ua-empty-title">Chưa có lịch đặt chỗ nào</p>
+                            <p class="ua-empty-sub">Hãy đặt chỗ trước để có trải nghiệm tốt nhất tại Góc Lặng.</p>
+                            <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
+                                <a asp-controller="Booking" asp-action="Index" class="ua-empty-link">
+                                    Đặt Chỗ Ngay
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ua-card-body">
+                            <div class="ua-booking-list">
+                                @foreach (var bk in bookings.Take(5))
+                                {
+                                    var bcCss = bk.Status switch {
+                                        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "bc-confirmed",
+                                        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "bc-cancelled",
+                                        _ => "bc-pending"
+                                    };
+                                    <div class="ua-booking-card @bcCss">
+
+                                        <!-- Top row: date + time chip + status badge -->
+                                        <div class="ua-booking-top">
+                                            <div class="ua-booking-datetime">
+                                                <span class="material-symbols-outlined" style="font-size:15px;color:#A27B5C;flex-shrink:0;">calendar_today</span>
+                                                <span class="ua-booking-date">@bk.BookingDate.ToString("dd/MM/yyyy")</span>
+                                                <span class="ua-booking-time-chip">@bk.BookingTime</span>
+                                            </div>
+                                            <span class="ua-status @BStatusCss(bk.Status)">
+                                                @BStatusLabel(bk.Status)
+                                            </span>
+                                        </div>
+
+                                        <!-- Info grid: 4 fields -->
+                                        <div class="ua-booking-meta">
+                                            <div class="ua-booking-meta-item">
+                                                <span class="material-symbols-outlined" style="font-size:13px;color:rgba(162,123,92,.55);">person</span>
+                                                <span class="ua-booking-meta-label">Họ tên:</span>
+                                                <span class="ua-booking-meta-val">@bk.FullName</span>
+                                            </div>
+                                            <div class="ua-booking-meta-item">
+                                                <span class="material-symbols-outlined" style="font-size:13px;color:rgba(162,123,92,.55);">groups</span>
+                                                <span class="ua-booking-meta-label">Số khách:</span>
+                                                <span class="ua-booking-meta-val">@bk.GuestCount người</span>
+                                            </div>
+                                            <div class="ua-booking-meta-item">
+                                                <span class="material-symbols-outlined" style="font-size:13px;color:rgba(162,123,92,.55);">call</span>
+                                                <span class="ua-booking-meta-label">SĐT:</span>
+                                                <span class="ua-booking-meta-val">@bk.Phone</span>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(bk.Occasion))
+                                            {
+                                                <div class="ua-booking-meta-item">
+                                                    <span class="material-symbols-outlined" style="font-size:13px;color:rgba(162,123,92,.55);">celebration</span>
+                                                    <span class="ua-booking-meta-label">Dịp:</span>
+                                                    <span class="ua-booking-meta-val">@bk.Occasion</span>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <!-- Special request note -->
+                                        @if (!string.IsNullOrEmpty(bk.SpecialRequest))
+                                        {
+                                            <div class="ua-booking-note">
+                                                <span class="material-symbols-outlined" style="font-size:14px;color:#A27B5C;flex-shrink:0;margin-top:1px;">chat_bubble</span>
+                                                @bk.SpecialRequest
+                                            </div>
+                                        }
+
+                                        <!-- Created at -->
+                                        <div style="margin-top:.55rem;font-size:.7rem;color:rgba(63,78,79,.38);font-family:'Work Sans',sans-serif;">
+                                            Đặt lúc @bk.CreatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")
+                                        </div>
+
+                                    </div>
+                                }
+                            </div>
+
+                            @if (bookings.Count > 5)
+                            {
+                                <div style="text-align:center;padding:1rem 0 .25rem;">
+                                    <a asp-controller="Booking" asp-action="MyBookings"
+                                       style="font-size:.78rem;font-weight:700;color:#A27B5C;text-decoration:none;">
+                                        Xem thêm @(bookings.Count - 5) lịch đặt chỗ →
+                                    </a>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Footer: new booking button -->
+                        <div style="padding:1rem 1.5rem 1.25rem;border-top:1px solid rgba(162,123,92,.08);display:flex;justify-content:flex-end;">
                             <a asp-controller="Booking" asp-action="Index"
-                               class="ua-empty-link" style="background:#3F4E4F;">
+                               style="display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:700;
+                                      color:#fff;background:#3F4E4F;padding:.5rem 1.2rem;border-radius:9999px;
+                                      text-decoration:none;transition:opacity .2s;"
+                               onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+                                <span class="material-symbols-outlined" style="font-size:15px;">add</span>
                                 Đặt Chỗ Mới
                             </a>
                         </div>
-                    </div>
+                    }
                 </div>
 
             </div><!-- end panels -->
