@@ -207,6 +207,17 @@
     </div>
 </form>
 
+@{
+    var hcToastMsg = TempData["Success"]?.ToString() ?? "";
+    var hcToastErr = TempData["Error"]?.ToString() ?? "";
+    var hcToastIsErr = !string.IsNullOrEmpty(hcToastErr);
+    var hcFinalMsg = hcToastIsErr ? hcToastErr : hcToastMsg;
+}
+<div id="hc-toast-bridge"
+     data-msg="@hcFinalMsg"
+     data-error="@(hcToastIsErr ? 1 : 0)"
+     style="display:none;"></div>
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -254,18 +265,20 @@
             document.getElementById('hcToast').classList.remove('show');
         }
 
-        // ── Hiển thị TempData nếu có ─────────────────────────
-        @if (TempData["Success"] != null)
-        {
-                <text>setTimeout(() => showToast('@Html.Raw(TempData["Success"])'), 200);</text>
-        }
-        @if (TempData["Error"] != null)
-        {
-                <text>setTimeout(() => showToast('@Html.Raw(TempData["Error"])', true), 200);</text>
-        }
+        // ── Hiển thị TempData — FIX TS1382/TS1109: dùng data-bridge thay vi if trong script
+        (function() {
+                var bridge = document.getElementById('hc-toast-bridge');
+                if (!bridge) return;
+                var msg = bridge.getAttribute('data-msg');
+                var isErr = bridge.getAttribute('data-error') === '1';
+                if (msg) setTimeout(function() { showToast(msg, isErr); }, 200);
+        })();
 
         // ── Hiện validation summary nếu có lỗi ───────────────
-        const vs = document.querySelector('[data-valmsg-summary]');
-        if (vs && vs.querySelector('li')) vs.closest('div[style]')?.style && (vs.closest('div').style.display = 'block');
+        var vs = document.querySelector('[data-valmsg-summary]');
+        if (vs && vs.querySelector('li')) {
+            var vsWrap = vs.closest('div');
+            if (vsWrap) vsWrap.style.display = 'block';
+        }
     </script>
 }

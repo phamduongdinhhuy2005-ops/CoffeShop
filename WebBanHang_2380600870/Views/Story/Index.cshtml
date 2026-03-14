@@ -1,163 +1,984 @@
 ﻿@* FILE: Views/Story/Index.cshtml *@
+@* REDESIGN: Heritage editorial aesthetic — lấy cảm hứng từ design mẫu *@
 @{
     ViewData["Title"] = "Câu Chuyện Của Chúng Mình";
 }
 
-<div class="min-h-screen bg-cream-custom py-16">
-    <div class="max-w-4xl mx-auto px-4">
-        <!-- Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-5xl font-bold text-slate-custom mb-4">Câu Chuyện Của Góc Lặng</h1>
-            <div class="w-24 h-1 bg-primary mx-auto mb-6"></div>
-            <p class="text-xl text-teal-custom italic">Nơi mỗi ly cà phê kể một câu chuyện</p>
-        </div>
+@section Styles {
+    <style>
+        /* ── FONTS ── */
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
 
-        <!-- Main Story Content -->
-        <div class="space-y-12">
-            <!-- Section 1: Khởi Đầu -->
-            <section class="bg-white rounded-2xl p-8 shadow-lg">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="material-symbols-outlined text-primary text-4xl">coffee</span>
-                    <h2 class="text-3xl font-bold text-slate-custom">Khởi Đầu</h2>
-                </div>
-                <p class="text-lg text-teal-custom leading-relaxed mb-4">
-                    Năm 2020, giữa những ngày thành phố nhộn nhịp, chúng mình mơ về một không gian
-                    nơi con người có thể tạm dừng, thưởng thức và kết nối. Góc Lặng ra đời từ niềm
-                    đam mê với cà phê và khao khát tạo nên một "góc nhỏ yên bình" giữa lòng Sài Gòn.
-                </p>
-                <p class="text-lg text-teal-custom leading-relaxed">
-                    Với tình yêu cà phê và niềm tin vào chất lượng, chúng mình bắt đầu hành trình
-                    mang đến những ly cà phê đậm đà, được pha chế từ những hạt cà phê nguyên chất nhất.
-                </p>
-            </section>
+        /* ── HERO ── */
+        .story-hero {
+            position: relative;
+            min-height: 72vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #1C1916;
+        }
 
-            <!-- Section 2: Triết Lý -->
-            <section class="bg-white rounded-2xl p-8 shadow-lg">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="material-symbols-outlined text-primary text-4xl">favorite</span>
-                    <h2 class="text-3xl font-bold text-slate-custom">Triết Lý</h2>
-                </div>
-                <p class="text-lg text-teal-custom leading-relaxed mb-4">
-                    Chúng mình tin rằng mỗi ly cà phê không chỉ là thức uống, mà là một trải nghiệm,
-                    một khoảnh khắc đáng nhớ. Góc Lặng là nơi bạn có thể:
-                </p>
-                <ul class="space-y-3 text-lg text-teal-custom">
-                    <li class="flex items-start gap-3">
-                        <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
-                        <span>Tìm thấy sự bình yên giữa cuộc sống bận rộn</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
-                        <span>Thưởng thức hương vị cà phê đích thực</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
-                        <span>Kết nối với bạn bè, người thân trong không gian ấm cúng</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
-                        <span>Sáng tạo và làm việc trong môi trường yên tĩnh</span>
-                    </li>
-                </ul>
-            </section>
+        .story-hero__bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(162,123,92,0.18) 0%, transparent 70%), repeating-linear-gradient( 0deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px );
+            z-index: 1;
+        }
 
-            <!-- Section 3: Cam Kết -->
-            <section class="bg-gradient-to-br from-primary/10 to-teal-custom/10 rounded-2xl p-8">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="material-symbols-outlined text-primary text-4xl">workspace_premium</span>
-                    <h2 class="text-3xl font-bold text-slate-custom">Cam Kết Của Chúng Mình</h2>
-                </div>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-xl p-6 shadow">
-                        <div class="flex items-center gap-3 mb-3">
-                            <span class="material-symbols-outlined text-primary text-2xl">eco</span>
-                            <h3 class="font-bold text-lg text-slate-custom">100% Nguyên Chất</h3>
-                        </div>
-                        <p class="text-teal-custom">Cà phê nguyên chất, không pha trộn, từ những vùng trồng uy tín</p>
-                    </div>
-                    <div class="bg-white rounded-xl p-6 shadow">
-                        <div class="flex items-center gap-3 mb-3">
-                            <span class="material-symbols-outlined text-primary text-2xl">home</span>
-                            <h3 class="font-bold text-lg text-slate-custom">Không Gian Ấm Cúng</h3>
-                        </div>
-                        <p class="text-teal-custom">Thiết kế yên tĩnh, thoải mái để bạn thư giãn và làm việc</p>
-                    </div>
-                    <div class="bg-white rounded-xl p-6 shadow">
-                        <div class="flex items-center gap-3 mb-3">
-                            <span class="material-symbols-outlined text-primary text-2xl">groups</span>
-                            <h3 class="font-bold text-lg text-slate-custom">Phục Vụ Tận Tâm</h3>
-                        </div>
-                        <p class="text-teal-custom">Đội ngũ nhân viên chuyên nghiệp, thân thiện và nhiệt tình</p>
-                    </div>
-                    <div class="bg-white rounded-xl p-6 shadow">
-                        <div class="flex items-center gap-3 mb-3">
-                            <span class="material-symbols-outlined text-primary text-2xl">payments</span>
-                            <h3 class="font-bold text-lg text-slate-custom">Giá Cả Hợp Lý</h3>
-                        </div>
-                        <p class="text-teal-custom">Chất lượng cao với mức giá phải chăng cho mọi người</p>
-                    </div>
-                </div>
-            </section>
+            /* Grain overlay */
+            .story-hero__bg::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
+                opacity: 0.35;
+                pointer-events: none;
+            }
 
-            <!-- Section 4: Hành Trình -->
-            <section class="bg-white rounded-2xl p-8 shadow-lg">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="material-symbols-outlined text-primary text-4xl">timeline</span>
-                    <h2 class="text-3xl font-bold text-slate-custom">Hành Trình Phát Triển</h2>
-                </div>
-                <div class="space-y-6">
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0 w-24 text-right">
-                            <span class="inline-block bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">2020</span>
-                        </div>
-                        <div class="flex-1 border-l-2 border-primary pl-6 pb-6">
-                            <h3 class="font-bold text-lg text-slate-custom mb-2">Khởi Đầu</h3>
-                            <p class="text-teal-custom">Ra mắt cửa hàng đầu tiên tại Quận 3, TP.HCM</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0 w-24 text-right">
-                            <span class="inline-block bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">2021</span>
-                        </div>
-                        <div class="flex-1 border-l-2 border-primary pl-6 pb-6">
-                            <h3 class="font-bold text-lg text-slate-custom mb-2">Phát Triển</h3>
-                            <p class="text-teal-custom">Mở rộng menu và cải thiện chất lượng phục vụ</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0 w-24 text-right">
-                            <span class="inline-block bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">2022</span>
-                        </div>
-                        <div class="flex-1 border-l-2 border-primary pl-6 pb-6">
-                            <h3 class="font-bold text-lg text-slate-custom mb-2">Mở Rộng</h3>
-                            <p class="text-teal-custom">Ra mắt hệ thống đặt hàng và đặt chỗ online</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0 w-24 text-right">
-                            <span class="inline-block bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">2024</span>
-                        </div>
-                        <div class="flex-1 pl-6">
-                            <h3 class="font-bold text-lg text-slate-custom mb-2">Hiện Tại</h3>
-                            <p class="text-teal-custom">Tiếp tục phát triển và mang đến trải nghiệm tốt nhất cho khách hàng</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        .story-hero__content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 2rem 1rem;
+            max-width: 760px;
+            animation: heroFadeIn 1.2s cubic-bezier(.22,1,.36,1) both;
+        }
 
-            <!-- CTA Section -->
-            <section class="text-center bg-gradient-to-br from-primary to-teal-custom text-white rounded-2xl p-12">
-                <h2 class="text-3xl font-bold mb-4">Hãy Đến Và Trải Nghiệm</h2>
-                <p class="text-lg mb-8 opacity-90">Mỗi ly cà phê là một câu chuyện, và chúng mình muốn chia sẻ câu chuyện đó cùng bạn</p>
-                <div class="flex gap-4 justify-center flex-wrap">
-                    <a asp-controller="Menu" asp-action="Index" class="bg-white text-primary px-8 py-3 rounded-full font-bold hover:bg-cream-custom transition-colors">
-                        Xem Thực Đơn
-                    </a>
-                    <a asp-controller="Booking" asp-action="Index" class="bg-white/20 text-white px-8 py-3 rounded-full font-bold hover:bg-white/30 transition-colors border-2 border-white">
-                        Đặt Chỗ Ngay
-                    </a>
-                </div>
-            </section>
+        @@keyframes heroFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(28px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .story-hero__eyebrow {
+            display: inline-block;
+            letter-spacing: 0.28em;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #A27B5C;
+            margin-bottom: 1.4rem;
+            padding: 0.35rem 1.2rem;
+            border: 1px solid rgba(162,123,92,0.35);
+            border-radius: 9999px;
+        }
+
+        .story-hero__title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.6rem, 6vw, 5rem);
+            font-weight: 700;
+            line-height: 1.12;
+            color: #DCD7C9;
+            margin-bottom: 1.5rem;
+        }
+
+            .story-hero__title em {
+                font-style: italic;
+                color: #A27B5C;
+            }
+
+        .story-hero__sub {
+            font-size: 1.1rem;
+            color: rgba(220,215,201,0.7);
+            font-weight: 300;
+            font-style: italic;
+            line-height: 1.8;
+            max-width: 520px;
+            margin: 0 auto 2.4rem;
+        }
+
+        .story-hero__scroll {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(220,215,201,0.4);
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            animation: pulseDown 2s ease-in-out infinite;
+        }
+
+        @@keyframes pulseDown {
+            0%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+
+            50% {
+                transform: translateY(6px);
+                opacity: 0.8;
+            }
+        }
+
+        .story-hero__scroll .line {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, #A27B5C, transparent);
+        }
+
+        /* ── DIVIDER ── */
+        .ornament-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+            margin: 0 auto 3.5rem;
+            max-width: 300px;
+        }
+
+            .ornament-divider span {
+                flex: 1;
+                height: 1px;
+                background: linear-gradient(to right, transparent, #A27B5C, transparent);
+            }
+
+            .ornament-divider .dot {
+                flex: none;
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #A27B5C;
+                box-shadow: 0 0 10px rgba(162,123,92,0.6);
+            }
+
+        /* ── ORIGIN SECTION ── */
+        .origin-section {
+            padding: 6rem 1.5rem;
+            background: #F7F7F6;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .origin-section::before {
+                content: '"';
+                font-family: 'Playfair Display', serif;
+                font-size: 28rem;
+                color: rgba(162,123,92,0.05);
+                position: absolute;
+                top: -4rem;
+                left: -2rem;
+                line-height: 1;
+                pointer-events: none;
+                user-select: none;
+            }
+
+        .origin-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5rem;
+            align-items: center;
+        }
+
+        @@media (max-width: 768px) {
+            .origin-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+        }
+
+        .origin-image-wrap {
+            position: relative;
+        }
+
+            .origin-image-wrap::before {
+                content: '';
+                position: absolute;
+                inset: -12px -12px 12px 12px;
+                border: 2px solid #A27B5C;
+                border-radius: 0.75rem;
+                z-index: 0;
+            }
+
+            .origin-image-wrap img {
+                position: relative;
+                z-index: 1;
+                width: 100%;
+                border-radius: 0.75rem;
+                object-fit: cover;
+                aspect-ratio: 4/3;
+                filter: grayscale(30%);
+                transition: filter 0.6s ease;
+            }
+
+            .origin-image-wrap:hover img {
+                filter: grayscale(0%);
+            }
+
+        .origin-badge {
+            position: absolute;
+            bottom: -1.5rem;
+            right: -1.5rem;
+            z-index: 2;
+            background: #A27B5C;
+            color: #DCD7C9;
+            padding: 1rem 1.4rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            box-shadow: 0 8px 24px rgba(162,123,92,0.4);
+        }
+
+            .origin-badge .year {
+                font-family: 'Playfair Display', serif;
+                font-size: 2rem;
+                font-weight: 700;
+                line-height: 1;
+                display: block;
+            }
+
+            .origin-badge .label {
+                font-size: 0.65rem;
+                letter-spacing: 0.18em;
+                text-transform: uppercase;
+                opacity: 0.85;
+            }
+
+        .section-eyebrow {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #A27B5C;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+            font-weight: 700;
+            color: #2C3639;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-body {
+            font-size: 1.05rem;
+            color: #3F4E4F;
+            line-height: 2;
+            margin-bottom: 1.2rem;
+        }
+
+            .section-body em {
+                font-style: italic;
+                color: #A27B5C;
+            }
+
+        .pull-quote {
+            border-left: 3px solid #A27B5C;
+            padding: 1rem 1.5rem;
+            margin: 1.8rem 0;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.15rem;
+            color: #2C3639;
+            background: rgba(162,123,92,0.05);
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        /* ── PHILOSOPHY SECTION ── */
+        .philosophy-section {
+            background: #2C3639;
+            padding: 6rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .philosophy-section::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(to right, transparent, #A27B5C 30%, #A27B5C 70%, transparent);
+            }
+
+        .philosophy-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .philosophy-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: #DCD7C9;
+            margin-bottom: 2rem;
+            font-weight: 700;
+        }
+
+        .philosophy-statement {
+            font-size: 1.15rem;
+            color: rgba(220,215,201,0.75);
+            line-height: 2;
+            font-weight: 300;
+            font-style: italic;
+            max-width: 680px;
+            margin: 0 auto 4rem;
+            border-left: 3px solid #A27B5C;
+            text-align: left;
+            padding: 1.2rem 1.8rem;
+            background: rgba(162,123,92,0.07);
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        @@media (max-width: 640px) {
+            .values-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .value-card {
+            padding: 2rem 1.5rem;
+            border: 1px solid rgba(162,123,92,0.2);
+            border-radius: 1rem;
+            text-align: center;
+            transition: border-color 0.3s, transform 0.3s;
+            background: rgba(255,255,255,0.03);
+        }
+
+            .value-card:hover {
+                border-color: rgba(162,123,92,0.55);
+                transform: translateY(-4px);
+            }
+
+        .value-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 1px solid rgba(162,123,92,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: #A27B5C;
+        }
+
+        .value-title {
+            font-weight: 700;
+            color: #DCD7C9;
+            margin-bottom: 0.5rem;
+        }
+
+        .value-desc {
+            font-size: 0.85rem;
+            color: rgba(220,215,201,0.55);
+            line-height: 1.7;
+        }
+
+        /* ── TIMELINE SECTION ── */
+        .timeline-section {
+            padding: 6rem 1.5rem;
+            background: #F7F7F6;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+            .section-header .title {
+                font-family: 'Playfair Display', serif;
+                font-size: clamp(2rem, 3.5vw, 2.8rem);
+                font-weight: 700;
+                color: #2C3639;
+            }
+
+        .header-rule {
+            width: 4rem;
+            height: 3px;
+            background: #A27B5C;
+            margin: 1rem auto 0;
+            border-radius: 9999px;
+        }
+
+        /* Vertical centered timeline */
+        .timeline {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+            .timeline::before {
+                content: '';
+                position: absolute;
+                left: 50%;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                background: linear-gradient(to bottom, transparent, #A27B5C 10%, #A27B5C 90%, transparent);
+                transform: translateX(-50%);
+            }
+
+        @@media (max-width: 640px) {
+            .timeline::before {
+                left: 1.5rem;
+            }
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 2.5rem;
+            align-items: center;
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        @@media (max-width: 640px) {
+            .timeline-item {
+                grid-template-columns: auto 1fr;
+                gap: 1.5rem;
+            }
+
+                .timeline-item .tl-left {
+                    display: none;
+                }
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .tl-left {
+            text-align: right;
+        }
+
+        .tl-right {
+            text-align: left;
+        }
+
+        .tl-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            z-index: 1;
+        }
+
+        .tl-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #A27B5C;
+            border: 3px solid #F7F7F6;
+            box-shadow: 0 0 0 2px #A27B5C;
+            flex-shrink: 0;
+        }
+
+        /* Alternate layout: odd items — text left, even items — text right */
+        .timeline-item.alt .tl-left {
+            text-align: left;
+        }
+
+        .timeline-item.alt .tl-right {
+            text-align: right;
+        }
+
+        .tl-year {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #A27B5C;
+            line-height: 1.1;
+        }
+
+        .tl-title {
+            font-weight: 700;
+            color: #2C3639;
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .tl-desc {
+            font-size: 0.9rem;
+            color: #3F4E4F;
+            line-height: 1.7;
+        }
+
+        .tl-img {
+            width: 100%;
+            max-width: 280px;
+            border-radius: 0.75rem;
+            object-fit: cover;
+            aspect-ratio: 4/3;
+            box-shadow: 0 8px 28px rgba(44,54,57,0.15);
+            filter: grayscale(20%);
+            transition: filter 0.5s, transform 0.4s;
+        }
+
+            .tl-img:hover {
+                filter: grayscale(0%);
+                transform: scale(1.02);
+            }
+
+        /* For "right side has image" */
+        .tl-left-img {
+            margin-left: auto;
+        }
+
+        /* ── COMMITMENT SECTION ── */
+        .commit-section {
+            padding: 5rem 1.5rem;
+            background: rgba(162,123,92,0.06);
+        }
+
+        .commit-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4,1fr);
+            gap: 1.5rem;
+        }
+
+        @@media (max-width: 900px) {
+            .commit-grid {
+                grid-template-columns: repeat(2,1fr);
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .commit-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .commit-card {
+            background: #fff;
+            padding: 2.2rem 1.6rem;
+            border-radius: 1rem;
+            text-align: center;
+            border: 1px solid rgba(220,215,201,0.8);
+            box-shadow: 0 2px 12px rgba(44,54,57,0.06);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+            .commit-card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 16px 40px rgba(44,54,57,0.12);
+            }
+
+        .commit-icon {
+            color: #A27B5C;
+            font-size: 2.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .commit-title {
+            font-weight: 700;
+            color: #2C3639;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .commit-desc {
+            font-size: 0.83rem;
+            color: #3F4E4F;
+            line-height: 1.7;
+        }
+
+        /* ── CTA SECTION ── */
+        .cta-section {
+            padding: 6rem 1.5rem;
+            background: #2C3639;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .cta-section::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(ellipse 70% 60% at 50% 60%, rgba(162,123,92,0.22) 0%, transparent 70%);
+                pointer-events: none;
+            }
+
+        .cta-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .cta-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: #DCD7C9;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+        }
+
+        .cta-sub {
+            color: rgba(220,215,201,0.65);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+        }
+
+        .cta-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: #A27B5C;
+            color: #fff;
+            padding: 0.85rem 2.5rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            transition: background 0.2s, transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+            .btn-primary:hover {
+                background: #8d6a4d;
+                transform: translateY(-2px);
+                color: #fff;
+            }
+
+        .btn-outline {
+            background: transparent;
+            color: #DCD7C9;
+            padding: 0.85rem 2.5rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            border: 2px solid rgba(220,215,201,0.4);
+            transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+            .btn-outline:hover {
+                border-color: #DCD7C9;
+                background: #DCD7C9;
+                color: #2C3639;
+                transform: translateY(-2px);
+            }
+
+        /* ── SCROLL REVEAL ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.75s cubic-bezier(.22,1,.36,1), transform 0.75s cubic-bezier(.22,1,.36,1);
+        }
+
+            .reveal.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+
+        .reveal-delay-4 {
+            transition-delay: 0.4s;
+        }
+    </style>
+}
+
+<!-- ═══════════════════════════════════════════
+     HERO
+════════════════════════════════════════════ -->
+<section class="story-hero">
+    <div class="story-hero__bg"></div>
+    <div class="story-hero__content">
+        <span class="story-hero__eyebrow">Kể từ năm 2020 · Sài Gòn</span>
+        <h1 class="story-hero__title">
+            Câu Chuyện Của<br><em>Góc Lặng</em>
+        </h1>
+        <p class="story-hero__sub">
+            "Nơi mỗi ly cà phê là một khoảng lặng quý giá,
+            và mỗi khoảnh khắc đều xứng đáng được trân trọng."
+        </p>
+        <div class="story-hero__scroll">
+            <div class="line"></div>
+            <span>Cuộn xuống</span>
         </div>
     </div>
-</div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     ORIGIN — KHỞI ĐẦU
+════════════════════════════════════════════ -->
+<section class="origin-section">
+    <div class="origin-grid">
+        <!-- Image -->
+        <div class="origin-image-wrap reveal">
+            <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=700&q=80"
+                 alt="Không gian cà phê ấm cúng Góc Lặng" />
+            <div class="origin-badge">
+                <span class="year">2020</span>
+                <span class="label">Khởi Đầu</span>
+            </div>
+        </div>
+
+        <!-- Text -->
+        <div class="reveal reveal-delay-2">
+            <span class="section-eyebrow">Khởi đầu từ một giấc mơ</span>
+            <h2 class="section-title">Một Góc Nhỏ<br>Giữa Lòng Sài Gòn</h2>
+            <p class="section-body">
+                Năm 2020, giữa những ngày thành phố nhộn nhịp không ngừng nghỉ,
+                chúng mình mơ về một không gian nơi con người có thể
+                <em>tạm dừng, thưởng thức và thực sự kết nối.</em>
+            </p>
+            <p class="section-body">
+                Góc Lặng ra đời từ niềm đam mê cà phê và khao khát tạo nên
+                một "góc nhỏ bình yên" — nơi hương cà phê quyện cùng sự tĩnh lặng,
+                và mỗi vị khách đều cảm nhận được chút gì đó thân thuộc như nhà.
+            </p>
+            <div class="pull-quote">
+                "Với tình yêu cà phê và niềm tin vào chất lượng,
+                chúng mình bắt đầu hành trình mang đến những ly cà phê đậm đà
+                từ những hạt cà phê nguyên chất nhất."
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     PHILOSOPHY — TRIẾT LÝ
+════════════════════════════════════════════ -->
+<section class="philosophy-section">
+    <div class="philosophy-inner">
+        <span class="section-eyebrow" style="color:#A27B5C;">Điều chúng mình tin</span>
+        <h2 class="philosophy-title reveal">Triết Lý Của Góc Lặng</h2>
+
+        <p class="philosophy-statement reveal reveal-delay-1">
+            Chúng mình tin rằng mỗi ly cà phê không chỉ là thức uống,
+            mà là một trải nghiệm, một khoảnh khắc đáng nhớ —
+            một nhịp thở giữa cuộc đời hối hả.
+            Góc Lặng là nơi bạn có thể thực sự hiện diện với chính mình.
+        </p>
+
+        <div class="values-grid">
+            <!-- Giá trị 1 -->
+            <div class="value-card reveal reveal-delay-1">
+                <div class="value-icon">
+                    <span class="material-symbols-outlined">self_improvement</span>
+                </div>
+                <div class="value-title">Bình Yên</div>
+                <p class="value-desc">
+                    Tìm thấy sự tĩnh lặng và không gian để thở
+                    giữa cuộc sống bận rộn.
+                </p>
+            </div>
+
+            <!-- Giá trị 2 -->
+            <div class="value-card reveal reveal-delay-2">
+                <div class="value-icon">
+                    <span class="material-symbols-outlined">local_cafe</span>
+                </div>
+                <div class="value-title">Đích Thực</div>
+                <p class="value-desc">
+                    Hương vị cà phê nguyên chất, không pha trộn,
+                    từ những vùng trồng được chọn lọc kỹ càng.
+                </p>
+            </div>
+
+            <!-- Giá trị 3 -->
+            <div class="value-card reveal reveal-delay-3">
+                <div class="value-icon">
+                    <span class="material-symbols-outlined">diversity_3</span>
+                </div>
+                <div class="value-title">Kết Nối</div>
+                <p class="value-desc">
+                    Gắn kết bạn bè và người thân trong không gian
+                    ấm áp, chân thành.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     TIMELINE — HÀNH TRÌNH
+════════════════════════════════════════════ -->
+<section class="timeline-section">
+    <div class="section-header reveal">
+        <span class="section-eyebrow">Những dấu mốc</span>
+        <h2 class="title">Hành Trình Phát Triển</h2>
+        <div class="header-rule"></div>
+    </div>
+
+    <div class="timeline">
+
+        <!-- 2020 -->
+        <div class="timeline-item reveal">
+            <div class="tl-left">
+                <p class="tl-year">2020</p>
+                <p class="tl-title">Khởi Đầu</p>
+                <p class="tl-desc">Ra mắt cửa hàng đầu tiên tại Quận 3, TP.HCM — với chỉ 8 bàn, một chiếc máy pha cà phê và rất nhiều nhiệt huyết.</p>
+            </div>
+            <div class="tl-center"><div class="tl-dot"></div></div>
+            <div class="tl-right">
+                <img class="tl-img"
+                     src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&q=80"
+                     alt="Quán Góc Lặng đầu tiên 2020" />
+            </div>
+        </div>
+
+        <!-- 2021 -->
+        <div class="timeline-item alt reveal">
+            <div class="tl-left">
+                <img class="tl-img tl-left-img"
+                     src="https://images.unsplash.com/photo-1514066558159-fc8c737ef259?w=400&q=80"
+                     alt="Menu Góc Lặng 2021" />
+            </div>
+            <div class="tl-center"><div class="tl-dot"></div></div>
+            <div class="tl-right">
+                <p class="tl-year">2021</p>
+                <p class="tl-title">Phát Triển</p>
+                <p class="tl-desc">Mở rộng thực đơn với các dòng đồ uống đặc sản và cải thiện không gian — đón hàng nghìn vị khách quen đầu tiên.</p>
+            </div>
+        </div>
+
+        <!-- 2022 -->
+        <div class="timeline-item reveal">
+            <div class="tl-left">
+                <p class="tl-year">2022</p>
+                <p class="tl-title">Mở Rộng Online</p>
+                <p class="tl-desc">Ra mắt hệ thống đặt hàng và đặt chỗ trực tuyến — giúp Góc Lặng tiếp cận nhiều khách hàng hơn khắp thành phố.</p>
+            </div>
+            <div class="tl-center"><div class="tl-dot"></div></div>
+            <div class="tl-right">
+                <img class="tl-img"
+                     src="https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&q=80"
+                     alt="Đặt chỗ online Góc Lặng" />
+            </div>
+        </div>
+
+        <!-- 2024 — Hiện tại -->
+        <div class="timeline-item alt reveal">
+            <div class="tl-left">
+                <img class="tl-img tl-left-img"
+                     src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&q=80"
+                     alt="Góc Lặng hiện tại" />
+            </div>
+            <div class="tl-center"><div class="tl-dot"></div></div>
+            <div class="tl-right">
+                <p class="tl-year">Hiện Tại</p>
+                <p class="tl-title">Tiếp Tục Hành Trình</p>
+                <p class="tl-desc">Không ngừng cải tiến, mang đến trải nghiệm tốt nhất — vì mỗi ngày là một cơ hội để Góc Lặng trở nên ý nghĩa hơn với bạn.</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     COMMITMENT — CAM KẾT
+════════════════════════════════════════════ -->
+<section class="commit-section">
+    <div class="section-header reveal" style="margin-bottom:3rem;">
+        <span class="section-eyebrow">Điều chúng mình cam kết</span>
+        <h2 class="title" style="font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3vw,2.5rem);font-weight:700;color:#2C3639;">
+            Lời Hứa Với Bạn
+        </h2>
+        <div class="header-rule"></div>
+    </div>
+
+    <div class="commit-grid">
+        <div class="commit-card reveal reveal-delay-1">
+            <span class="material-symbols-outlined commit-icon">eco</span>
+            <p class="commit-title">100% Nguyên Chất</p>
+            <p class="commit-desc">Cà phê không pha trộn từ những vùng trồng uy tín, được chọn lọc thủ công.</p>
+        </div>
+        <div class="commit-card reveal reveal-delay-2">
+            <span class="material-symbols-outlined commit-icon">home_pin</span>
+            <p class="commit-title">Không Gian Ấm Cúng</p>
+            <p class="commit-desc">Thiết kế yên tĩnh, thoải mái — nơi bạn thư giãn và làm việc hiệu quả nhất.</p>
+        </div>
+        <div class="commit-card reveal reveal-delay-3">
+            <span class="material-symbols-outlined commit-icon">volunteer_activism</span>
+            <p class="commit-title">Phục Vụ Tận Tâm</p>
+            <p class="commit-desc">Đội ngũ chuyên nghiệp, thân thiện và thực sự quan tâm đến từng vị khách.</p>
+        </div>
+        <div class="commit-card reveal reveal-delay-4">
+            <span class="material-symbols-outlined commit-icon">payments</span>
+            <p class="commit-title">Giá Cả Hợp Lý</p>
+            <p class="commit-desc">Trải nghiệm cao cấp với mức giá phải chăng — ai cũng xứng đáng được thưởng thức.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     CTA
+════════════════════════════════════════════ -->
+<section class="cta-section">
+    <div class="cta-inner">
+        <div class="ornament-divider reveal" style="margin-bottom:3rem;">
+            <span></span><div class="dot"></div><span></span>
+        </div>
+
+        <h2 class="cta-title reveal">
+            Hãy Đến Và<br><em style="color:#A27B5C;">Trải Nghiệm</em>
+        </h2>
+        <p class="cta-sub reveal reveal-delay-1">
+            Mỗi ly cà phê là một câu chuyện,
+            và chúng mình muốn được chia sẻ câu chuyện đó cùng bạn.
+        </p>
+        <div class="cta-actions reveal reveal-delay-2">
+            <a asp-controller="Menu" asp-action="Index" class="btn-primary">
+                Xem Thực Đơn
+            </a>
+            <a asp-controller="Booking" asp-action="Index" class="btn-outline">
+                Đặt Chỗ Ngay
+            </a>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // ── Scroll Reveal ──
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
+}

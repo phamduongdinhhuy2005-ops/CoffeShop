@@ -1,5 +1,7 @@
-// FILE: Controllers/AccountController.cs
-// THAY THẾ TOÀN BỘ FILE CŨ - FIXED ALL WARNINGS
+// Controllers/AccountController.cs
+// THAY THẾ TOÀN BỘ FILE CŨ
+// Đã có đủ: Register, Login, Logout, AccessDenied, UserAccount, UpdateProfile, ChangePassword
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -111,7 +113,6 @@ namespace WebBanHang_2380600870.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login");
 
-            // FIX: Suppress nullable warning with proper null handling
             var orders = await _context.Orders
                 .Include(o => o.OrderDetails!)
                 .ThenInclude(od => od.Product)
@@ -132,7 +133,6 @@ namespace WebBanHang_2380600870.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login");
 
-            // VALIDATION
             if (string.IsNullOrWhiteSpace(fullName))
             {
                 TempData["Error"] = "Họ tên không được để trống.";
@@ -152,7 +152,6 @@ namespace WebBanHang_2380600870.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
         {
-            // VALIDATION ĐẦY ĐỦ
             if (string.IsNullOrWhiteSpace(currentPassword))
             {
                 TempData["Error"] = "Vui lòng nhập mật khẩu hiện tại.";

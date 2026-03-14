@@ -1,4 +1,12 @@
-﻿// Controllers/CartController.cs
+﻿// Controllers/CartController.cs — THAY THẾ TOÀN BỘ FILE CŨ
+// KEY FIXES:
+// [FIX-ADMIN] Add() guard: Admin bị chặn, trả JSON lỗi
+// [FIX-ADMIN] Index(), Checkout() redirect Admin → Admin/Index
+// [FIX-TOPPINGS] Remove/UpdateQuantity nhận đúng toppings param
+// [FIX-PRICE] SalePrice + giá âm Size S
+// [FIX-CART-COUNT] Admin trả 0
+// [NEW] OrderHistory() action
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -28,23 +36,34 @@ namespace WebBanHang_2380600870.Controllers
         // GET /Cart
         public IActionResult Index()
         {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Index", "Admin");
             var cart = GetCart();
             return View(cart);
         }
 
         // POST /Cart/Add
+        // [FIX-ADMIN] Admin bị chặn hoàn toàn — trả JSON thay vì redirect vì gọi qua AJAX
         [HttpPost]
         public async Task<IActionResult> Add(int productId, int quantity = 1, string size = "M",
             string sugarLevel = "100%", string toppings = "")
         {
+            if (User.IsInRole("Admin"))
+                return Json(new { success = false, message = "Tài khoản Admin không thể thêm vào giỏ hàng." });
+
+            if (quantity < 1) quantity = 1;
+            if (quantity > 99) quantity = 99;
+
             var product = await _context.Products.FindAsync(productId);
             if (product == null)
                 return Json(new { success = false, message = "Sản phẩm không tồn tại." });
 
             decimal price = product.Price;
-            // ±7k theo từng bậc kích cỡ (S=-7k, M=giá gốc, L=+7k)
+            if (product.IsOnSale && product.DiscountPercent.HasValue && product.DiscountPercent > 0)
+                price = product.SalePrice;
+
             if (size == "L") price += 7000;
-            else if (size == "S") price -= 7000;
+            else if (size == "S") price = Math.Max(0, price - 7000);
 
             var cart = GetCart();
             cart.AddItem(new CartItem
@@ -56,7 +75,7 @@ namespace WebBanHang_2380600870.Controllers
                 Quantity = quantity,
                 Size = size,
                 SugarLevel = sugarLevel,
-                Toppings = toppings
+                Toppings = toppings ?? ""
             });
             SaveCart(cart);
 
@@ -70,20 +89,23 @@ namespace WebBanHang_2380600870.Controllers
 
         // POST /Cart/Remove
         [HttpPost]
-        public IActionResult Remove(int productId, string size, string sugarLevel)
+        public IActionResult Remove(int productId, string size, string sugarLevel, string toppings = "")
         {
             var cart = GetCart();
-            cart.RemoveItem(productId, size, sugarLevel);
+            cart.RemoveItem(productId, size, sugarLevel, toppings);
             SaveCart(cart);
             return RedirectToAction(nameof(Index));
         }
 
         // POST /Cart/UpdateQuantity
         [HttpPost]
-        public IActionResult UpdateQuantity(int productId, string size, string sugarLevel, int quantity)
+        public IActionResult UpdateQuantity(int productId, string size, string sugarLevel, int quantity, string toppings = "")
         {
+            if (quantity < 0) quantity = 0;
+            if (quantity > 99) quantity = 99;
+
             var cart = GetCart();
-            cart.UpdateQuantity(productId, size, sugarLevel, quantity);
+            cart.UpdateQuantity(productId, size, sugarLevel, quantity, toppings);
             SaveCart(cart);
             return RedirectToAction(nameof(Index));
         }
@@ -98,27 +120,31 @@ namespace WebBanHang_2380600870.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET /Cart/CartCount (AJAX)
+        // GET /Cart/CartCount — AJAX badge
         [HttpGet]
         public IActionResult CartCount()
         {
+            if (User.IsInRole("Admin"))
+                return Json(new { count = 0 });
             var cart = GetCart();
             return Json(new { count = cart.TotalQuantity });
         }
 
         // GET /Cart/Checkout
         [Authorize]
-        public async Task<IActionResult> Checkout()  // FIX: async thay vì sync + .Result
+        public async Task<IActionResult> Checkout()
         {
-            var cart = GetCart();
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Index", "Admin");
 
+            var cart = GetCart();
             if (cart.Items == null || !cart.Items.Any())
             {
                 TempData["Error"] = "Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.";
                 return RedirectToAction("Index", "Menu");
             }
 
-            var user = await _userManager.GetUserAsync(User); // FIX: await thay vì .Result
+            var user = await _userManager.GetUserAsync(User);
             var vm = new CheckoutViewModel
             {
                 Cart = cart,
@@ -134,13 +160,17 @@ namespace WebBanHang_2380600870.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel vm)
         {
-            var cart = GetCart();
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Index", "Admin");
 
+            var cart = GetCart();
             if (cart.Items == null || !cart.Items.Any())
             {
-                TempData["Error"] = "Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.";
+                TempData["Error"] = "Giỏ hàng của bạn đang trống.";
                 return RedirectToAction("Index", "Menu");
             }
+
+            ModelState.Remove("Cart");
 
             if (!ModelState.IsValid)
             {
@@ -158,16 +188,19 @@ namespace WebBanHang_2380600870.Controllers
             var order = new Order
             {
                 UserId = user.Id,
-                OrderDate = DateTime.Now,
+                OrderDate = DateTime.UtcNow,
                 Status = OrderStatus.Pending,
                 TotalAmount = cart.TotalAmount,
-                Note = vm.Note,
-                ShippingAddress = vm.ShippingAddress,
+                Note = vm.Note?.Trim(),
+                ShippingAddress = vm.ShippingAddress?.Trim(),
+                PaymentMethod = vm.PaymentMethod ?? "COD",
                 OrderDetails = cart.Items.Select(i => new OrderDetail
                 {
                     ProductId = i.ProductId,
                     Quantity = i.Quantity,
-                    UnitPrice = i.UnitPrice
+                    UnitPrice = i.UnitPrice,
+                    ItemNote = $"Size: {i.Size} | Đường: {i.SugarLevel}" +
+                               (string.IsNullOrEmpty(i.Toppings) ? "" : $" | Topping: {i.Toppings}")
                 }).ToList()
             };
 
@@ -186,8 +219,7 @@ namespace WebBanHang_2380600870.Controllers
         public async Task<IActionResult> OrderConfirm(int orderId)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-                return RedirectToAction("Login", "Account");
+            if (user == null) return RedirectToAction("Login", "Account");
 
             var order = await _context.Orders
                 .Include(o => o.OrderDetails!)
@@ -196,6 +228,26 @@ namespace WebBanHang_2380600870.Controllers
 
             if (order == null) return NotFound();
             return View(order);
+        }
+
+        // GET /Cart/OrderHistory
+        [Authorize]
+        public async Task<IActionResult> OrderHistory()
+        {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Orders", "Admin");
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
+
+            var orders = await _context.Orders
+                .Include(o => o.OrderDetails!)
+                .ThenInclude(od => od.Product)
+                .Where(o => o.UserId == user.Id)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+
+            return View(orders);
         }
     }
 }

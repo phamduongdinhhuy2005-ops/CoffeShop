@@ -148,7 +148,21 @@
                             <h4 class="text-slate-custom text-base font-bold">@product.Name</h4>
                             <p class="text-teal-custom text-xs font-medium italic mt-1">@product.Description</p>
                         </div>
-                        <p class="text-primary font-bold whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                        @* FIX: Hiện giá sale *@
+                        @if (product.IsOnSale && product.SalePrice > 0 && product.SalePrice < product.Price)
+                        {
+                            <div class="flex flex-col items-end gap-0.5">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] font-bold px-1 py-0.5 rounded-full" style="background:#ef4444;color:#fff;line-height:1.2;">SALE</span>
+                                    <p class="text-primary font-bold whitespace-nowrap">@((product.SalePrice / 1000).ToString("0"))k</p>
+                                </div>
+                                <p class="text-xs text-gray-400 line-through whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-primary font-bold whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                        }
                     </div>
                 </a>
             }
@@ -180,7 +194,21 @@
                             <h4 class="text-slate-custom text-base font-bold">@product.Name</h4>
                             <p class="text-teal-custom text-xs font-medium italic mt-1">@product.Description</p>
                         </div>
-                        <p class="text-primary font-bold whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                        @* FIX: Hiện giá sale *@
+                        @if (product.IsOnSale && product.SalePrice > 0 && product.SalePrice < product.Price)
+                        {
+                            <div class="flex flex-col items-end gap-0.5">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] font-bold px-1 py-0.5 rounded-full" style="background:#ef4444;color:#fff;line-height:1.2;">SALE</span>
+                                    <p class="text-primary font-bold whitespace-nowrap">@((product.SalePrice / 1000).ToString("0"))k</p>
+                                </div>
+                                <p class="text-xs text-gray-400 line-through whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-primary font-bold whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                        }
                     </div>
                 </a>
             }
@@ -212,7 +240,21 @@
                             <h4 class="text-slate-custom text-base font-bold">@product.Name</h4>
                             <p class="text-teal-custom text-xs font-medium italic mt-1">@product.Description</p>
                         </div>
-                        <p class="text-primary font-bold whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                        @* FIX: Hiện giá sale *@
+                        @if (product.IsOnSale && product.SalePrice > 0 && product.SalePrice < product.Price)
+                        {
+                            <div class="flex flex-col items-end gap-0.5">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] font-bold px-1 py-0.5 rounded-full" style="background:#ef4444;color:#fff;line-height:1.2;">SALE</span>
+                                    <p class="text-primary font-bold whitespace-nowrap">@((product.SalePrice / 1000).ToString("0"))k</p>
+                                </div>
+                                <p class="text-xs text-gray-400 line-through whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-primary font-bold whitespace-nowrap">@((product.Price / 1000).ToString("0"))k</p>
+                        }
                     </div>
                 </a>
             }

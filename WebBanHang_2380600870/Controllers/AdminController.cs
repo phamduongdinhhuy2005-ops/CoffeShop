@@ -1,4 +1,6 @@
-﻿// FILE: Controllers/AdminController.cs
+﻿// Controllers/AdminController.cs
+// FIX CS0168: Bỏ biến 'ex' trong tất cả catch blocks không dùng đến
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +35,8 @@ namespace WebBanHang_2380600870.Controllers
             try
             {
                 var totalProducts = (await _productRepo.GetAllAsync())?.Count() ?? 0;
-                var totalUsers = _userManager.Users?.Count() ?? 0;
+
+                var totalUsers = await _userManager.Users.CountAsync();
                 var totalOrders = await _context.Orders.CountAsync();
                 var totalBookings = await _context.Bookings.CountAsync();
 
@@ -47,21 +50,30 @@ namespace WebBanHang_2380600870.Controllers
                     .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
                 ViewBag.TotalRevenue = totalRevenue;
 
+                var pendingOrders = await _context.Orders.CountAsync(o => o.Status == OrderStatus.Pending);
+                var processingOrders = await _context.Orders.CountAsync(o =>
+                    o.Status == OrderStatus.Confirmed || o.Status == OrderStatus.Processing);
+                ViewBag.PendingOrders = pendingOrders;
+                ViewBag.ProcessingOrders = processingOrders;
+
                 var recentOrders = await _context.Orders
                     .Include(o => o.User)
-                    .Include(o => o.OrderDetails)
+                    .Include(o => o.OrderDetails!)
+                    .ThenInclude(od => od.Product)
                     .OrderByDescending(o => o.OrderDate)
                     .Take(5)
                     .ToListAsync();
 
                 return View(recentOrders);
             }
-            catch (Exception)
+            catch (Exception)  // FIX CS0168: bỏ 'ex' — không dùng đến
             {
                 TempData["Error"] = "Có lỗi xảy ra khi tải dữ liệu dashboard. Vui lòng thử lại.";
                 ViewBag.TotalProducts = 0; ViewBag.TotalUsers = 0;
                 ViewBag.TotalOrders = 0; ViewBag.TotalBookings = 0;
-                ViewBag.TotalRevenue = 0;
+                ViewBag.TotalRevenue = 0m;
+                ViewBag.PendingOrders = 0;
+                ViewBag.ProcessingOrders = 0;
                 return View(new List<Order>());
             }
         }
@@ -79,7 +91,7 @@ namespace WebBanHang_2380600870.Controllers
         {
             try
             {
-                var users = _userManager.Users.ToList();
+                var users = await _userManager.Users.OrderBy(u => u.Email).ToListAsync();
                 var userRoles = new Dictionary<string, IList<string>>();
                 foreach (var user in users)
                     userRoles[user.Id] = await _userManager.GetRolesAsync(user);
@@ -87,7 +99,7 @@ namespace WebBanHang_2380600870.Controllers
                 ViewBag.UserRoles = userRoles;
                 return View(users);
             }
-            catch (Exception)
+            catch (Exception)  // FIX CS0168
             {
                 TempData["Error"] = "Có lỗi xảy ra khi tải danh sách người dùng.";
                 return View(new List<AppUser>());
@@ -107,6 +119,13 @@ namespace WebBanHang_2380600870.Controllers
                     return RedirectToAction(nameof(Users));
                 }
 
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser?.Id == userId)
+                {
+                    TempData["Error"] = "Không thể thay đổi quyền của tài khoản đang đăng nhập.";
+                    return RedirectToAction(nameof(Users));
+                }
+
                 if (await _userManager.IsInRoleAsync(user, "Admin"))
                 {
                     await _userManager.RemoveFromRoleAsync(user, "Admin");
@@ -122,7 +141,7 @@ namespace WebBanHang_2380600870.Controllers
 
                 return RedirectToAction(nameof(Users));
             }
-            catch (Exception)
+            catch (Exception)  // FIX CS0168
             {
                 TempData["Error"] = "Có lỗi xảy ra khi thay đổi quyền người dùng.";
                 return RedirectToAction(nameof(Users));
@@ -149,6 +168,12 @@ namespace WebBanHang_2380600870.Controllers
                     return RedirectToAction(nameof(Users));
                 }
 
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    TempData["Error"] = "Không thể xóa tài khoản Admin. Hãy hạ quyền trước.";
+                    return RedirectToAction(nameof(Users));
+                }
+
                 var result = await _userManager.DeleteAsync(user);
                 TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                     ? "Đã xóa tài khoản thành công."
@@ -156,7 +181,7 @@ namespace WebBanHang_2380600870.Controllers
 
                 return RedirectToAction(nameof(Users));
             }
-            catch (Exception)
+            catch (Exception)  // FIX CS0168
             {
                 TempData["Error"] = "Có lỗi xảy ra khi xóa người dùng.";
                 return RedirectToAction(nameof(Users));
@@ -170,7 +195,8 @@ namespace WebBanHang_2380600870.Controllers
             {
                 var query = _context.Orders
                     .Include(o => o.User)
-                    .Include(o => o.OrderDetails)
+                    .Include(o => o.OrderDetails!)
+                    .ThenInclude(od => od.Product)
                     .AsQueryable();
 
                 if (!string.IsNullOrEmpty(status) && Enum.TryParse<OrderStatus>(status, out var s))
@@ -178,9 +204,15 @@ namespace WebBanHang_2380600870.Controllers
 
                 var orders = await query.OrderByDescending(o => o.OrderDate).ToListAsync();
                 ViewBag.CurrentStatus = status;
+
+                ViewBag.StatusCounts = await _context.Orders
+                    .GroupBy(o => o.Status)
+                    .Select(g => new { Status = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Status.ToString(), x => x.Count);
+
                 return View(orders);
             }
-            catch (Exception)
+            catch (Exception)  // FIX CS0168
             {
                 TempData["Error"] = "Có lỗi xảy ra khi tải danh sách đơn hàng.";
                 return View(new List<Order>());
@@ -194,14 +226,24 @@ namespace WebBanHang_2380600870.Controllers
             try
             {
                 var order = await _context.Orders.FindAsync(orderId);
-                if (order == null) { TempData["Error"] = "Không tìm thấy đơn hàng."; return RedirectToAction(nameof(Orders)); }
+                if (order == null)
+                {
+                    TempData["Error"] = "Không tìm thấy đơn hàng.";
+                    return RedirectToAction(nameof(Orders));
+                }
+
+                if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled)
+                {
+                    TempData["Error"] = "Không thể thay đổi trạng thái đơn hàng đã hoàn thành hoặc đã hủy.";
+                    return RedirectToAction(nameof(Orders));
+                }
 
                 order.Status = status;
                 await _context.SaveChangesAsync();
-                TempData["Success"] = "Đã cập nhật trạng thái đơn hàng.";
+                TempData["Success"] = $"Đã cập nhật đơn #{orderId} sang trạng thái: {status}.";
                 return RedirectToAction(nameof(Orders));
             }
-            catch (Exception)
+            catch (Exception)  // FIX CS0168
             {
                 TempData["Error"] = "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng.";
                 return RedirectToAction(nameof(Orders));
@@ -209,14 +251,20 @@ namespace WebBanHang_2380600870.Controllers
         }
 
         // ========== QUẢN LÝ ĐẶT CHỖ ==========
-        public async Task<IActionResult> Bookings()
+        public async Task<IActionResult> Bookings(string? status = null)
         {
             try
             {
-                var bookings = await _context.Bookings.OrderByDescending(b => b.CreatedAt).ToListAsync();
+                var query = _context.Bookings.AsQueryable();
+
+                if (!string.IsNullOrEmpty(status) && Enum.TryParse<BookingStatus>(status, out var s))
+                    query = query.Where(b => b.Status == s);
+
+                var bookings = await query.OrderByDescending(b => b.CreatedAt).ToListAsync();
+                ViewBag.CurrentStatus = status;
                 return View(bookings);
             }
-            catch (Exception)
+            catch (Exception)  // FIX CS0168
             {
                 TempData["Error"] = "Có lỗi xảy ra khi tải danh sách đặt chỗ.";
                 return View(new List<Booking>());
@@ -230,14 +278,18 @@ namespace WebBanHang_2380600870.Controllers
             try
             {
                 var booking = await _context.Bookings.FindAsync(bookingId);
-                if (booking == null) { TempData["Error"] = "Không tìm thấy đặt chỗ."; return RedirectToAction(nameof(Bookings)); }
+                if (booking == null)
+                {
+                    TempData["Error"] = "Không tìm thấy đặt chỗ.";
+                    return RedirectToAction(nameof(Bookings));
+                }
 
                 booking.Status = status;
                 await _context.SaveChangesAsync();
-                TempData["Success"] = "Đã cập nhật trạng thái đặt chỗ.";
+                TempData["Success"] = $"Đã cập nhật trạng thái đặt chỗ của {booking.FullName}.";
                 return RedirectToAction(nameof(Bookings));
             }
-            catch (Exception)
+            catch (Exception)  // FIX CS0168
             {
                 TempData["Error"] = "Có lỗi xảy ra khi cập nhật trạng thái đặt chỗ.";
                 return RedirectToAction(nameof(Bookings));

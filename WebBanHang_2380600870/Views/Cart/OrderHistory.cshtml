@@ -1,0 +1,134 @@
+﻿@* Views/Cart/OrderHistory.cshtml *@
+@* NEW: Trang Lịch Sử Đặt Hàng riêng cho User *@
+@model IEnumerable<WebBanHang_2380600870.Models.Order>
+@{
+    ViewData["Title"] = "Lịch Sử Đặt Hàng | Góc Lặng";
+    Layout = "_Layout";
+
+    string OStatusLabel(WebBanHang_2380600870.Models.OrderStatus s) => s switch
+    {
+        WebBanHang_2380600870.Models.OrderStatus.Pending => "Chờ xác nhận",
+        WebBanHang_2380600870.Models.OrderStatus.Confirmed => "Đã xác nhận",
+        WebBanHang_2380600870.Models.OrderStatus.Processing => "Đang pha chế",
+        WebBanHang_2380600870.Models.OrderStatus.Ready => "Sẵn sàng",
+        WebBanHang_2380600870.Models.OrderStatus.Completed => "Hoàn thành",
+        WebBanHang_2380600870.Models.OrderStatus.Cancelled => "Đã hủy",
+        _ => "Không xác định"
+    };
+    string OStatusBg(WebBanHang_2380600870.Models.OrderStatus s) => s switch
+    {
+        WebBanHang_2380600870.Models.OrderStatus.Pending => "rgba(234,179,8,0.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Confirmed => "rgba(59,130,246,0.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Processing => "rgba(139,92,246,0.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Ready => "rgba(16,185,129,0.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Completed => "rgba(16,185,129,0.15)",
+        WebBanHang_2380600870.Models.OrderStatus.Cancelled => "rgba(239,68,68,0.1)",
+        _ => "rgba(100,116,139,0.1)"
+    };
+    string OStatusClr(WebBanHang_2380600870.Models.OrderStatus s) => s switch
+    {
+        WebBanHang_2380600870.Models.OrderStatus.Pending => "#b45309",
+        WebBanHang_2380600870.Models.OrderStatus.Confirmed => "#1d4ed8",
+        WebBanHang_2380600870.Models.OrderStatus.Processing => "#7c3aed",
+        WebBanHang_2380600870.Models.OrderStatus.Ready => "#065f46",
+        WebBanHang_2380600870.Models.OrderStatus.Completed => "#065f46",
+        WebBanHang_2380600870.Models.OrderStatus.Cancelled => "#b91c1c",
+        _ => "#64748b"
+    };
+}
+
+<section class="min-h-screen pt-28 pb-20" style="background: #F2EFE9;">
+    <div class="max-w-3xl mx-auto px-4">
+
+        <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
+            <div>
+                <p class="text-sm tracking-[0.2em] uppercase mb-1" style="color: #A27B5C;">Tài Khoản</p>
+                <h1 class="text-3xl font-bold" style="font-family: 'Playfair Display', serif; color: #2C3639;">Lịch Sử Đặt Hàng</h1>
+            </div>
+            <a asp-controller="Menu" asp-action="Index"
+               class="flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-85"
+               style="background: #A27B5C;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                Đặt Thêm
+            </a>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center py-24 bg-white rounded-2xl" style="border: 1px solid rgba(162,123,92,0.12);">
+                <span class="material-symbols-outlined" style="font-size: 64px; color: rgba(162,123,92,0.3);">receipt_long</span>
+                <h2 class="text-xl font-bold mt-4 mb-3" style="font-family: 'Playfair Display', serif; color: #2C3639;">Chưa có đơn hàng nào</h2>
+                <p class="text-sm mb-8" style="color: rgba(63,78,79,0.55);">Hãy thêm vào giỏ và đặt món yêu thích của bạn.</p>
+                <a asp-controller="Menu" asp-action="Index"
+                   class="inline-block px-8 py-3 rounded-full text-white font-semibold transition-opacity hover:opacity-85"
+                   style="background: #A27B5C;">
+                    Xem Thực Đơn
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="space-y-4">
+                @foreach (var order in Model)
+                {
+                    <div class="bg-white rounded-2xl border p-5 hover:border-primary/30 transition-colors" style="border-color: rgba(162,123,92,0.15);">
+                        <div class="flex items-start justify-between mb-4 flex-wrap gap-2">
+                            <div>
+                                <span class="font-bold text-base" style="color: #2C3639;">Đơn #@order.Id</span>
+                                <span class="text-sm ml-3" style="color: rgba(63,78,79,0.5);">@order.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide" style="background: @OStatusBg(order.Status); color: @OStatusClr(order.Status);">@OStatusLabel(order.Status)</span>
+                        </div>
+
+                        @if (order.OrderDetails != null && order.OrderDetails.Any())
+                        {
+                            <div class="space-y-2 mb-4">
+                                @foreach (var detail in order.OrderDetails)
+                                {
+                                    <div class="flex items-start gap-3">
+                                        @if (detail.Product?.ImageUrl != null)
+                                        {
+                                            <img src="@detail.Product.ImageUrl" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" onerror="this.style.display='none'" />
+                                        }
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium" style="color: #2C3639;">@(detail.Product?.Name ?? "Sản phẩm") × @detail.Quantity</p>
+                                            @if (!string.IsNullOrEmpty(detail.ItemNote))
+                                            {
+                                                <p class="text-xs mt-0.5" style="color: rgba(63,78,79,0.5);">@detail.ItemNote</p>
+                                            }
+                                        </div>
+                                        <span class="text-sm font-semibold flex-shrink-0" style="color: #A27B5C;">@((detail.UnitPrice * detail.Quantity).ToString("N0"))đ</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div class="flex items-center justify-between pt-3 border-t flex-wrap gap-2" style="border-color: rgba(162,123,92,0.1);">
+                            <div class="flex flex-col gap-1">
+                                @if (!string.IsNullOrEmpty(order.ShippingAddress))
+                                {
+                                    <span class="text-xs" style="color: rgba(63,78,79,0.55);">📍 @order.ShippingAddress</span>
+                                }
+                                @if (!string.IsNullOrEmpty(order.PaymentMethod))
+                                {
+                                    <span class="text-xs" style="color: rgba(63,78,79,0.55);">
+                                        💳 @(order.PaymentMethod == "COD" ? "Thanh toán khi nhận" : "Chuyển khoản")
+                                    </span>
+                                }
+                            </div>
+                            <span class="font-bold text-lg" style="color: #A27B5C;">@order.TotalAmount.ToString("N0")đ</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="mt-8 text-center">
+            <a asp-controller="Account" asp-action="UserAccount"
+               class="text-sm font-semibold transition-colors hover:opacity-70"
+               style="color: #A27B5C;">
+                ← Quay lại Cài Đặt Tài Khoản
+            </a>
+        </div>
+    </div>
+</section>

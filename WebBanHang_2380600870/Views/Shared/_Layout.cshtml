@@ -1,5 +1,9 @@
 ﻿@* FILE: Views/Shared/_Layout.cshtml *@
-@* THAY THẾ TOÀN BỘ FILE CŨ *@
+@* UPDATED: 
+   - User menu: thêm Cài Đặt, Lịch Sử Đặt Hàng, Lịch Sử Đặt Chỗ
+   - Admin menu: ẩn "Đặt Chỗ", ẩn icon giỏ hàng
+   - Admin: icon giỏ hàng redirect sang Product/Index thay vì Cart
+*@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -76,7 +80,7 @@
             right: 0;
             top: 100%;
             padding-top: 8px;
-            min-width: 220px;
+            min-width: 240px;
             z-index: 999;
         }
 
@@ -95,6 +99,25 @@
         /* Khi có admin-page class trên body: ẩn scroll ngoài */
         body.admin-page {
             overflow: hidden;
+        }
+
+        /* Cart badge */
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #A27B5C;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 99px;
+            min-width: 17px;
+            height: 17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0 3px;
         }
     </style>
 
@@ -122,14 +145,23 @@
                 <nav class="hidden md:flex flex-1 justify-center gap-10">
                     <a asp-controller="Menu" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Thực Đơn</a>
                     <a asp-controller="Story" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Câu Chuyện</a>
-                    <a asp-controller="Booking" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Đặt Chỗ</a>
+                    @* FIX: Admin không cần link Đặt Chỗ trên header — ẩn đi *@
+                    @if (!User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Booking" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Đặt Chỗ</a>
+                    }
+                    <a asp-controller="Home" asp-action="Privacy" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Chính Sách</a>
                     <a href="#footer-location" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Tìm Chúng Mình</a>
                 </nav>
                 <div class="flex items-center gap-2">
-                    <a asp-controller="Product" asp-action="Index"
-                       class="flex items-center justify-center rounded-full h-10 w-10 bg-cream-custom/50 text-teal-custom hover:bg-primary hover:text-white transition-all">
-                        <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
-                    </a>
+                    @* FIX: Ẩn icon giỏ hàng với Admin — Admin không dùng cart *@
+                    @if (!User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Product" asp-action="Index"
+                           class="flex items-center justify-center rounded-full h-10 w-10 bg-cream-custom/50 text-teal-custom hover:bg-primary hover:text-white transition-all">
+                            <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
+                        </a>
+                    }
                     <div class="user-menu">
                         <button class="flex items-center justify-center rounded-full h-10 w-10 bg-cream-custom/50 text-teal-custom hover:bg-primary hover:text-white transition-all">
                             <span class="material-symbols-outlined text-[20px]">person</span>
@@ -159,19 +191,36 @@
                                     <div class="py-2">
                                         @if (User.IsInRole("Admin"))
                                         {
-                                            <a asp-controller="Admin" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors">
+                                            @* ADMIN MENU: Chỉ có Dashboard và Quản lý — không có Đặt Chỗ *@
+                                            <a asp-controller="Admin" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
                                                 <span class="material-symbols-outlined text-primary" style="font-size:18px;">dashboard</span>
                                                 Dashboard Admin
                                             </a>
-                                            <a asp-controller="Admin" asp-action="Users" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors">
+                                            <a asp-controller="Admin" asp-action="Users" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
                                                 <span class="material-symbols-outlined text-primary" style="font-size:18px;">group</span>
                                                 Quản Lý Người Dùng
                                             </a>
                                         }
-                                        <a asp-controller="Booking" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors">
-                                            <span class="material-symbols-outlined text-primary" style="font-size:18px;">event_seat</span>
-                                            Đặt Chỗ
-                                        </a>
+                                        else
+                                        {
+                                            @* USER MENU: Cài Đặt + Lịch Sử Đặt Hàng + Lịch Sử Đặt Chỗ *@
+                                            <a asp-controller="Account" asp-action="UserAccount" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                                <span class="material-symbols-outlined text-primary" style="font-size:18px;">manage_accounts</span>
+                                                Cài Đặt Tài Khoản
+                                            </a>
+                                            <a asp-controller="Cart" asp-action="OrderHistory" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                                <span class="material-symbols-outlined text-primary" style="font-size:18px;">receipt_long</span>
+                                                Lịch Sử Đặt Hàng
+                                            </a>
+                                            <a asp-controller="Booking" asp-action="MyBookings" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                                <span class="material-symbols-outlined text-primary" style="font-size:18px;">event_seat</span>
+                                                Lịch Đặt Chỗ
+                                            </a>
+                                            <a asp-controller="Booking" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                                <span class="material-symbols-outlined text-primary" style="font-size:18px;">add_circle</span>
+                                                Đặt Chỗ Mới
+                                            </a>
+                                        }
                                     </div>
                                     <div class="border-t py-2" style="border-color:rgba(162,123,92,0.15);">
                                         <form asp-controller="Account" asp-action="Logout" method="post">
@@ -186,16 +235,14 @@
                                 }
                                 else
                                 {
-                                    <div class="p-4 flex flex-col gap-2">
-                                        <a asp-controller="Account" asp-action="Login"
-                                           class="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-sm font-bold text-white transition-all hover:opacity-90"
-                                           style="background:#2C3639;">
-                                            <span class="material-symbols-outlined text-[16px]">login</span>Đăng Nhập
+                                    <div class="py-2">
+                                        <a asp-controller="Account" asp-action="Login" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                            <span class="material-symbols-outlined text-primary" style="font-size:18px;">login</span>
+                                            Đăng Nhập
                                         </a>
-                                        <a asp-controller="Account" asp-action="Register"
-                                           class="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-sm font-bold transition-all hover:opacity-90"
-                                           style="border:1.5px solid #A27B5C; color:#A27B5C;">
-                                            <span class="material-symbols-outlined text-[16px]">person_add</span>Đăng Ký
+                                        <a asp-controller="Account" asp-action="Register" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                            <span class="material-symbols-outlined text-primary" style="font-size:18px;">person_add</span>
+                                            Đăng Ký
                                         </a>
                                     </div>
                                 }
@@ -205,179 +252,201 @@
                 </div>
             </header>
 
-            @* Body chiếm phần còn lại, scroll bên trong *@
-            <div style="flex:1; overflow:hidden;">
-                @RenderBody()
-            </div>
-
+            @RenderBody()
         </div>
     }
     else
     {
-        @* === NORMAL PAGES (non-admin): giữ nguyên layout cũ === *@
-        <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
-            <div class="layout-container flex h-full grow flex-col">
+        <!-- ===== NORMAL PAGE LAYOUT ===== -->
+        <div class="flex flex-col min-h-screen">
 
-                <!-- ===== HEADER (NORMAL PAGE) ===== -->
-                <header class="flex items-center justify-between whitespace-nowrap border-b border-primary/20 bg-background-light/90 backdrop-blur-md px-6 md:px-20 py-4 sticky top-0 z-50">
-                    <a asp-controller="Home" asp-action="Index" class="flex items-center gap-3 text-slate-custom hover:opacity-80 transition-opacity">
-                        <span class="material-symbols-outlined text-primary text-3xl" style="line-height:1;display:block;">local_cafe</span>
-                        <div class="flex flex-col justify-center">
-                            <h2 class="text-slate-custom font-bold text-lg tracking-widest uppercase"
-                                style="font-family:'Playfair Display',serif;line-height:1.3;margin:0;">
-                                Góc Lặng
-                            </h2>
-                            <p class="text-teal-custom text-[9px] tracking-[0.22em] uppercase font-medium" style="margin-top:2px;line-height:1;">Café & Nghệ Thuật Cổ Điển</p>
-                        </div>
-                    </a>
-                    <nav class="hidden md:flex flex-1 justify-center gap-10">
-                        <a asp-controller="Menu" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Thực Đơn</a>
-                        <a asp-controller="Story" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Câu Chuyện</a>
+            <!-- ===== HEADER (NORMAL PAGE) ===== -->
+            <header class="flex items-center justify-between whitespace-nowrap border-b border-primary/20 bg-background-light/90 backdrop-blur-md px-6 md:px-20 py-4 sticky top-0 z-50">
+                <a asp-controller="Home" asp-action="Index" class="flex items-center gap-3 text-slate-custom hover:opacity-80 transition-opacity">
+                    <span class="material-symbols-outlined text-primary text-3xl" style="line-height:1;display:block;">local_cafe</span>
+                    <div class="flex flex-col justify-center">
+                        <h2 class="text-slate-custom font-bold text-lg tracking-widest uppercase"
+                            style="font-family:'Playfair Display',serif;line-height:1.3;margin:0;">
+                            Góc Lặng
+                        </h2>
+                        <p class="text-teal-custom text-[9px] tracking-[0.22em] uppercase font-medium" style="margin-top:2px;line-height:1;">Café & Nghệ Thuật Cổ Điển</p>
+                    </div>
+                </a>
+
+                <nav class="hidden md:flex flex-1 justify-center gap-10">
+                    <a asp-controller="Menu" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Thực Đơn</a>
+                    <a asp-controller="Story" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Câu Chuyện</a>
+                    @* FIX: Ẩn Đặt Chỗ với Admin trên nav bar *@
+                    @if (!User.IsInRole("Admin"))
+                    {
                         <a asp-controller="Booking" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Đặt Chỗ</a>
-                        <a href="#footer-location" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Tìm Chúng Mình</a>
-                    </nav>
-                    <div class="flex items-center gap-2">
-                        <a asp-controller="Product" asp-action="Index"
-                           class="flex items-center justify-center rounded-full h-10 w-10 bg-cream-custom/50 text-teal-custom hover:bg-primary hover:text-white transition-all">
+                    }
+                    <a asp-controller="Home" asp-action="Privacy" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Chính Sách</a>
+                    <a href="#footer-location" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Tìm Chúng Mình</a>
+                </nav>
+
+                <div class="flex items-center gap-2">
+                    @* FIX: Ẩn giỏ hàng với Admin; User thấy giỏ hàng + badge số lượng *@
+                    @if (!User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Cart" asp-action="Index"
+                           class="relative flex items-center justify-center rounded-full h-10 w-10 bg-cream-custom/50 text-teal-custom hover:bg-primary hover:text-white transition-all"
+                           id="cartBtn">
                             <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
+                            <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
                         </a>
-                        <div class="user-menu">
-                            <button class="flex items-center justify-center rounded-full h-10 w-10 bg-cream-custom/50 text-teal-custom hover:bg-primary hover:text-white transition-all">
-                                <span class="material-symbols-outlined text-[20px]">person</span>
-                            </button>
-                            <div class="user-menu-dropdown">
-                                <div class="user-menu-dropdown-inner">
-                                    @if (User.Identity != null && User.Identity.IsAuthenticated)
-                                    {
-                                        <div class="px-5 py-4 border-b" style="border-color:rgba(162,123,92,0.15); background:rgba(162,123,92,0.05);">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style="background:#A27B5C;">
-                                                    @User.Identity.Name?.Substring(0, 1).ToUpper()
-                                                </div>
-                                                <div class="min-w-0">
-                                                    <p class="text-slate-custom font-bold text-sm truncate">@User.Identity.Name</p>
-                                                    @if (User.IsInRole("Admin"))
-                                                    {
-                                                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background:rgba(162,123,92,0.2); color:#A27B5C;">Admin</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background:rgba(63,78,79,0.15); color:#3F4E4F;">Thành viên</span>
-                                                    }
-                                                </div>
+                    }
+
+                    <div class="user-menu">
+                        <button class="flex items-center justify-center rounded-full h-10 w-10 bg-cream-custom/50 text-teal-custom hover:bg-primary hover:text-white transition-all">
+                            <span class="material-symbols-outlined text-[20px]">person</span>
+                        </button>
+                        <div class="user-menu-dropdown">
+                            <div class="user-menu-dropdown-inner">
+                                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                                {
+                                    <div class="px-5 py-4 border-b" style="border-color:rgba(162,123,92,0.15); background:rgba(162,123,92,0.05);">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style="background:#A27B5C;">
+                                                @User.Identity.Name?.Substring(0, 1).ToUpper()
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-slate-custom font-bold text-sm truncate">@User.Identity.Name</p>
+                                                @if (User.IsInRole("Admin"))
+                                                {
+                                                    <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background:rgba(162,123,92,0.2); color:#A27B5C;">Admin</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background:rgba(63,78,79,0.15); color:#3F4E4F;">Thành viên</span>
+                                                }
                                             </div>
                                         </div>
-                                        <div class="py-2">
-                                            @if (User.IsInRole("Admin"))
-                                            {
-                                                <a asp-controller="Admin" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors">
-                                                    <span class="material-symbols-outlined text-primary" style="font-size:18px;">dashboard</span>
-                                                    Dashboard Admin
-                                                </a>
-                                                <a asp-controller="Admin" asp-action="Users" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors">
-                                                    <span class="material-symbols-outlined text-primary" style="font-size:18px;">group</span>
-                                                    Quản Lý Người Dùng
-                                                </a>
-                                            }
-                                            <a asp-controller="Booking" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors">
+                                    </div>
+                                    <div class="py-2">
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            @* ADMIN: chỉ hiện Dashboard + Quản lý, KHÔNG có Đặt Chỗ *@
+                                            <a asp-controller="Admin" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                                <span class="material-symbols-outlined text-primary" style="font-size:18px;">dashboard</span>
+                                                Dashboard Admin
+                                            </a>
+                                            <a asp-controller="Admin" asp-action="Users" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                                <span class="material-symbols-outlined text-primary" style="font-size:18px;">group</span>
+                                                Quản Lý Người Dùng
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            @* USER: Cài Đặt, Lịch Sử Đặt Hàng, Lịch Đặt Chỗ, Đặt Chỗ Mới *@
+                                            <a asp-controller="Account" asp-action="UserAccount" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                                <span class="material-symbols-outlined text-primary" style="font-size:18px;">manage_accounts</span>
+                                                Cài Đặt Tài Khoản
+                                            </a>
+                                            <a asp-controller="Cart" asp-action="OrderHistory" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                                <span class="material-symbols-outlined text-primary" style="font-size:18px;">receipt_long</span>
+                                                Lịch Sử Đặt Hàng
+                                            </a>
+                                            <a asp-controller="Booking" asp-action="MyBookings" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
                                                 <span class="material-symbols-outlined text-primary" style="font-size:18px;">event_seat</span>
-                                                Đặt Chỗ
+                                                Lịch Đặt Chỗ
                                             </a>
-                                        </div>
-                                        <div class="border-t py-2" style="border-color:rgba(162,123,92,0.15);">
-                                            <form asp-controller="Account" asp-action="Logout" method="post">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="flex items-center gap-3 w-full px-5 py-3 text-sm text-left transition-colors" style="color:#b91c1c;"
-                                                        onmouseover="this.style.background='rgba(239,68,68,0.07)'" onmouseout="this.style.background=''">
-                                                    <span class="material-symbols-outlined" style="font-size:18px; color:#b91c1c;">logout</span>
-                                                    Đăng Xuất
-                                                </button>
-                                            </form>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="p-4 flex flex-col gap-2">
-                                            <a asp-controller="Account" asp-action="Login"
-                                               class="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-sm font-bold text-white transition-all hover:opacity-90"
-                                               style="background:#2C3639;">
-                                                <span class="material-symbols-outlined text-[16px]">login</span>Đăng Nhập
+                                            <a asp-controller="Booking" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                                <span class="material-symbols-outlined text-primary" style="font-size:18px;">add_circle</span>
+                                                Đặt Chỗ Mới
                                             </a>
-                                            <a asp-controller="Account" asp-action="Register"
-                                               class="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-sm font-bold transition-all hover:opacity-90"
-                                               style="border:1.5px solid #A27B5C; color:#A27B5C;">
-                                                <span class="material-symbols-outlined text-[16px]">person_add</span>Đăng Ký
-                                            </a>
-                                        </div>
-                                    }
+                                        }
+                                    </div>
+                                    <div class="border-t py-2" style="border-color:rgba(162,123,92,0.15);">
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="flex items-center gap-3 w-full px-5 py-3 text-sm text-left transition-colors" style="color:#b91c1c;"
+                                                    onmouseover="this.style.background='rgba(239,68,68,0.07)'" onmouseout="this.style.background=''">
+                                                <span class="material-symbols-outlined" style="font-size:18px; color:#b91c1c;">logout</span>
+                                                Đăng Xuất
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="py-2">
+                                        <a asp-controller="Account" asp-action="Login" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                            <span class="material-symbols-outlined text-primary" style="font-size:18px;">login</span>
+                                            Đăng Nhập
+                                        </a>
+                                        <a asp-controller="Account" asp-action="Register" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
+                                            <span class="material-symbols-outlined text-primary" style="font-size:18px;">person_add</span>
+                                            Đăng Ký
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ===== BODY ===== -->
+            <main class="flex-1">
+                @RenderBody()
+            </main>
+
+            <!-- ===== FOOTER ===== -->
+            <footer id="footer-location" class="bg-slate-custom text-cream-custom pt-16 pb-8 mt-auto">
+                <div class="max-w-7xl mx-auto px-6 md:px-20">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                        <div class="md:col-span-1">
+                            <div class="flex items-center gap-3 mb-5">
+                                <span class="material-symbols-outlined text-primary text-3xl" style="line-height:1;">local_cafe</span>
+                                <div>
+                                    <h3 class="font-bold text-xl tracking-widest uppercase" style="font-family:'Playfair Display',serif;">Góc Lặng</h3>
+                                    <p class="text-primary text-[10px] tracking-[0.2em] uppercase">Café & Nghệ Thuật Cổ Điển</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </header>
-
-                @RenderBody()
-
-                <!-- ===== FOOTER ===== -->
-                <footer class="bg-background-light py-16 px-6 md:px-20 border-t border-primary/10">
-                    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-                        <div>
-                            <a asp-controller="Home" asp-action="Index" class="flex items-center gap-3 mb-2 hover:opacity-80 transition-opacity">
-                                <span class="material-symbols-outlined text-primary text-3xl">local_cafe</span>
-                                <h2 class="text-slate-custom font-bold text-lg uppercase" style="font-family:'Playfair Display',serif;">Góc Lặng</h2>
-                            </a>
-                            <p class="text-primary text-xs tracking-widest uppercase mb-5">Café & Nghệ Thuật Cổ Điển</p>
-                            <p class="vn-body text-teal-custom text-sm mb-6">Một nơi chúng mình tạo ra vì niềm đam mê — dành cho những ai muốn dừng lại, thở sâu, và thưởng thức buổi sáng đúng nghĩa.</p>
-                            <div class="flex gap-4">
-                                <a class="text-teal-custom hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">public</span></a>
-                                <a class="text-teal-custom hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">camera</span></a>
-                                <a class="text-teal-custom hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">share</span></a>
-                            </div>
+                            <p class="text-cream-custom/60 text-sm leading-relaxed">
+                                Một nơi chúng mình tạo ra vì niềm đam mê — dành cho những ai muốn dừng lại, thở sâu, và thưởng thức buổi sáng đúng nghĩa.
+                            </p>
                         </div>
                         <div>
-                            <h4 class="text-slate-custom font-bold uppercase tracking-widest text-sm mb-6">Khám Phá</h4>
-                            <ul class="flex flex-col gap-4 text-teal-custom text-sm">
-                                <li><a asp-controller="Story" asp-action="Index" class="hover:text-primary transition-colors">Câu Chuyện Của Chúng Mình</a></li>
-                                <li><a asp-controller="Menu" asp-action="Index" class="hover:text-primary transition-colors">Thực Đơn</a></li>
-                                <li><a asp-controller="Booking" asp-action="Index" class="hover:text-primary transition-colors">Đặt Chỗ</a></li>
-                                <li><a asp-controller="GiftCard" asp-action="Index" class="hover:text-primary transition-colors">Gift Card</a></li>
+                            <h4 class="font-bold text-sm uppercase tracking-widest text-primary mb-6">Khám Phá</h4>
+                            <ul class="space-y-3 text-sm">
+                                <li><a asp-controller="Story" asp-action="Index" class="text-cream-custom/60 hover:text-primary transition-colors">Câu Chuyện Của Chúng Mình</a></li>
+                                <li><a asp-controller="Menu" asp-action="Index" class="text-cream-custom/60 hover:text-primary transition-colors">Thực Đơn</a></li>
+                                <li><a asp-controller="Booking" asp-action="Index" class="text-cream-custom/60 hover:text-primary transition-colors">Đặt Chỗ</a></li>
+                                <li><a asp-controller="GiftCard" asp-action="Index" class="text-cream-custom/60 hover:text-primary transition-colors">Gift Card</a></li>
                             </ul>
                         </div>
-                        <div id="footer-location">
-                            <h4 class="text-slate-custom font-bold uppercase tracking-widest text-sm mb-6">Ghé Thăm</h4>
-                            <ul class="flex flex-col gap-4 text-teal-custom text-sm">
-                                <li class="flex gap-2 items-start">
-                                    <span class="material-symbols-outlined text-primary text-lg shrink-0">location_on</span>
-                                    124 Đường Hoài Cổ, Quận 3, TP.HCM
+                        <div>
+                            <h4 class="font-bold text-sm uppercase tracking-widest text-primary mb-6">Ghé Thăm</h4>
+                            <ul class="space-y-3 text-sm text-cream-custom/60">
+                                <li class="flex gap-2.5 items-start">
+                                    <span class="material-symbols-outlined text-primary text-[16px] mt-0.5 shrink-0">location_on</span>
+                                    <span>124 Đường Hoài Cổ, Quận 3, TP.HCM</span>
                                 </li>
-                                <li class="flex gap-2 items-center">
-                                    <span class="material-symbols-outlined text-primary text-lg shrink-0">schedule</span>
-                                    Thứ 2 – Thứ 6: 7:00 – 19:00
+                                <li class="flex gap-2.5 items-center">
+                                    <span class="material-symbols-outlined text-primary text-[16px] shrink-0">schedule</span>
+                                    <span>Thứ 2 – Thứ 6: 7:00 – 19:00</span>
                                 </li>
-                                <li class="flex gap-2 items-center">
-                                    <span class="material-symbols-outlined text-primary text-lg shrink-0">schedule</span>
-                                    Thứ 7 – CN: 8:00 – 20:00
-                                </li>
-                                <li class="flex gap-2 items-center">
-                                    <span class="material-symbols-outlined text-primary text-lg shrink-0">call</span>
-                                    (028) 1234 5678
+                                <li class="flex gap-2.5 items-center">
+                                    <span class="material-symbols-outlined text-primary text-[16px] shrink-0">schedule</span>
+                                    <span>Thứ 7 – CN: 8:00 – 20:00</span>
                                 </li>
                             </ul>
                         </div>
                         <div>
-                            <h4 class="text-slate-custom font-bold uppercase tracking-widest text-sm mb-6">Vị Trí</h4>
-                            <div class="rounded-xl overflow-hidden h-40 bg-cream-custom/40">
-                                <img alt="Bản đồ Góc Lặng" class="w-full h-full object-cover grayscale opacity-60"
-                                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPTaYoGRzPS3HzjX1qkNfvn5L-33NWlXGgvN8ErZNOIgDCHZlEwxKKZZsudgd_Z0rfGjpSN17Mr5FLB1gU7rHtIdVqfJ6HTCEzOihtzl5_2lg-N8s0nHF20VjyMQVTxurl0JeJuNiCiI9gKeFx7csGJcMEXUbI239gBhv-g0VvgEmKcEI_xiqKu2P2SPmlfBLurzkAWCEiYUT4j3htSa7cn-MR82jTb2u_lLw_q8VL0i8zR2rnhCCA9gJgVVyNxR4ej71-Go3jgF2w" />
+                            <h4 class="font-bold text-sm uppercase tracking-widest text-primary mb-6">Vị Trí</h4>
+                            <div class="rounded-xl overflow-hidden" style="height:140px; background:rgba(162,123,92,0.15); display:flex; align-items:center; justify-content:center;">
+                                <span class="material-symbols-outlined text-primary" style="font-size:48px;">location_on</span>
                             </div>
                         </div>
                     </div>
-                    <div class="max-w-7xl mx-auto mt-16 pt-8 border-t border-primary/10 text-center text-teal-custom text-xs uppercase tracking-[0.2em]">
+                    <div class="border-t pt-8 text-center text-xs text-cream-custom/40" style="border-color:rgba(220,215,201,0.12);">
                         &copy; 2024 Góc Lặng Café. Được làm với tình yêu và cà phê. ☕
                     </div>
-                </footer>
+                </div>
+            </footer>
 
-            </div>
         </div>
     }
 
@@ -387,13 +456,27 @@
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
                     e.preventDefault();
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
         });
+
+        // FIX: Tự động cập nhật cart badge khi page load
+        (function updateCartBadge() {
+            const badge = document.getElementById('cartBadge');
+            if (!badge) return;
+            fetch('/Cart/CartCount')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.count > 0) {
+                        badge.textContent = data.count > 99 ? '99+' : data.count;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(() => {});
+        })();
     </script>
 
     @await RenderSectionAsync("AdminPage", required: false)

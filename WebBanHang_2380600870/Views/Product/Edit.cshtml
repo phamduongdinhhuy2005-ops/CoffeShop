@@ -618,14 +618,15 @@
                             <div style="font-size:.72rem;color:rgba(63,78,79,.45);">Hiện badge "Sale" và giá sau giảm</div>
                         </div>
                     </div>
-                    <label style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;">
+                    @* FIX: Checkbox NGOÀI label để tránh double-toggle (label+onclick) *@
+                    <div style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;">
                         <input type="checkbox" id="toggleSale" asp-for="IsOnSale"
                                onchange="toggleSaleBox(this.checked)" style="display:none;" />
-                        <span id="saleSlider" onclick="document.getElementById('toggleSale').click();toggleSaleBox(document.getElementById('toggleSale').checked)"
+                        <span id="saleSlider" onclick="var cb=document.getElementById('toggleSale');cb.checked=!cb.checked;toggleSaleBox(cb.checked);"
                               style="position:absolute;inset:0;border-radius:11px;cursor:pointer;transition:background .2s;background:#e2e8f0;">
                             <span style="position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);display:block;" id="saleThumb"></span>
                         </span>
-                    </label>
+                    </div>
                 </div>
 
                 <div class="ep-sale-box" id="saleBox">
@@ -707,6 +708,13 @@
     <span class="material-symbols-outlined">check_circle</span>
     <span id="toastMsg">Đã lưu thay đổi!</span>
 </div>
+
+@{
+    var epToastMsg = TempData["Success"]?.ToString() ?? "";
+}
+<div id="ep-toast-bridge"
+     data-msg="@epToastMsg"
+     style="display:none;"></div>
 
 @section Scripts {
     <script>
@@ -834,9 +842,12 @@
             setTimeout(() => t.classList.remove('show'), 3200);
         }
 
-        @if (TempData["Success"] != null)
-        {
-                <text>setTimeout(() => showToast('@TempData["Success"]'), 300);</text>
-        }
+        // FIX TS1382: dùng data-bridge thay vi if + anonymous fn trong script
+        (function() {
+                var bridge = document.getElementById('ep-toast-bridge');
+                if (!bridge) return;
+                var msg = bridge.getAttribute('data-msg');
+                if (msg) setTimeout(function() { showToast(msg); }, 300);
+        })();
     </script>
 }

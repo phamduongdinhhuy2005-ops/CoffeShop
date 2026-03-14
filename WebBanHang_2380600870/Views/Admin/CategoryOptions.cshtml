@@ -4,6 +4,13 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["ActivePage"] = "Category";
     ViewData["Breadcrumb"] = "<a href='/Category'>Danh mục</a> <span class='material-symbols-outlined'>chevron_right</span> Tùy chọn sản phẩm";
+
+    var serverCategories = ViewBag.Categories as IEnumerable<WebBanHang_2380600870.Models.Category>
+                          ?? Enumerable.Empty<WebBanHang_2380600870.Models.Category>();
+
+    // FIX TS1109: pre-compute để tránh C# lambda trong <script>
+    var serverCategoriesJson = System.Text.Json.JsonSerializer.Serialize(
+        serverCategories.Select(c => new { id = c.Id, name = c.Name }));
 }
 
 <style>
@@ -343,16 +350,124 @@
             opacity: 1;
         }
 
-    .co-badge-new {
-        font-size: .65rem;
-        font-weight: 800;
-        background: #10b981;
-        color: #fff;
-        padding: .1rem .4rem;
-        border-radius: 4px;
-        text-transform: uppercase;
-        letter-spacing: .05em;
+    /* ── Inline Edit Modal ─────────────────────────────────── */
+    .co-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 8000;
+        background: rgba(44,54,57,.35);
+        backdrop-filter: blur(3px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .2s;
     }
+
+        .co-modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+    .co-modal {
+        background: #fff;
+        border-radius: 18px;
+        padding: 1.75rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 60px rgba(44,54,57,.18);
+        transform: translateY(16px) scale(.97);
+        transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    .co-modal-overlay.open .co-modal {
+        transform: translateY(0) scale(1);
+    }
+
+    .co-modal-title {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #2c3639;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .co-modal-field {
+        margin-bottom: 1rem;
+    }
+
+    .co-modal-label {
+        display: block;
+        font-size: .78rem;
+        font-weight: 700;
+        color: rgba(44,54,57,.6);
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        margin-bottom: .4rem;
+    }
+
+    .co-modal-input {
+        width: 100%;
+        padding: .65rem 1rem;
+        border: 1.5px solid rgba(162,123,92,.25);
+        border-radius: 10px;
+        font-size: .9rem;
+        color: #2c3639;
+        background: #fafaf9;
+        outline: none;
+        transition: border-color .15s;
+        font-family: 'Work Sans',sans-serif;
+        box-sizing: border-box;
+    }
+
+        .co-modal-input:focus {
+            border-color: #a27b5c;
+            background: #fff;
+        }
+
+    .co-modal-footer {
+        display: flex;
+        gap: .75rem;
+        margin-top: 1.5rem;
+        justify-content: flex-end;
+    }
+
+    .co-modal-cancel {
+        padding: .6rem 1.2rem;
+        background: none;
+        border: 1.5px solid rgba(44,54,57,.15);
+        border-radius: 10px;
+        color: #2c3639;
+        font-size: .875rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Work Sans',sans-serif;
+        transition: background .15s;
+    }
+
+        .co-modal-cancel:hover {
+            background: rgba(44,54,57,.05);
+        }
+
+    .co-modal-confirm {
+        padding: .6rem 1.4rem;
+        background: #a27b5c;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: .875rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: 'Work Sans',sans-serif;
+        transition: opacity .15s;
+    }
+
+        .co-modal-confirm:hover {
+            opacity: .88;
+        }
 </style>
 
 <!-- Toast -->
@@ -369,6 +484,28 @@
         <span class="material-symbols-outlined" style="font-size:18px;">save</span>
         Lưu tất cả thay đổi
     </button>
+</div>
+
+<!-- Inline Edit Modal -->
+<div class="co-modal-overlay" id="editModal" onclick="closeModalOnBackdrop(event)">
+    <div class="co-modal">
+        <div class="co-modal-title">
+            <span class="material-symbols-outlined" style="color:#a27b5c;font-size:20px;">edit</span>
+            Chỉnh sửa Topping
+        </div>
+        <div class="co-modal-field">
+            <label class="co-modal-label">Tên topping</label>
+            <input class="co-modal-input" id="modalToppingName" type="text" placeholder="VD: Thêm đá..." />
+        </div>
+        <div class="co-modal-field">
+            <label class="co-modal-label">Giá (đ) — nhập 0 nếu miễn phí</label>
+            <input class="co-modal-input" id="modalToppingPrice" type="number" min="0" step="1000" placeholder="0" />
+        </div>
+        <div class="co-modal-footer">
+            <button class="co-modal-cancel" onclick="closeModal()">Hủy</button>
+            <button class="co-modal-confirm" onclick="confirmEdit()">Lưu thay đổi</button>
+        </div>
+    </div>
 </div>
 
 <!-- Header info -->
@@ -388,65 +525,95 @@
 </div>
 
 <div class="co-grid" id="categoriesGrid">
-    <!-- Cards rendered by JS from localStorage data -->
+    <!-- Cards rendered by JS -->
 </div>
 
+<!-- Pass server categories to JS -->
 <script>
-    // ══════════════════════════════════════════════════════════════
-    //  DEFAULT CONFIG — theo category name
-    // ══════════════════════════════════════════════════════════════
-    const DEFAULT_CONFIG = {
-        "Cà Phê": {
-            icon: "coffee",
-            sub: "Đồ uống có caffeine",
-            hasSugar: true,
-            sizeLabel: "Kích Cỡ",
-            sugars: ["Không đường", "Ít ngọt", "Vừa", "Nhiều đường"],
-            toppings: [
-                { name: "Thêm đá",       price: 0 },
-                { name: "Sữa yến mạch", price: 10000 },
-                { name: "Shot espresso thêm", price: 15000 },
-                { name: "Trân châu đen", price: 15000 },
-            ]
-        },
-        "Trà & Thảo Mộc": {
-            icon: "local_florist",
-            sub: "Trà tươi & thảo mộc",
-            hasSugar: true,
-            sizeLabel: "Kích Cỡ",
-            sugars: ["Không đường", "Ít ngọt", "Vừa", "Nhiều đường"],
-            toppings: [
-                { name: "Thêm đá",       price: 0 },
-                { name: "Sữa yến mạch", price: 10000 },
-                { name: "Mật ong thêm", price: 5000 },
-                { name: "Chanh tươi",   price: 5000 },
-            ]
-        },
-        "Bánh Sáng": {
-            icon: "bakery_dining",
-            sub: "Bánh & đồ ăn",
-            hasSugar: false,
-            sizeLabel: "Phần",
-            sugars: [],
-            toppings: [
-                { name: "Bơ thêm",     price: 5000 },
-                { name: "Mứt dâu",     price: 5000 },
-                { name: "Trứng ốp la", price: 15000 },
-                { name: "Cà phê kèm",  price: 20000 },
-            ]
-        }
-    };
+    // ── Danh mục từ server (luôn up-to-date) ──────────────────────
+    const SERVER_CATEGORIES = @Html.Raw(serverCategoriesJson); // FIX TS1109
 
-    // Load từ localStorage, nếu chưa có thì dùng default
-    function getConfig() {
-        try {
-            const saved = localStorage.getItem('goclang_category_options');
-            return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-        } catch { return JSON.parse(JSON.stringify(DEFAULT_CONFIG)); }
+    // ── Icon mapping theo tên (fallback cho danh mục mới) ─────────
+    const ICON_MAP = {
+        "Cà Phê":           { icon: "coffee",        sub: "Đồ uống có caffeine" },
+        "Trà & Thảo Mộc":   { icon: "local_florist", sub: "Trà tươi & thảo mộc" },
+        "Bánh Sáng":        { icon: "bakery_dining",  sub: "Bánh & đồ ăn" },
+        "Thức uống đặc biệt": { icon: "local_cafe",  sub: "Thức uống đặc biệt" },
+    };
+    function getIconInfo(name) {
+        return ICON_MAP[name] || { icon: "category", sub: name };
     }
 
-    let config = getConfig();
+    // ── Default config cho danh mục chưa có config ────────────────
+    const DEFAULT_TOPPINGS = {
+        "Cà Phê": [
+            { name: "Thêm đá",           price: 0     },
+            { name: "Sữa yến mạch",      price: 10000 },
+            { name: "Shot espresso thêm",price: 15000 },
+            { name: "Trân châu đen",     price: 15000 },
+        ],
+        "Trà & Thảo Mộc": [
+            { name: "Thêm đá",       price: 0    },
+            { name: "Đào miếng",     price: 10000},
+            { name: "Mật ong thêm",  price: 5000 },
+            { name: "Chanh tươi",    price: 5000 },
+            { name: "Trân châu trắng", price: 8000 },
+        ],
+        "Bánh Sáng": [
+            { name: "Bơ thêm",     price: 5000  },
+            { name: "Mứt dâu",     price: 5000  },
+            { name: "Trứng ốp la", price: 15000 },
+            { name: "Cà phê đen kèm", price: 20000 },
+        ],
+    };
+
+    // ── Storage key (phải khớp với Detail.cshtml) ─────────────────
+    const STORAGE_KEY = 'goclang_category_options';
+
+    // ── Load/Save config ─────────────────────────────────────────
+    function loadConfig() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : null;
+        } catch { return null; }
+    }
+
+    // Merge: server categories làm chủ — config cũ giữ lại toppings/settings
+    function buildConfig() {
+        const saved = loadConfig() || {};
+        const merged = {};
+        SERVER_CATEGORIES.forEach(cat => {
+            const name = cat.name;
+            const iconInfo = getIconInfo(name);
+            if (saved[name]) {
+                // Giữ nguyên settings đã lưu, chỉ update icon/sub nếu thiếu
+                merged[name] = {
+                    icon:      saved[name].icon      || iconInfo.icon,
+                    sub:       saved[name].sub       || iconInfo.sub,
+                    hasSugar:  saved[name].hasSugar  !== undefined ? saved[name].hasSugar : true,
+                    sizeLabel: saved[name].sizeLabel || "Kích Cỡ",
+                    toppings:  saved[name].toppings  || DEFAULT_TOPPINGS[name] || [],
+                };
+            } else {
+                // Danh mục mới chưa có config — dùng default
+                merged[name] = {
+                    icon:      iconInfo.icon,
+                    sub:       iconInfo.sub,
+                    hasSugar:  name !== "Bánh Sáng",
+                    sizeLabel: name === "Bánh Sáng" ? "Phần" : "Kích Cỡ",
+                    toppings:  DEFAULT_TOPPINGS[name] || [],
+                };
+            }
+        });
+        return merged;
+    }
+
+    let config = buildConfig();
     let dirty  = false;
+
+    // ── Modal state ───────────────────────────────────────────────
+    let _editCat   = null;
+    let _editIndex = null;
 
     function setDirty() {
         dirty = true;
@@ -454,17 +621,17 @@
     }
 
     function discardChanges() {
-        config = getConfig();
+        config = buildConfig();
         dirty  = false;
         document.getElementById('saveBar').classList.remove('show');
         renderAll();
     }
 
     function saveAllOptions() {
-        localStorage.setItem('goclang_category_options', JSON.stringify(config));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
         dirty = false;
         document.getElementById('saveBar').classList.remove('show');
-        showToast('Đã lưu tùy chọn! Trang chi tiết sản phẩm sẽ cập nhật ngay.');
+        showToast('✅ Đã lưu! Trang chi tiết sản phẩm sẽ cập nhật ngay.');
     }
 
     // ── Render ────────────────────────────────────────────────────
@@ -474,10 +641,21 @@
         Object.keys(config).forEach(catName => renderCard(catName, grid));
     }
 
+    function safeName(name) {
+        return name.replace(/[^a-zA-Z0-9]/g, '_');
+    }
+
+    function fmtPrice(price) {
+        return price === 0 ? '+0k' : '+' + (price / 1000) + 'k';
+    }
+
     function renderCard(catName, container) {
-        const cat = config[catName];
+        const cat  = config[catName];
+        const sn   = safeName(catName);
         const card = document.createElement('div');
         card.className = 'co-card';
+        card.dataset.cat = catName;
+
         card.innerHTML = `
             <div class="co-card-header">
                 <div class="co-cat-icon">
@@ -489,10 +667,12 @@
                 </div>
             </div>
 
-            <!-- Cài đặt chung -->
             <div class="co-section-title">Cài đặt chung</div>
             <div class="co-toggle-row">
-                <div><div class="co-toggle-label">Độ ngọt</div><div class="co-toggle-sub">Cho phép chọn mức đường</div></div>
+                <div>
+                    <div class="co-toggle-label">Độ ngọt</div>
+                    <div class="co-toggle-sub">Cho phép chọn mức đường</div>
+                </div>
                 <label class="co-switch">
                     <input type="checkbox" ${cat.hasSugar ? 'checked' : ''}
                            onchange="toggleSugar('${catName}', this.checked)" />
@@ -501,27 +681,25 @@
             </div>
             <div class="co-toggle-row" style="margin-top:.25rem;">
                 <div><div class="co-toggle-label">Nhãn kích cỡ</div></div>
-                <input class="co-input" style="max-width:120px;margin:0;"
+                <input class="co-input" style="max-width:130px;margin:0;flex:unset;"
                        value="${cat.sizeLabel}"
                        onchange="config['${catName}'].sizeLabel=this.value;setDirty();" />
             </div>
 
-            <!-- Topping -->
             <div class="co-section-title" style="margin-top:1.25rem;">
                 Topping / Tùy chọn thêm
             </div>
-            <div id="toppings-${safeName(catName)}">
-                ${cat.toppings.map((t, i) => renderToppingRow(catName, t, i)).join('')}
+            <div id="toppings-${sn}">
+                ${renderToppingList(catName)}
             </div>
             <div class="co-add-row">
-                <input class="co-input" id="new-topping-name-${safeName(catName)}" placeholder="Tên topping..." />
-                <input class="co-input-price" id="new-topping-price-${safeName(catName)}" placeholder="0đ" type="number" min="0" step="1000" value="0" />
+                <input class="co-input" id="new-name-${sn}" placeholder="Tên topping..." />
+                <input class="co-input-price" id="new-price-${sn}" placeholder="0" type="number" min="0" step="1000" value="0" />
                 <button class="co-add-btn" onclick="addTopping('${catName}')">
                     <span class="material-symbols-outlined" style="font-size:17px;">add</span> Thêm
                 </button>
             </div>
 
-            <!-- Size pricing info -->
             <div class="co-section-title" style="margin-top:1.25rem;">Giá theo kích cỡ</div>
             <div style="background:rgba(162,123,92,.06);border-radius:10px;padding:.875rem 1rem;font-size:.82rem;color:#3f4e4f;display:flex;gap:1rem;flex-wrap:wrap;">
                 <span>🔹 <strong>Nhỏ</strong>: Giá gốc −7k</span>
@@ -532,26 +710,36 @@
         container.appendChild(card);
     }
 
+    function renderToppingList(catName) {
+        return config[catName].toppings
+            .map((t, i) => renderToppingRow(catName, t, i))
+            .join('');
+    }
+
     function renderToppingRow(catName, topping, index) {
-        const priceStr = topping.price === 0 ? '+0k' : '+' + (topping.price/1000) + 'k';
+        const sn = safeName(catName);
+        // Escape single quotes for inline onclick
+        const escapedCat = catName.replace(/'/g, "\\'");
         return `
-        <div class="co-option-row" id="topping-row-${safeName(catName)}-${index}">
+        <div class="co-option-row" id="tr-${sn}-${index}">
             <span class="material-symbols-outlined co-option-icon">local_offer</span>
             <span class="co-option-name">${topping.name}</span>
-            <span class="co-option-price">${priceStr}</span>
+            <span class="co-option-price">${fmtPrice(topping.price)}</span>
             <div class="co-option-edit">
-                <button class="co-icon-btn" onclick="editTopping('${catName}',${index})" title="Sửa">
+                <button class="co-icon-btn" onclick="openEditModal('${escapedCat}',${index})" title="Sửa">
                     <span class="material-symbols-outlined" style="font-size:17px;">edit</span>
                 </button>
-                <button class="co-icon-btn del" onclick="deleteTopping('${catName}',${index})" title="Xóa">
+                <button class="co-icon-btn del" onclick="deleteTopping('${escapedCat}',${index})" title="Xóa">
                     <span class="material-symbols-outlined" style="font-size:17px;">delete</span>
                 </button>
             </div>
         </div>`;
     }
 
-    function safeName(name) {
-        return name.replace(/[^a-zA-Z0-9]/g, '_');
+    function refreshToppingList(catName) {
+        const sn = safeName(catName);
+        const el = document.getElementById('toppings-' + sn);
+        if (el) el.innerHTML = renderToppingList(catName);
     }
 
     // ── Actions ───────────────────────────────────────────────────
@@ -561,62 +749,118 @@
     }
 
     function addTopping(catName) {
-        const sn    = safeName(catName);
-        const nameEl  = document.getElementById('new-topping-name-' + sn);
-        const priceEl = document.getElementById('new-topping-price-' + sn);
+        const sn = safeName(catName);
+        const nameEl  = document.getElementById('new-name-' + sn);
+        const priceEl = document.getElementById('new-price-' + sn);
         const name  = nameEl.value.trim();
         const price = parseInt(priceEl.value) || 0;
-        if (!name) { nameEl.style.borderColor='#ef4444'; setTimeout(()=>nameEl.style.borderColor='',1500); return; }
-
+        if (!name) {
+            nameEl.style.borderColor = '#ef4444';
+            setTimeout(() => nameEl.style.borderColor = '', 1500);
+            return;
+        }
         config[catName].toppings.push({ name, price });
         setDirty();
         nameEl.value = ''; priceEl.value = '0';
-
-        // Re-render just the toppings list
-        const container = document.getElementById('toppings-' + sn);
-        container.innerHTML = config[catName].toppings
-            .map((t, i) => renderToppingRow(catName, t, i)).join('');
+        refreshToppingList(catName);
     }
 
     function deleteTopping(catName, index) {
-        if (!confirm('Xóa topping "' + config[catName].toppings[index].name + '"?')) return;
-        config[catName].toppings.splice(index, 1);
-        setDirty();
-        const sn = safeName(catName);
-        document.getElementById('toppings-' + sn).innerHTML =
-            config[catName].toppings.map((t, i) => renderToppingRow(catName, t, i)).join('');
+        const t = config[catName].toppings[index];
+        if (!t) return;
+        // Dùng custom confirm thay vì browser confirm
+        openDeleteConfirm(catName, index, t.name);
     }
 
-    function editTopping(catName, index) {
+    // ── Inline Edit Modal ─────────────────────────────────────────
+    function openEditModal(catName, index) {
+        _editCat   = catName;
+        _editIndex = index;
         const t = config[catName].toppings[index];
-        const newName  = prompt('Tên topping:', t.name);
-        if (newName === null) return;
-        const newPrice = prompt('Giá (đ, nhập 0 nếu miễn phí):', t.price);
-        if (newPrice === null) return;
-        config[catName].toppings[index] = {
-            name: newName.trim() || t.name,
-            price: parseInt(newPrice) || 0
-        };
+        document.getElementById('modalToppingName').value  = t.name;
+        document.getElementById('modalToppingPrice').value = t.price;
+        document.getElementById('editModal').classList.add('open');
+        setTimeout(() => document.getElementById('modalToppingName').focus(), 50);
+    }
+
+    function closeModal() {
+        document.getElementById('editModal').classList.remove('open');
+        _editCat = null; _editIndex = null;
+    }
+
+    function closeModalOnBackdrop(e) {
+        if (e.target === document.getElementById('editModal')) closeModal();
+    }
+
+    function confirmEdit() {
+        if (_editCat === null || _editIndex === null) return;
+        const name  = document.getElementById('modalToppingName').value.trim();
+        const price = parseInt(document.getElementById('modalToppingPrice').value) || 0;
+        if (!name) {
+            document.getElementById('modalToppingName').style.borderColor = '#ef4444';
+            setTimeout(() => document.getElementById('modalToppingName').style.borderColor = '', 1500);
+            return;
+        }
+        config[_editCat].toppings[_editIndex] = { name, price };
         setDirty();
-        const sn = safeName(catName);
-        document.getElementById('toppings-' + sn).innerHTML =
-            config[catName].toppings.map((t2, i) => renderToppingRow(catName, t2, i)).join('');
+        refreshToppingList(_editCat);
+        closeModal();
+    }
+
+    // ── Delete confirm (inline, không dùng browser confirm) ───────
+    function openDeleteConfirm(catName, index, toppingName) {
+        // Tạo mini-confirm overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:8500;background:rgba(44,54,57,.3);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;';
+        overlay.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:1.5rem 1.75rem;max-width:360px;width:100%;box-shadow:0 16px 48px rgba(44,54,57,.18);">
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;">
+                <span class="material-symbols-outlined" style="color:#ef4444;font-size:22px;">delete</span>
+                <span style="font-size:1rem;font-weight:800;color:#2c3639;">Xóa topping?</span>
+            </div>
+            <p style="font-size:.875rem;color:#64748b;margin-bottom:1.25rem;">
+                Bạn chắc chắn muốn xóa <strong>"${toppingName}"</strong> khỏi danh mục này?
+            </p>
+            <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+                <button id="dcCancel" style="padding:.55rem 1.1rem;background:none;border:1.5px solid rgba(44,54,57,.15);border-radius:10px;color:#2c3639;font-size:.875rem;font-weight:600;cursor:pointer;font-family:'Work Sans',sans-serif;">Hủy</button>
+                <button id="dcConfirm" style="padding:.55rem 1.1rem;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:.875rem;font-weight:700;cursor:pointer;font-family:'Work Sans',sans-serif;">Xóa</button>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        document.getElementById('dcCancel').onclick  = () => overlay.remove();
+        document.getElementById('dcConfirm').onclick = () => {
+            config[catName].toppings.splice(index, 1);
+            setDirty();
+            refreshToppingList(catName);
+            overlay.remove();
+        };
     }
 
     // ── Toast ─────────────────────────────────────────────────────
+    let _toastTimer = null;
     function showToast(msg) {
+        clearTimeout(_toastTimer);
         const t = document.getElementById('coToast');
         document.getElementById('coToastMsg').textContent = msg;
         t.classList.add('show');
-        setTimeout(hideToast, 4000);
+        _toastTimer = setTimeout(hideToast, 4000);
     }
     function hideToast() { document.getElementById('coToast').classList.remove('show'); }
 
+    // ── Keyboard shortcut: Enter = confirm modal ───────────────────
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && document.getElementById('editModal').classList.contains('open')) {
+            e.preventDefault();
+            confirmEdit();
+        }
+        if (e.key === 'Escape' && document.getElementById('editModal').classList.contains('open')) {
+            closeModal();
+        }
+    });
+
     // ── Init ──────────────────────────────────────────────────────
     renderAll();
-
-    // Thông báo nếu vừa vào trang lần đầu
-    if (!localStorage.getItem('goclang_category_options')) {
+    if (!loadConfig()) {
         setTimeout(() => showToast('💡 Đang dùng cấu hình mặc định. Thay đổi và nhấn Lưu để áp dụng.'), 600);
     }
 </script>

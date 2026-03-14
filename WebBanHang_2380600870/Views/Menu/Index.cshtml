@@ -28,8 +28,8 @@
             <a asp-controller="Menu" asp-action="Index"
                class="px-5 py-2.5 rounded-full text-sm font-bold transition-all"
                style="@(activeCategory == null
-                                  ? "background:#2C3639; color:#DCD7C9;"
-                                  : "background:rgba(44,54,57,0.08); color:#3F4E4F; border:1.5px solid rgba(44,54,57,0.15);")">
+                                                 ? "background:#2C3639; color:#DCD7C9;"
+                                                 : "background:rgba(44,54,57,0.08); color:#3F4E4F; border:1.5px solid rgba(44,54,57,0.15);")">
                 Tất Cả
             </a>
             @foreach (var cat in categories)
@@ -37,8 +37,8 @@
                 <a asp-controller="Menu" asp-action="Index" asp-route-categoryId="@cat.Id"
                    class="px-5 py-2.5 rounded-full text-sm font-bold transition-all"
                    style="@(activeCategory == cat.Id
-                                          ? "background:#A27B5C; color:#fff;"
-                                          : "background:rgba(162,123,92,0.08); color:#3F4E4F; border:1.5px solid rgba(162,123,92,0.18);")">
+                                                             ? "background:#A27B5C; color:#fff;"
+                                                             : "background:rgba(162,123,92,0.08); color:#3F4E4F; border:1.5px solid rgba(162,123,92,0.18);")">
                     @cat.Name
                 </a>
             }
@@ -70,8 +70,8 @@
                        class="group flex flex-col gap-3 cursor-pointer" style="text-decoration:none;">
                         <div class="relative overflow-hidden rounded-2xl shadow-sm group-hover:shadow-xl transition-all duration-300"
                              style="aspect-ratio:1/1; background:#e8e0d5;
-                                            background-image:url('@product.ImageUrl');
-                                            background-size:cover; background-position:center;">
+                                                    background-image:url('@product.ImageUrl');
+                                                    background-size:cover; background-position:center;">
                             <!-- Hover overlay -->
                             <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                                  style="background:rgba(44,54,57,0.45);">
@@ -95,7 +95,19 @@
                                     <p class="text-teal-custom text-xs italic mt-0.5 opacity-70 line-clamp-2">@product.Description</p>
                                 }
                             </div>
-                            <p class="text-primary font-black whitespace-nowrap text-sm">@PriceK(product.Price)</p>
+                            @* FIX: Hiện giá sale nếu đang khuyến mãi *@
+                            <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                                @if (product.IsOnSale && product.SalePrice > 0 && product.SalePrice < product.Price)
+                                {
+                                    <span class="text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:#ef4444;color:#fff;line-height:1.3;">-@(product.DiscountPercent?.ToString("0"))%</span>
+                                    <p class="text-primary font-black whitespace-nowrap text-sm">@PriceK(product.SalePrice)</p>
+                                    <p class="text-xs text-gray-400 line-through whitespace-nowrap">@PriceK(product.Price)</p>
+                                }
+                                else
+                                {
+                                    <p class="text-primary font-black whitespace-nowrap text-sm">@PriceK(product.Price)</p>
+                                }
+                            </div>
                         </div>
                     </a>
                 }

@@ -1,46 +1,49 @@
-﻿@* Views/Product/Detail.cshtml *@
+﻿// ===== FILE: C:\Users\Admin\source\repos\CoffeShop\WebBanHang_2380600870\Views\Product\Detail.cshtml =====
+@* Views/Product/Detail.cshtml *@
+@* FIX: Nút "Thêm vào giỏ" ẩn với Admin — điều kiện đổi từ IsAuthenticated → IsAuthenticated && !IsInRole("Admin") *@
 @model WebBanHang_2380600870.Models.ProductDetailViewModel
 @{
     ViewData["Title"] = Model.Product.Name + " | Góc Lặng";
     Layout = "_Layout";
     var p = Model.Product;
     var categoryName = p.Category?.Name ?? "Thực đơn";
-    var catId = p.CategoryId; // 1=Trà&ThảoMộc, 2=Cà Phê, 3=Bánh Sáng
+    var catId = p.CategoryId;
+    var catName = p.Category?.Name ?? "";
     string PriceK(decimal price) => (price / 1000).ToString("0") + "k";
 
-    // ── Options theo category ────────────────────────────────
-    // Cà Phê (2): shot thêm, sữa yến mạch, trân châu, thêm đá
-    // Trà & Thảo Mộc (1): thêm đá, sữa yến mạch, mật ong thêm, chanh thêm
-    // Bánh Sáng (3): bơ thêm, mứt thêm, trứng thêm, đồ uống kèm
-    var toppings = catId == 2
+    // ── Fallback toppings (dùng khi localStorage chưa có) ───────
+    var fallbackToppings = catId == 2
         ? new[] {
-            ("Thêm đá",         "+0k",  0),
-            ("Sữa yến mạch",    "+10k", 10000),
-            ("Shot espresso",   "+15k", 15000),
-            ("Trân châu đen",   "+15k", 15000),
+            ("Thêm đá",              "+0k",  0),
+            ("Sữa yến mạch",         "+10k", 10000),
+            ("Shot espresso thêm",   "+15k", 15000),
+            ("Trân châu đen",        "+15k", 15000),
           }
         : catId == 1
         ? new[] {
             ("Thêm đá",         "+0k",  0),
-            ("Sữa yến mạch",    "+10k", 10000),
+            ("Đào miếng",       "+10k", 10000),
             ("Mật ong thêm",    "+5k",  5000),
             ("Chanh tươi",      "+5k",  5000),
+            ("Trân châu trắng", "+8k",  8000),
           }
         : new[] {
-            ("Bơ thêm",         "+5k",  5000),
-            ("Mứt dâu",         "+5k",  5000),
-            ("Trứng ốp la",     "+15k", 15000),
-            ("Cà phê kèm",      "+20k", 20000),
+            ("Bơ thêm",        "+5k",  5000),
+            ("Mứt dâu",        "+5k",  5000),
+            ("Trứng ốp la",    "+15k", 15000),
+            ("Cà phê đen kèm", "+20k", 20000),
           };
 
-    // Sugar options theo category (bánh không có độ ngọt)
     bool hasSugar = catId != 3;
-
-    // Size label (bánh thì gọi khác)
     var sizeLabel = catId == 3 ? "Phần" : "Kích Cỡ";
-    var sizeNames = catId == 3
-        ? new[] { "Nhỏ", "Vừa", "Lớn" }
-        : new[] { "Nhỏ", "Vừa", "Lớn" };
+    var sizeNames = new[] { "Nhỏ", "Vừa", "Lớn" };
+
+    // Pre-compute JSON tại server để tránh C# lambda trong <script> (fix TS1109 warning)
+    var fallbackToppingsJson = System.Text.Json.JsonSerializer.Serialize(
+        fallbackToppings.Select(t => new { name = t.Item1, price = t.Item3 }));
+
+    // FIX TS1109: Pre-compute basePrice để tránh @(ternary với >) trong <script>
+    var basePriceValue = (p.IsOnSale && p.SalePrice > 0) ? p.SalePrice : p.Price;
 }
 
 <style>
@@ -86,24 +89,59 @@
             border-color: #A27B5C;
         }
 
-    /* Price flash animation */
-    @@keyframes priceFlash {
-        0% {
-            transform: scale(1)
-        }
-
-        40% {
-            transform: scale(1.12)
-        }
-
-        100% {
-            transform: scale(1)
-        }
-    }
-
     .price-flash {
         animation: priceFlash .25s ease;
     }
+
+    /* ── Topping pagination ──────────────────────────────── */
+    #toppingPager {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .375rem;
+        margin-top: .875rem;
+    }
+
+    .tp-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(162,123,92,.25);
+        cursor: pointer;
+        transition: background .2s, transform .2s;
+        border: none;
+        padding: 0;
+    }
+
+        .tp-dot.active {
+            background: #A27B5C;
+            transform: scale(1.3);
+        }
+
+    .tp-arrow {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(162,123,92,.3);
+        background: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a27b5c;
+        transition: background .15s, border-color .15s;
+        font-size: 16px;
+    }
+
+        .tp-arrow:hover:not(:disabled) {
+            background: rgba(162,123,92,.08);
+            border-color: #a27b5c;
+        }
+
+        .tp-arrow:disabled {
+            opacity: .3;
+            cursor: default;
+        }
 </style>
 
 <main class="flex-1 max-w-7xl mx-auto w-full px-4 md:px-10 py-8 lg:py-12">
@@ -167,7 +205,7 @@
                 }
             </div>
 
-            <!-- Giá — cập nhật theo size và topping -->
+            <!-- Giá -->
             <div class="flex items-baseline gap-3 mb-6">
                 @if (p.IsOnSale && p.SalePrice > 0)
                 {
@@ -192,7 +230,7 @@
 
                 <!-- Size -->
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3">@sizeLabel</label>
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3" id="sizeLabelEl">@sizeLabel</label>
                     <div class="flex gap-3">
                         @for (int i = 0; i < sizeNames.Length; i++)
                         {
@@ -205,54 +243,50 @@
                             </button>
                         }
                     </div>
-                    <p class="text-xs mt-2 opacity-50" style="color:#3F4E4F;">
-                        @(catId == 3 ? "Nhỏ/Vừa/Lớn · ±7k mỗi bậc" : "Nhỏ/Vừa/Lớn · ±7k mỗi bậc")
-                    </p>
+                    <p class="text-xs mt-2 opacity-50" style="color:#3F4E4F;">Nhỏ/Vừa/Lớn · ±7k mỗi bậc</p>
                 </div>
 
-                <!-- Độ ngọt (chỉ hiện cho đồ uống) -->
-                @if (hasSugar)
-                {
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3">Độ Ngọt</label>
-                        <div class="flex gap-2 flex-wrap">
-                            @{
-                                var sugars = new[] { "Không đường", "Ít ngọt", "Vừa", "Nhiều đường" };
-                            }
-                            @for (int i = 0; i < sugars.Length; i++)
-                            {
-                                <button type="button"
-                                        class="sugar-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold"
-                                        style="border:1.5px solid @(i == 2 ? "#A27B5C" : "rgba(162,123,92,0.25)");
-                                                       background:@(i == 2 ? "#A27B5C" : "transparent");
-                                                       color:@(i == 2 ? "#fff" : "#3F4E4F");"
-                                        onclick="selectSugar(this)">
-                                    @sugars[i]
-                                </button>
-                            }
-                        </div>
+                <!-- Độ ngọt -->
+                <div id="sugarSection" style="display:@(hasSugar ? "block" : "none")">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3">Độ Ngọt</label>
+                    <div class="flex gap-2 flex-wrap" id="sugarBtns">
+                        @{
+                            var sugars = new[] { "Không đường", "Ít ngọt", "Vừa", "Nhiều đường" };
+                        }
+                        @for (int i = 0; i < sugars.Length; i++)
+                        {
+                            <button type="button"
+                                    class="sugar-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold"
+                                    style="border:1.5px solid @(i == 2 ? "#A27B5C" : "rgba(162,123,92,0.25)");
+                                                           background:@(i == 2 ? "#A27B5C" : "transparent");
+                                                           color:@(i == 2 ? "#fff" : "#3F4E4F");"
+                                    onclick="selectSugar(this)">
+                                @sugars[i]
+                            </button>
+                        }
                     </div>
-                }
+                </div>
 
-                <!-- Topping theo category -->
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3">
+                <!-- Topping -->
+                <div id="toppingSection">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3" id="toppingLabel">
                         @(catId == 3 ? "Thêm Vào Phần Ăn" : "Topping Thêm")
                     </label>
-                    <div class="grid grid-cols-2 gap-2">
-                        @foreach (var (name, priceStr, priceVal) in toppings)
+                    <div id="toppingGrid" class="grid grid-cols-2 gap-2">
+                        @foreach (var (name, priceStr, priceVal) in fallbackToppings)
                         {
                             <label class="topping-label flex items-center gap-3 p-3 rounded-xl cursor-pointer"
                                    style="border:1.5px solid rgba(162,123,92,0.18);"
                                    data-topping-price="@priceVal"
                                    data-topping-name="@name">
                                 <input type="checkbox" class="topping-check w-4 h-4 rounded cursor-pointer"
-                                       style="accent-color:#A27B5C;" onchange="updateTotal()" />
+                                       style="accent-color:#A27B5C;" onchange="onToppingChange(this)" />
                                 <span class="text-sm font-medium text-teal-custom flex-1">@name</span>
                                 <span class="text-xs font-bold text-primary">@priceStr</span>
                             </label>
                         }
                     </div>
+                    <div id="toppingPager" style="display:none;"></div>
                 </div>
             </div>
 
@@ -268,7 +302,11 @@
                     </button>
                 </div>
 
-                @if (User.Identity?.IsAuthenticated == true)
+                @* ====================================================
+                   FIX: Đổi điều kiện từ IsAuthenticated → IsAuthenticated && !IsInRole("Admin")
+                   Admin thấy badge thông báo thay vì nút thêm giỏ
+                   ==================================================== *@
+                @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
                 {
                     <button type="button" id="addToCartBtn"
                             onclick="addToCart(@p.Id)"
@@ -277,6 +315,14 @@
                         <span class="material-symbols-outlined">shopping_basket</span>
                         <span id="addBtnText">Thêm Vào Giỏ — @PriceK(p.IsOnSale && p.SalePrice > 0 ? p.SalePrice : p.Price)</span>
                     </button>
+                }
+                else if (User.IsInRole("Admin"))
+                {
+                    <div class="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl text-sm font-semibold"
+                         style="background: rgba(162,123,92,0.07); border: 1.5px dashed rgba(162,123,92,0.3); color: #A27B5C;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">info</span>
+                        Admin — chỉ xem sản phẩm
+                    </div>
                 }
                 else
                 {
@@ -303,20 +349,20 @@
                 @{
                     var stats = catId == 3
                     ? new[] {
-                                new { Label = "Nguyên liệu", Value = "Tươi" },
-                                new { Label = "Thủ công",    Value = "100%" },
+                                new { Label = "Nguyên liệu", Value = "Tươi"  },
+                                new { Label = "Thủ công",    Value = "100%"  },
                                 new { Label = "Nguồn gốc",   Value = "Local" },
                     }
                     : catId == 1
                     ? new[] {
-                                new { Label = "Caffeine",    Value = "~0mg" },
-                                new { Label = "Antioxidant", Value = "Cao" },
-                                new { Label = "Nguồn gốc",   Value = "100%" },
+                                new { Label = "Caffeine",    Value = "~0mg"  },
+                                new { Label = "Antioxidant", Value = "Cao"   },
+                                new { Label = "Nguồn gốc",   Value = "100%"  },
                     }
                     : new[] {
-                                new { Label = "Calories",    Value = "~180" },
-                                new { Label = "Caffeine",    Value = "~120mg" },
-                                new { Label = "Nguồn gốc",   Value = "100%" },
+                                new { Label = "Calories",    Value = "~180"  },
+                                new { Label = "Caffeine",    Value = "~120mg"},
+                                new { Label = "Nguồn gốc",   Value = "100%"  },
                     };
                 }
                 @foreach (var st in stats)
@@ -374,34 +420,157 @@
 
 @section Scripts {
     <script>
-        var qty       = 1;
-        var sizeIndex = 1;   // 0=Nhỏ, 1=Vừa, 2=Lớn (mặc định Vừa)
-        var SIZE_DELTA = 7000; // ±7k mỗi bậc so với Vừa
-        var basePrice = @(p.IsOnSale && p.SalePrice > 0 ? p.SalePrice : p.Price);
+        // Inject keyframes via JS (String.fromCharCode avoids Razor/CSS linter issues)
+        (function(){
+            var s = document.createElement('style');
+            var at = String.fromCharCode(64);
+            s.textContent = at + 'keyframes priceFlash{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}';
+            document.head.appendChild(s);
+        })();
 
-        // Tính giá hiện tại = basePrice + size delta + toppings
-        function calcPrice() {
-            var sizeDelta = (sizeIndex - 1) * SIZE_DELTA; // -7k / 0 / +7k
-            var toppingSum = 0;
+        var qty        = 1;
+        var sizeIndex  = 1;
+        var SIZE_DELTA = 7000;
+        var basePrice  = @basePriceValue;
+
+        var PAGE_SIZE    = 4;
+        var toppingPage  = 0;
+        var allToppings  = [];
+        // FIX: Lưu tên toppings đã chọn để giữ state khi chuyển trang
+        var selectedToppingNames = new Set();
+
+        var STORAGE_KEY  = 'goclang_category_options';
+        var CAT_NAME     = '@Html.Raw(catName.Replace("'", "\\'"))';
+
+        function loadToppingsFromConfig() {
+            try {
+                var saved = localStorage.getItem(STORAGE_KEY);
+                if (!saved) return null;
+                var cfg = JSON.parse(saved);
+                return cfg[CAT_NAME] || null;
+            } catch (e) { return null; }
+        }
+
+        function buildToppingItems(catCfg) {
+            if (catCfg && catCfg.toppings && catCfg.toppings.length > 0) {
+                return catCfg.toppings.map(function(t) {
+                    return { name: t.name, price: t.price };
+                });
+            }
+            // Fallback JSON pre-computed server-side (tránh C# lambda trong script)
+            return @Html.Raw(fallbackToppingsJson);
+        }
+
+        function applyConfigToUI(catCfg) {
+            if (!catCfg) return;
+            if (catCfg.sizeLabel) {
+                var sl = document.getElementById('sizeLabelEl');
+                if (sl) sl.textContent = catCfg.sizeLabel;
+            }
+            var sugarSec = document.getElementById('sugarSection');
+            if (sugarSec) {
+                sugarSec.style.display = catCfg.hasSugar !== false ? 'block' : 'none';
+            }
+        }
+
+        function renderToppingPage() {
+            var grid  = document.getElementById('toppingGrid');
+            var pager = document.getElementById('toppingPager');
+            var total = allToppings.length;
+            var pages = Math.ceil(total / PAGE_SIZE);
+
+            if (toppingPage >= pages) toppingPage = Math.max(0, pages - 1);
+
+            // FIX: Lưu tên toppings đang checked trên trang hiện tại trước khi rebuild DOM
             document.querySelectorAll('.topping-check:checked').forEach(function(cb) {
-                toppingSum += parseInt(cb.closest('[data-topping-price]').getAttribute('data-topping-price')) || 0;
+                var name = cb.closest('[data-topping-name]')?.getAttribute('data-topping-name');
+                if (name) selectedToppingNames.add(name);
+            });
+
+            var start = toppingPage * PAGE_SIZE;
+            var slice = allToppings.slice(start, start + PAGE_SIZE);
+
+            grid.innerHTML = slice.map(function(t) {
+                var priceStr = t.price === 0 ? '+0k' : '+' + (t.price / 1000) + 'k';
+                var escaped  = t.name.replace(/"/g, '&quot;');
+                // FIX: Restore checked state nếu topping này đã được chọn trước đó
+                var isChecked = selectedToppingNames.has(t.name) ? ' checked' : '';
+                return '<label class="topping-label flex items-center gap-3 p-3 rounded-xl cursor-pointer"' +
+                       ' style="border:1.5px solid rgba(162,123,92,0.18);"' +
+                       ' data-topping-price="' + t.price + '"' +
+                       ' data-topping-name="' + escaped + '">' +
+                       '<input type="checkbox" class="topping-check w-4 h-4 rounded cursor-pointer"' +
+                       ' style="accent-color:#A27B5C;" onchange="onToppingChange(this)" ' + isChecked + '/>' +
+                       '<span class="text-sm font-medium text-teal-custom flex-1">' + t.name + '</span>' +
+                       '<span class="text-xs font-bold text-primary">' + priceStr + '</span>' +
+                       '</label>';
+            }).join('');
+
+            if (pages <= 1) {
+                pager.style.display = 'none';
+                return;
+            }
+            pager.style.display = 'flex';
+            pager.innerHTML =
+                '<button class="tp-arrow" id="tpPrev" onclick="gotoToppingPage(' + (toppingPage - 1) + ')"' +
+                (toppingPage === 0 ? ' disabled' : '') + '>' +
+                '<span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span></button>';
+
+            for (var i = 0; i < pages; i++) {
+                pager.innerHTML +=
+                    '<button class="tp-dot' + (i === toppingPage ? ' active' : '') + '"' +
+                    ' onclick="gotoToppingPage(' + i + ')" title="Trang ' + (i+1) + '"></button>';
+            }
+
+            pager.innerHTML +=
+                '<button class="tp-arrow" id="tpNext" onclick="gotoToppingPage(' + (toppingPage + 1) + ')"' +
+                (toppingPage >= pages - 1 ? ' disabled' : '') + '>' +
+                '<span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span></button>';
+        }
+
+        function gotoToppingPage(page) {
+            var pages = Math.ceil(allToppings.length / PAGE_SIZE);
+            if (page < 0 || page >= pages) return;
+            toppingPage = page;
+            renderToppingPage();
+            updateTotal();
+        }
+
+        // FIX: Khi check/uncheck topping, cập nhật Set để persist qua các trang
+        function onToppingChange(cb) {
+            var name = cb.closest('[data-topping-name]')?.getAttribute('data-topping-name');
+            if (!name) return;
+            if (cb.checked) {
+                selectedToppingNames.add(name);
+            } else {
+                selectedToppingNames.delete(name);
+            }
+            updateTotal();
+        }
+
+        function calcPrice() {
+            var sizeDelta = (sizeIndex - 1) * SIZE_DELTA;
+            var toppingSum = 0;
+            // Use Set as source of truth (persists across pages)
+            selectedToppingNames.forEach(function(name) {
+                var t = allToppings.find(function(x) { return x.name === name; });
+                if (t) toppingSum += t.price || 0;
             });
             return basePrice + sizeDelta + toppingSum;
         }
 
         function updateTotal() {
-            var price   = calcPrice();
-            var total   = (price * qty / 1000).toFixed(0) + 'k';
-            var unitK   = (price / 1000).toFixed(0) + 'k';
+            var price = calcPrice();
+            var total = (price * qty / 1000).toFixed(0) + 'k';
+            var unitK = (price / 1000).toFixed(0) + 'k';
             var el = document.getElementById('addBtnText');
             if (el) el.textContent = 'Thêm Vào Giỏ — ' + total;
 
-            // Flash giá đơn vị
             var priceEl = document.getElementById('priceDisplay');
             if (priceEl) {
                 priceEl.textContent = unitK;
                 priceEl.classList.remove('price-flash');
-                void priceEl.offsetWidth; // reflow
+                void priceEl.offsetWidth;
                 priceEl.classList.add('price-flash');
             }
         }
@@ -446,28 +615,19 @@
             thumb.classList.add('active'); thumb.style.borderColor = '#A27B5C'; thumb.style.opacity = '1';
         }
 
-        // ── Thêm vào giỏ hàng (gọi POST thật) ──────────────────
+        // ── Thêm vào giỏ hàng ───────────────────────────────────
         async function addToCart(productId) {
             var btn = document.getElementById('addToCartBtn');
             btn.disabled = true; btn.style.opacity = '0.7';
 
-            // Lấy sugar
             var sugarBtn = document.querySelector('.sugar-btn.active');
             var sugar    = sugarBtn ? sugarBtn.textContent.trim() : 'Vừa';
 
-            // Lấy toppings đã chọn
-            var selectedToppings = [];
-            document.querySelectorAll('.topping-check:checked').forEach(function(cb) {
-                selectedToppings.push(cb.closest('[data-topping-name]').getAttribute('data-topping-name'));
-            });
+            var selectedToppings = Array.from(selectedToppingNames); // all checked across pages
 
-            // Lấy size
-            var sizeBtn = document.querySelector('.size-btn.active');
             var sizeMap = ['S','M','L'];
             var size    = sizeMap[sizeIndex];
-
-            // Ghi chú
-            var note = document.getElementById('noteInput')?.value || '';
+            var note    = document.getElementById('noteInput')?.value || '';
             var toppingStr = selectedToppings.join(', ');
             if (note) toppingStr = toppingStr ? toppingStr + ' | ' + note : note;
 
@@ -493,9 +653,12 @@
                 const data = await resp.json();
                 if (data.success) {
                     showToast('✅ Đã thêm vào giỏ hàng!', 'success');
-                    // Cập nhật badge giỏ hàng nếu có
-                    var badge = document.getElementById('cart-badge') || document.querySelector('[data-cart-count]');
-                    if (badge) badge.textContent = data.cartCount;
+                    // Cập nhật cart badge
+                    const badge = document.getElementById('cartBadge');
+                    if (badge && data.cartCount > 0) {
+                        badge.textContent = data.cartCount > 99 ? '99+' : data.cartCount;
+                        badge.style.display = 'flex';
+                    }
                 } else {
                     showToast(data.message || 'Có lỗi xảy ra', 'error');
                 }
@@ -523,8 +686,14 @@
             }, 3500);
         }
 
-        // Thêm AntiForgery token vào trang (cần cho AJAX POST)
-        // Nếu không có trong DOM thì fetch sẽ tự dùng cookie
+        // ── Init ─────────────────────────────────────────────────
+        (function init() {
+            var catCfg = loadToppingsFromConfig();
+            applyConfigToUI(catCfg);
+            allToppings = buildToppingItems(catCfg);
+            renderToppingPage();
+            updateTotal();
+        })();
     </script>
 
     @* Hidden AntiForgery token cho AJAX *@

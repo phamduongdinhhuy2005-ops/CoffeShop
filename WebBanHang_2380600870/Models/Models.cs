@@ -1,4 +1,19 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿// Models/Models.cs
+// THAY THẾ TOÀN BỘ FILE CŨ
+// FIXED & OPTIMIZED:
+// 1. OrderDetail.ItemNote — lưu Size/Đường/Topping
+// 2. Order.PaymentMethod — lưu phương thức thanh toán
+// 3. AppUser.CreatedAt dùng UtcNow
+// 4. Subscriber unique index
+// 5. Booking.Phone regex validate SĐT Việt Nam
+// [MỚI] 6. Booking.UserId (nullable FK → AppUser) — liên kết booking với tài khoản
+// [MỚI] 7. AppUser.Bookings navigation property
+// [MỚI] 8. OnModelCreating: cấu hình Booking → AppUser (SetNull on delete)
+// SAU KHI THAY FILE NÀY: chạy migration
+//   dotnet ef migrations add AddBookingUserId
+//   dotnet ef database update
+
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
@@ -9,8 +24,13 @@ namespace WebBanHang_2380600870.Models
     public class Subscriber
     {
         public int Id { get; set; }
+
+        [Required]
+        [EmailAddress]
+        [StringLength(256)]
         public string Email { get; set; } = "";
-        public DateTime SubscribedAt { get; set; } = DateTime.Now;
+
+        public DateTime SubscribedAt { get; set; } = DateTime.UtcNow;
     }
 
     // ===================== PRODUCT =====================
@@ -79,9 +99,13 @@ namespace WebBanHang_2380600870.Models
         [StringLength(100)]
         public string? FullName { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        // FIX: Dùng UtcNow thay vì Now để tránh timezone issues
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public List<Order>? Orders { get; set; }
+
+        // [MỚI] Navigation property — để query bookings của user này
+        public List<Booking>? Bookings { get; set; }
     }
 
     // ===================== ORDER =====================
@@ -103,7 +127,8 @@ namespace WebBanHang_2380600870.Models
         public string UserId { get; set; } = null!;
         public AppUser? User { get; set; }
 
-        public DateTime OrderDate { get; set; } = DateTime.Now;
+        // FIX: Dùng UtcNow
+        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         [Column(TypeName = "decimal(18,2)")]
@@ -111,6 +136,10 @@ namespace WebBanHang_2380600870.Models
 
         public string? Note { get; set; }
         public string? ShippingAddress { get; set; }
+
+        // FIX: Lưu phương thức thanh toán
+        [StringLength(50)]
+        public string PaymentMethod { get; set; } = "COD";
 
         public List<OrderDetail>? OrderDetails { get; set; }
     }
@@ -130,6 +159,10 @@ namespace WebBanHang_2380600870.Models
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal UnitPrice { get; set; }
+
+        // FIX: Lưu ghi chú tùy chọn (Size, Đường, Topping) cho từng item
+        [StringLength(500)]
+        public string? ItemNote { get; set; }
     }
 
     // ===================== BOOKING =====================
@@ -139,14 +172,24 @@ namespace WebBanHang_2380600870.Models
     {
         public int Id { get; set; }
 
+        // [MỚI] Liên kết booking với tài khoản user
+        // Nullable: khách không đăng nhập vẫn đặt được, khi đã login sẽ có UserId
+        // Khi user bị xóa: UserId sẽ thành NULL (SetNull), booking vẫn giữ lại
+        public string? UserId { get; set; }
+        public AppUser? User { get; set; }
+
         [Required(ErrorMessage = "Họ tên không được để trống")]
+        [StringLength(100)]
         public string FullName { get; set; } = null!;
 
         [Required(ErrorMessage = "Email không được để trống")]
-        [EmailAddress]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        [StringLength(256)]
         public string Email { get; set; } = null!;
 
         [Required(ErrorMessage = "Số điện thoại không được để trống")]
+        // FIX: Validate SĐT Việt Nam (0xxx hoặc +84xxx)
+        [RegularExpression(@"^(0|\+84)[3-9][0-9]{8}$", ErrorMessage = "Số điện thoại Việt Nam không hợp lệ (VD: 0912345678)")]
         public string Phone { get; set; } = null!;
 
         [Required(ErrorMessage = "Ngày đặt không được để trống")]
@@ -155,12 +198,17 @@ namespace WebBanHang_2380600870.Models
         [Required(ErrorMessage = "Giờ đến không được để trống")]
         public string BookingTime { get; set; } = null!;
 
-        [Range(1, 20)]
+        [Range(1, 20, ErrorMessage = "Số khách từ 1 đến 20")]
         public int GuestCount { get; set; } = 1;
 
+        [StringLength(100)]
         public string? Occasion { get; set; }
+
+        [StringLength(500)]
         public string? SpecialRequest { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        // FIX: Dùng UtcNow
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public BookingStatus Status { get; set; } = BookingStatus.Pending;
     }
 
@@ -215,6 +263,19 @@ namespace WebBanHang_2380600870.Models
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // [MỚI] Booking → AppUser: nullable FK, xóa user thì UserId thành NULL
+            modelBuilder.Entity<Booking>()
+                .HasOne(b => b.User)
+                .WithMany(u => u.Bookings)
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            // FIX: Unique index cho Subscriber.Email
+            modelBuilder.Entity<Subscriber>()
+                .HasIndex(s => s.Email)
+                .IsUnique();
 
             // ===== SEED CATEGORIES =====
             modelBuilder.Entity<Category>().HasData(

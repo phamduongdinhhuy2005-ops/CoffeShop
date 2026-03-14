@@ -1,4 +1,5 @@
 ﻿@* Views/Cart/OrderConfirm.cshtml *@
+@* FIX CS8602: Model.OrderDetails có thể null → thêm null-check *@
 @model WebBanHang_2380600870.Models.Order
 @{
     ViewData["Title"] = "Đặt Hàng Thành Công";
@@ -30,12 +31,17 @@
                     Chi tiết đơn hàng
                 </h2>
                 <div class="space-y-3">
-                    @foreach (var detail in Model.OrderDetails)
+                    @* FIX CS8602: Thêm null-check trước khi foreach *@
+                    @foreach (var detail in Model.OrderDetails ?? new List<WebBanHang_2380600870.Models.OrderDetail>())
                     {
                         <div class="flex justify-between text-sm" style="font-family: 'Work Sans', sans-serif; color: #3F4E4F;">
                             <span>@detail.Product?.Name × @detail.Quantity</span>
                             <span>@((detail.UnitPrice * detail.Quantity).ToString("N0"))đ</span>
                         </div>
+                        @if (!string.IsNullOrEmpty(detail.ItemNote))
+                        {
+                            <p class="text-xs ml-2" style="color: rgba(63,78,79,0.45);">↳ @detail.ItemNote</p>
+                        }
                     }
                 </div>
                 <div class="border-t mt-4 pt-4 flex justify-between font-bold" style="border-color: #DCD7C9; color: #2C3639;">

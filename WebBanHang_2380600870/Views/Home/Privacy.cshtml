@@ -1,78 +1,317 @@
-﻿@* Views/Home/Privacy.cshtml — THAY THẾ TOÀN BỘ *@
+﻿@* Views/Home/Privacy.cshtml *@
+@* REDESIGNED: Tham khảo Heritage Cafe design - hero section, card layout *@
 @{
-    ViewData["Title"] = "Chính Sách Bảo Mật";
+    ViewData["Title"] = "Chính Sách Bảo Mật | Góc Lặng";
+    Layout = "_Layout";
 }
 
-<section class="min-h-screen pt-28 pb-20" style="background-color: #F7F7F6;">
-    <div class="max-w-3xl mx-auto px-4">
+<style>
+    /* ── Hero ─────────────────────────────────────────── */
+    .pv-hero {
+        position: relative;
+        background: #2C3639;
+        padding: 6rem 1rem 5rem;
+        text-align: center;
+        overflow: hidden;
+    }
 
-        <div class="mb-12 text-center">
-            <p class="text-sm tracking-[0.2em] uppercase mb-3" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
-                Minh Bạch & Tin Cậy
-            </p>
-            <h1 class="text-4xl font-bold" style="font-family: 'Playfair Display', serif; color: #2C3639;">
-                Chính Sách Bảo Mật
-            </h1>
-            <p class="mt-4 text-sm" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
-                Cập nhật lần cuối: Tháng 3, 2025
-            </p>
-        </div>
+    .pv-hero-img {
+        position: absolute;
+        inset: 0;
+        background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCGGBpe-w1M0lkiSH7XR146scnmSKX1lBc0dzCuVNqu11HduJibJ2XOtcZulbDeujtkF09HGKw9PPMml2CiIyad2tfsuBrBLTFx-BprscKR4yy1_-swuvAKy1RGv_Nij11Ka0T2vcymAHQNLLs8vyznZiqx_URa0rjPVaQvBVzM84jJ4KHdhUdSzsVigaAtx7dsyiu8KL5FTgUf0MYePsQ7OruIaZF06j3jNzlT1xbBIz8agrwHQlJ4yWICVspSvZyhNEsFVxjoy505');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.35;
+    }
 
-        <div class="bg-white rounded-2xl shadow-sm p-8 space-y-8" style="font-family: 'Work Sans', sans-serif; color: #3F4E4F;">
+    .pv-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse 60% 80% at 10% 50%, rgba(162,123,92,0.18) 0%, transparent 65%), radial-gradient(ellipse 50% 60% at 90% 20%, rgba(162,123,92,0.1) 0%, transparent 65%);
+        pointer-events: none;
+    }
 
-            @{
-                var sections = new[]
-                {
-                        new {
-                        icon = "info",
-                        title = "1. Thông Tin Chúng Mình Thu Thập",
-                        content = "Khi bạn sử dụng dịch vụ của Góc Lặng Café, chúng mình có thể thu thập các thông tin sau: Họ tên, địa chỉ email, số điện thoại khi bạn đăng ký tài khoản hoặc đặt chỗ. Thông tin đặt hàng bao gồm địa chỉ giao hàng và lịch sử mua hàng. Thông tin kỹ thuật như địa chỉ IP, loại trình duyệt, và hành vi truy cập trang web."
-                        },
-                        new {
-                        icon = "verified_user",
-                        title = "2. Cách Chúng Mình Sử Dụng Thông Tin",
-                        content = "Thông tin bạn cung cấp được sử dụng để: Xử lý đơn hàng và giao hàng đến bạn. Liên hệ xác nhận đặt chỗ hoặc cập nhật trạng thái đơn hàng. Cải thiện chất lượng dịch vụ dựa trên phản hồi và hành vi sử dụng. Gửi thông tin khuyến mãi (chỉ khi bạn đồng ý nhận)."
-                        },
-                        new {
-                        icon = "lock",
-                        title = "3. Bảo Mật Thông Tin",
-                        content = "Chúng mình cam kết bảo vệ thông tin cá nhân của bạn. Dữ liệu được lưu trữ trên hệ thống bảo mật với mã hóa SSL. Chúng mình không bán, trao đổi, hay chuyển giao thông tin cá nhân của bạn cho bên thứ ba mà không có sự đồng ý của bạn, ngoại trừ các trường hợp yêu cầu từ cơ quan pháp luật."
-                        },
-                        new {
-                        icon = "cookie",
-                        title = "4. Cookies",
-                        content = "Trang web sử dụng cookies để ghi nhớ phiên đăng nhập và giỏ hàng của bạn. Bạn có thể tắt cookies trong cài đặt trình duyệt, tuy nhiên điều này có thể ảnh hưởng đến một số tính năng của trang web."
-                        },
-                        new {
-                        icon = "manage_accounts",
-                        title = "5. Quyền Của Bạn",
-                        content = "Bạn có quyền yêu cầu xem, sửa đổi, hoặc xóa thông tin cá nhân mà chúng mình lưu giữ. Để thực hiện các quyền này, vui lòng liên hệ với chúng mình qua email hoặc đến trực tiếp quán."
-                        },
-                        new {
-                        icon = "contact_mail",
-                        title = "6. Liên Hệ",
-                        content = "Nếu bạn có bất kỳ câu hỏi nào về chính sách bảo mật này, vui lòng liên hệ: Email: hello@goclang.vn | Điện thoại: 028 1234 5678 | Địa chỉ: 42 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh."
-                        }
-                        };
+    .pv-hero-pattern {
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(45deg, rgba(162,123,92,0.04) 0, rgba(162,123,92,0.04) 1px, transparent 1px, transparent 60px), repeating-linear-gradient(-45deg, rgba(162,123,92,0.04) 0, rgba(162,123,92,0.04) 1px, transparent 1px, transparent 60px);
+        pointer-events: none;
+    }
+
+    .pv-hero-inner {
+        position: relative;
+        z-index: 1;
+    }
+
+    .pv-hero-label {
+        font-size: .72rem;
+        font-weight: 800;
+        letter-spacing: .32em;
+        text-transform: uppercase;
+        color: #A27B5C;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .pv-hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 900;
+        color: #F2EFE9;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+    }
+
+    .pv-hero-sub {
+        font-size: .875rem;
+        color: rgba(220,215,201,0.55);
+        letter-spacing: .04em;
+    }
+
+    .pv-hero-divider {
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #A27B5C, transparent);
+        margin: 1.5rem auto 0;
+        border-radius: 99px;
+    }
+
+    /* ── Main content ─────────────────────────────────── */
+    .pv-body {
+        background: #F2EFE9;
+        padding: 4rem 1rem 5rem;
+    }
+
+    .pv-wrap {
+        max-width: 860px;
+        margin: 0 auto;
+    }
+
+    /* ── Section cards ────────────────────────────────── */
+    .pv-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.5rem;
+        background: #fff;
+        border: 1px solid rgba(162,123,92,0.15);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 2px 12px rgba(44,54,57,0.05);
+        transition: box-shadow .2s, border-color .2s;
+    }
+
+        .pv-card:hover {
+            box-shadow: 0 8px 32px rgba(44,54,57,0.1);
+            border-color: rgba(162,123,92,0.3);
+        }
+    /* All cards same white background */
+    .pv-icon-wrap {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: rgba(162,123,92,0.1);
+        border: 1.5px solid rgba(162,123,92,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: transform .2s, background .2s;
+    }
+
+    .pv-card:hover .pv-icon-wrap {
+        transform: scale(1.08);
+        background: rgba(162,123,92,0.18);
+    }
+
+    .pv-icon-wrap .material-symbols-outlined {
+        font-size: 26px;
+        color: #A27B5C;
+    }
+
+    .pv-card-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .pv-card-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #2C3639;
+        margin-bottom: .75rem;
+    }
+
+    .pv-card-text {
+        font-size: .9rem;
+        color: #3F4E4F;
+        line-height: 1.85;
+    }
+
+    /* ── Contact CTA ──────────────────────────────────── */
+    .pv-cta {
+        background: linear-gradient(135deg, #2C3639, #3F4E4F);
+        border-radius: 24px;
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-top: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .pv-cta::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(162,123,92,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+    .pv-cta-inner {
+        position: relative;
+        z-index: 1;
+    }
+
+    .pv-cta-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #F2EFE9;
+        margin-bottom: .75rem;
+    }
+
+    .pv-cta-sub {
+        font-size: .875rem;
+        color: rgba(220,215,201,0.65);
+        margin-bottom: 2rem;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .pv-cta-contacts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        justify-content: center;
+    }
+
+    .pv-contact-item {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        color: #DCD7C9;
+        font-size: .875rem;
+        font-weight: 600;
+    }
+
+        .pv-contact-item .material-symbols-outlined {
+            font-size: 18px;
+            color: #A27B5C;
+        }
+
+    @@media (max-width: 600px) {
+        .pv-card {
+            flex-direction: column;
+        }
+
+        .pv-icon-wrap {
+            width: 48px;
+            height: 48px;
+        }
+
+            .pv-icon-wrap .material-symbols-outlined {
+                font-size: 22px;
             }
+    }
+</style>
 
-            @foreach (var s in sections)
-            {
-                <div>
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: #DCD7C9;">
-                            <span class="material-symbols-outlined text-base" style="color: #A27B5C;">@s.icon</span>
-                        </div>
-                        <h2 class="font-bold text-lg" style="font-family: 'Playfair Display', serif; color: #2C3639;">
-                            @s.title
-                        </h2>
-                    </div>
-                    <p class="text-sm leading-relaxed pl-11">
-                        @s.content
-                    </p>
-                </div>
-                <div class="w-full h-px" style="background-color: #F7F7F6;"></div>
-            }
-        </div>
+@* ── HERO ── *@
+<div class="pv-hero">
+    <div class="pv-hero-img"></div>
+    <div class="pv-hero-pattern"></div>
+    <div class="pv-hero-inner">
+        <span class="pv-hero-label">Quyền Riêng Tư & Tin Cậy</span>
+        <h1 class="pv-hero-title">Chính Sách Bảo Mật</h1>
+        <p class="pv-hero-sub">Cập nhật lần cuối: Tháng 3, 2025</p>
+        <div class="pv-hero-divider"></div>
     </div>
-</section>
+</div>
+
+@* ── CARDS ── *@
+<div class="pv-body">
+    <div class="pv-wrap">
+
+        @{
+            var sections = new[] {
+                new {
+                icon    = "history_edu",
+                title   = "1. Giới Thiệu",
+                content = "Tại Góc Lặng Café, chúng mình trân trọng sự tin tưởng của bạn như cách chúng mình gìn giữ từng hương vị di sản. Chính sách bảo mật này giúp bạn hiểu rõ cách chúng mình thu thập, sử dụng và bảo vệ thông tin cá nhân trong suốt quá trình bạn trải nghiệm dịch vụ tại không gian của chúng mình."
+                },
+                new {
+                icon    = "database",
+                title   = "2. Thông Tin Chúng Mình Thu Thập",
+                content = "Chúng mình chỉ thu thập các thông tin cơ bản cần thiết: họ tên, địa chỉ email, số điện thoại khi bạn đăng ký tài khoản hoặc đặt chỗ. Thông tin đặt hàng bao gồm địa chỉ giao hàng và lịch sử mua hàng. Thông tin kỹ thuật như địa chỉ IP, loại trình duyệt nhằm cải thiện trải nghiệm dịch vụ."
+                },
+                new {
+                icon    = "verified_user",
+                title   = "3. Cách Chúng Mình Sử Dụng Thông Tin",
+                content = "Thông tin bạn cung cấp được sử dụng để xử lý đơn hàng và giao hàng đến bạn; liên hệ xác nhận đặt chỗ hoặc cập nhật trạng thái đơn hàng; cải thiện chất lượng dịch vụ dựa trên phản hồi; gửi thông tin khuyến mãi chỉ khi bạn đồng ý nhận. Góc Lặng cam kết không chia sẻ thông tin cho bất kỳ bên thứ ba nào vì mục đích thương mại."
+                },
+                new {
+                icon    = "lock",
+                title   = "4. Bảo Mật Dữ Liệu",
+                content = "Chúng mình áp dụng các tiêu chuẩn bảo mật hiện đại nhất để bảo vệ dữ liệu của bạn. Hệ thống lưu trữ được mã hóa SSL và giám sát liên tục. Dữ liệu không bao giờ được bán, trao đổi hay chuyển giao cho bên thứ ba mà không có sự đồng ý rõ ràng từ bạn, ngoại trừ yêu cầu từ cơ quan pháp luật."
+                },
+                new {
+                icon    = "cookie",
+                title   = "5. Cookies",
+                content = "Trang web sử dụng cookies để ghi nhớ phiên đăng nhập và giỏ hàng của bạn, giúp trải nghiệm mượt mà hơn mỗi lần ghé thăm. Bạn có thể tắt cookies trong cài đặt trình duyệt, tuy nhiên một số tính năng có thể bị ảnh hưởng."
+                },
+                new {
+                icon    = "gavel",
+                title   = "6. Quyền Của Bạn",
+                content = "Bạn có toàn quyền yêu cầu truy cập, sửa đổi hoặc xóa bỏ thông tin cá nhân khỏi hệ thống của chúng mình bất cứ lúc nào. Mọi yêu cầu sẽ được xử lý tận tâm trong vòng 24 giờ làm việc. Để thực hiện quyền này, vui lòng liên hệ qua email bên dưới."
+                }
+                };
+        }
+
+        @foreach (var s in sections)
+        {
+            <div class="pv-card">
+                <div class="pv-icon-wrap">
+                    <span class="material-symbols-outlined">@s.icon</span>
+                </div>
+                <div class="pv-card-content">
+                    <h3 class="pv-card-title">@s.title</h3>
+                    <p class="pv-card-text">@s.content</p>
+                </div>
+            </div>
+        }
+
+        @* ── Contact CTA ── *@
+        <div class="pv-cta">
+            <div class="pv-cta-inner">
+                <h2 class="pv-cta-title">Bạn có thắc mắc về quyền riêng tư?</h2>
+                <p class="pv-cta-sub">Đừng ngần ngại liên hệ với chúng mình để được giải đáp mọi thông tin liên quan đến bảo mật và quyền lợi của bạn.</p>
+                <div class="pv-cta-contacts">
+                    <div class="pv-contact-item">
+                        <span class="material-symbols-outlined">mail</span>
+                        <span>hello@goclang.vn</span>
+                    </div>
+                    <div class="pv-contact-item">
+                        <span class="material-symbols-outlined">call</span>
+                        <span>028 1234 5678</span>
+                    </div>
+                    <div class="pv-contact-item">
+                        <span class="material-symbols-outlined">location_on</span>
+                        <span>124 Đường Hoài Cổ, Quận 3, TP.HCM</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
