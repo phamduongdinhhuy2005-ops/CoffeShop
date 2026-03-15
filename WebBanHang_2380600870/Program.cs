@@ -104,7 +104,7 @@ app.UseAuthentication();
 
 // ✅ FIX QUAN TRỌNG: UseSession PHẢI đặt sau UseAuthentication
 // và TRƯỚC UseAuthorization — nếu đặt sau UseAuthorization,
-// session sẽ không khởi tạo kịp khi controller cần đọc giỏ hàng
+// session sẽ không khởi tạo kịp khi controller cần đọc giỏ hàng
 app.UseSession();
 
 app.UseAuthorization();

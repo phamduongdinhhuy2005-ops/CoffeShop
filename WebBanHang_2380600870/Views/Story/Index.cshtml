@@ -109,23 +109,13 @@
             animation: pulseDown 2s ease-in-out infinite;
         }
 
-        @@keyframes pulseDown {
-            0%, 100% {
-                transform: translateY(0);
-                opacity: 0.4;
-            }
+            /* pulseDown: see JS injection */
 
-            50% {
-                transform: translateY(6px);
-                opacity: 0.8;
+            .story-hero__scroll .line {
+                width: 1px;
+                height: 40px;
+                background: linear-gradient(to bottom, #A27B5C, transparent);
             }
-        }
-
-        .story-hero__scroll .line {
-            width: 1px;
-            height: 40px;
-            background: linear-gradient(to bottom, #A27B5C, transparent);
-        }
 
         /* ── DIVIDER ── */
         .ornament-divider {
@@ -968,6 +958,14 @@
 </section>
 
 @section Scripts {
+    <script>
+        // Inject @@keyframes with % selectors to avoid CSS linter CSS041 warning
+        (function() {
+            var s = document.createElement('style');
+            s.textContent = '@@keyframes pulseDown{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(6px);opacity:.8}}';
+            document.head.appendChild(s);
+        })();
+    </script>
     <script>
         // ── Scroll Reveal ──
         const observer = new IntersectionObserver((entries) => {

@@ -23,7 +23,7 @@ namespace WebBanHang_2380600870.Controllers
             _context = context;
         }
 
-        // ======== ÄÄ‚NG KÃ ========
+        // ======== ĐĂNG KÝ ========
         [HttpGet]
         public IActionResult Register() => View();
 
@@ -46,7 +46,7 @@ namespace WebBanHang_2380600870.Controllers
             {
                 await _userManager.AddToRoleAsync(user, "User");
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                TempData["Success"] = "ÄÄƒng kÃ½ thÃ nh cÃ´ng! ChÃ o má»«ng báº¡n Ä‘áº¿n vá»›i GÃ³c Láº·ng.";
+                TempData["Success"] = "Đăng ký thành công! Chào mừng bạn đến với Góc Lặng.";
                 return RedirectToAction("Index", "Home");
             }
 
@@ -55,7 +55,7 @@ namespace WebBanHang_2380600870.Controllers
             return View(model);
         }
 
-        // ======== ÄÄ‚NG NHáº¬P ========
+        // ======== ĐĂNG NHẬP ========
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
@@ -84,15 +84,15 @@ namespace WebBanHang_2380600870.Controllers
 
             if (result.IsLockedOut)
             {
-                ModelState.AddModelError(string.Empty, "TÃ i khoáº£n Ä‘Ã£ bá»‹ khÃ³a do Ä‘Äƒng nháº­p sai quÃ¡ nhiá»u láº§n. Vui lÃ²ng thá»­ láº¡i sau 15 phÃºt.");
+                ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.");
                 return View(model);
             }
 
-            ModelState.AddModelError(string.Empty, "Email hoáº·c máº­t kháº©u khÃ´ng Ä‘Ãºng.");
+            ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không đúng.");
             return View(model);
         }
 
-        // ======== ÄÄ‚NG XUáº¤T ========
+        // ======== ĐĂNG XUẤT ========
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
@@ -104,7 +104,7 @@ namespace WebBanHang_2380600870.Controllers
         // ======== ACCESS DENIED ========
         public IActionResult AccessDenied() => View();
 
-        // ======== TÃ€I KHOáº¢N ========
+        // ======== TÀI KHOẢN ========
         [Authorize]
         public async Task<IActionResult> UserAccount()
         {
@@ -141,7 +141,7 @@ namespace WebBanHang_2380600870.Controllers
 
             if (string.IsNullOrWhiteSpace(fullName))
             {
-                TempData["Error"] = "Há» tÃªn khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.";
+                TempData["Error"] = "Họ tên không được để trống.";
                 return RedirectToAction("UserAccount");
             }
 
@@ -149,7 +149,7 @@ namespace WebBanHang_2380600870.Controllers
             user.PhoneNumber = phoneNumber?.Trim();
             await _userManager.UpdateAsync(user);
 
-            TempData["Success"] = "Cáº­p nháº­t thÃ´ng tin thÃ nh cÃ´ng!";
+            TempData["Success"] = "Cập nhật thông tin thành công!";
             return RedirectToAction("UserAccount");
         }
 
@@ -160,31 +160,31 @@ namespace WebBanHang_2380600870.Controllers
         {
             if (string.IsNullOrWhiteSpace(currentPassword))
             {
-                TempData["Error"] = "Vui lÃ²ng nháº­p máº­t kháº©u hiá»‡n táº¡i.";
+                TempData["Error"] = "Vui lòng nhập mật khẩu hiện tại.";
                 return RedirectToAction("UserAccount");
             }
 
             if (string.IsNullOrWhiteSpace(newPassword))
             {
-                TempData["Error"] = "Vui lÃ²ng nháº­p máº­t kháº©u má»›i.";
+                TempData["Error"] = "Vui lòng nhập mật khẩu mới.";
                 return RedirectToAction("UserAccount");
             }
 
             if (newPassword.Length < 6)
             {
-                TempData["Error"] = "Máº­t kháº©u má»›i pháº£i cÃ³ Ã­t nháº¥t 6 kÃ½ tá»±.";
+                TempData["Error"] = "Mật khẩu mới phải có ít nhất 6 ký tự.";
                 return RedirectToAction("UserAccount");
             }
 
             if (newPassword != confirmPassword)
             {
-                TempData["Error"] = "Máº­t kháº©u má»›i khÃ´ng khá»›p.";
+                TempData["Error"] = "Mật khẩu mới không khớp.";
                 return RedirectToAction("UserAccount");
             }
 
             if (currentPassword == newPassword)
             {
-                TempData["Error"] = "Máº­t kháº©u má»›i pháº£i khÃ¡c máº­t kháº©u hiá»‡n táº¡i.";
+                TempData["Error"] = "Mật khẩu mới phải khác mật khẩu hiện tại.";
                 return RedirectToAction("UserAccount");
             }
 
@@ -193,7 +193,7 @@ namespace WebBanHang_2380600870.Controllers
 
             var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
             if (result.Succeeded)
-                TempData["Success"] = "Äá»•i máº­t kháº©u thÃ nh cÃ´ng!";
+                TempData["Success"] = "Đổi mật khẩu thành công!";
             else
                 TempData["Error"] = string.Join(", ", result.Errors.Select(e => e.Description));
 

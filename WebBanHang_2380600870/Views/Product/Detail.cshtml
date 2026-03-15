@@ -257,8 +257,8 @@
                             <button type="button"
                                     class="sugar-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold"
                                     style="border:1.5px solid @(i == 2 ? "#A27B5C" : "rgba(162,123,92,0.25)");
-                                                           background:@(i == 2 ? "#A27B5C" : "transparent");
-                                                           color:@(i == 2 ? "#fff" : "#3F4E4F");"
+                                background:@(i == 2 ? "#A27B5C" : "transparent");
+                                color:@(i == 2 ? "#fff" : "#3F4E4F");"
                                     onclick="selectSugar(this)">
                                 @sugars[i]
                             </button>
@@ -326,8 +326,8 @@
                 else
                 {
                     <a asp-controller="Account" asp-action="Login"
-                       class="flex-1 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-                       style="background:#2C3639; box-shadow:0 4px 18px rgba(44,54,57,0.25);">
+                           class="flex-1 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                           style="background:#2C3639; box-shadow:0 4px 18px rgba(44,54,57,0.25);">
                         <span class="material-symbols-outlined">login</span>
                         Đăng nhập để đặt hàng
                     </a>
@@ -388,7 +388,7 @@
                     <p class="text-teal-custom text-sm mt-1 opacity-70">Những lựa chọn tuyệt vời khác từ Góc Lặng</p>
                 </div>
                 <a asp-controller="Menu" asp-action="Index"
-                   class="text-primary font-bold flex items-center gap-1 hover:underline underline-offset-4 text-sm">
+                       class="text-primary font-bold flex items-center gap-1 hover:underline underline-offset-4 text-sm">
                     Xem thực đơn
                     <span class="material-symbols-outlined" style="font-size:18px;">arrow_right_alt</span>
                 </a>
@@ -397,7 +397,7 @@
                 @foreach (var rp in Model.RelatedProducts)
                 {
                     <a asp-controller="Product" asp-action="Detail" asp-route-id="@rp.Id"
-                       class="group cursor-pointer" style="text-decoration:none;">
+                           class="group cursor-pointer" style="text-decoration:none;">
                         <div class="aspect-square rounded-2xl overflow-hidden mb-4 shadow-md group-hover:shadow-xl transition-all duration-300 relative"
                              style="background-image:url('@rp.ImageUrl'); background-size:cover; background-position:center; background-color:#e8e0d5;">
                             <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -430,7 +430,7 @@
         var qty        = 1;
         var sizeIndex  = 1;
         var SIZE_DELTA = 7000;
-        var basePrice  = @basePriceValue;
+        var basePrice  = @(basePriceValue);
 
         var PAGE_SIZE    = 4;
         var toppingPage  = 0;

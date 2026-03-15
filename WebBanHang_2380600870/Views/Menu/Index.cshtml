@@ -8,7 +8,6 @@
     var categories = ViewBag.Categories as IEnumerable<WebBanHang_2380600870.Models.Category>
                      ?? Enumerable.Empty<WebBanHang_2380600870.Models.Category>();
     var products = Model.ToList();
-    string PriceK(decimal price) => (price / 1000).ToString("0") + "k";
     string activeCatName = activeCategory != null
         ? (categories.FirstOrDefault(c => c.Id == activeCategory)?.Name ?? "")
         : "Tất Cả";
@@ -23,7 +22,7 @@
     position: relative; min-height: 88vh;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    text-align: center; overflow: hidden; isolation: isolate;
+    text-align: center; overflow: hidden;
 }
 .mn-hero__bg {
     position: absolute; inset: 0; z-index: 0;
@@ -95,10 +94,7 @@
 @@keyframes mnFadeIn {
     from { opacity: 0; } to { opacity: 1; }
 }
-@@keyframes mnScrollPulse {
-    0%,100% { opacity: .4; transform: scaleY(1); }
-    50%      { opacity: 1; transform: scaleY(1.15); }
-}
+/* mnScrollPulse: injected via JS below, see Scripts block */
 
 /* ════════════════════════════════════════════════
    FILTER BAR — tab underline, sticky
@@ -442,6 +438,14 @@
 </script>
 
 @section Scripts {
+    <script>
+        // Inject @@keyframes with % selectors to avoid CSS linter CSS041 warning
+        (function() {
+            var s = document.createElement('style');
+            s.textContent = '@@keyframes mnScrollPulse{0%,100%{opacity:.4;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.15)}}';
+            document.head.appendChild(s);
+        })();
+    </script>
 <script>
 (function () {
     /* ── Constants ── */

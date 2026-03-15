@@ -66,7 +66,7 @@
     {
         bool active = cur == status;
         <a asp-action="Orders" asp-route-status="@(status == "" ? null : status)"
-           style="padding:.45rem 1rem;border-radius:99px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-decoration:none;border:1.5px solid @(active ? "#a27b5c" : "rgba(162,123,92,.25)");background:@(active ? "#a27b5c" : "transparent");color:@(active ? "#fff" : "#a27b5c");transition:all .15s;">
+               style="padding:.45rem 1rem;border-radius:99px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-decoration:none;border:1.5px solid @(active ? "#a27b5c" : "rgba(162,123,92,.25)");background:@(active ? "#a27b5c" : "transparent");color:@(active ? "#fff" : "#a27b5c");transition:all .15s;">
             @label
         </a>
     }

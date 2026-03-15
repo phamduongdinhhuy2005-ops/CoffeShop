@@ -130,8 +130,8 @@
             </div>
             @* Add button *@
             <a asp-action="Add"
-               class="btn fw-bold d-flex align-items-center gap-2 px-4"
-               style="background:#a27b5c;color:#fff;box-shadow:0 4px 12px rgba(162,123,92,.3);border-radius:.6rem">
+                   class="btn fw-bold d-flex align-items-center gap-2 px-4"
+                   style="background:#a27b5c;color:#fff;box-shadow:0 4px 12px rgba(162,123,92,.3);border-radius:.6rem">
                 <span class="material-symbols-outlined" style="font-size:20px">add_circle</span>
                 Thêm danh mục
             </a>
@@ -177,16 +177,16 @@
                         <td class="px-4 py-3">
                             <div class="d-flex justify-content-end gap-2">
                                 <a asp-action="Update" asp-route-id="@category.Id"
-                                   class="btn btn-sm d-flex align-items-center justify-content-center"
-                                   style="width:36px;height:36px;border:1px solid #dcd7c9;border-radius:.5rem;color:#3f4e4f;padding:0"
-                                   title="Chỉnh sửa">
+                                       class="btn btn-sm d-flex align-items-center justify-content-center"
+                                       style="width:36px;height:36px;border:1px solid #dcd7c9;border-radius:.5rem;color:#3f4e4f;padding:0"
+                                       title="Chỉnh sửa">
                                     <span class="material-symbols-outlined" style="font-size:18px">edit</span>
                                 </a>
                                 <a asp-action="Delete" asp-route-id="@category.Id"
-                                   class="btn btn-sm d-flex align-items-center justify-content-center"
-                                   style="width:36px;height:36px;border:1px solid #fee2e2;border-radius:.5rem;color:#ef4444;padding:0"
-                                   title="Xóa"
-                                   onclick="return confirmDelete(event, '@category.Name')">
+                                       class="btn btn-sm d-flex align-items-center justify-content-center"
+                                       style="width:36px;height:36px;border:1px solid #fee2e2;border-radius:.5rem;color:#ef4444;padding:0"
+                                       title="Xóa"
+                                       onclick="return confirmDelete(event, '@category.Name')">
                                     <span class="material-symbols-outlined" style="font-size:18px">delete</span>
                                 </a>
                             </div>
@@ -234,8 +234,8 @@
                     Hủy
                 </button>
                 <a id="deleteConfirmLink" href="#"
-                   class="btn flex-fill fw-bold py-2 text-white"
-                   style="background:#ef4444;border-radius:.6rem">
+                       class="btn flex-fill fw-bold py-2 text-white"
+                       style="background:#ef4444;border-radius:.6rem">
                     Xóa danh mục
                 </a>
             </div>

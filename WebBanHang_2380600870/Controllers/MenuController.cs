@@ -16,7 +16,7 @@ namespace WebBanHang_2380600870.Controllers
             _categoryRepository = categoryRepository;
         }
 
-        // GET: /Menu  hoặc  /Menu?categoryId=2
+        // GET: /Menu  hoáº·c  /Menu?categoryId=2
         public async Task<IActionResult> Index(int? categoryId)
         {
             var allProducts = await _productRepository.GetAllAsync();
