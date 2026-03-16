@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using WebBanHang_2380600870.Models;
 
 namespace WebBanHang_2380600870.Controllers
@@ -92,6 +93,86 @@ namespace WebBanHang_2380600870.Controllers
             return View(model);
         }
 
+        // ======== ĐĂNG NHẬP NGOÀI (Google / Facebook) ========
+
+        /// Bước 1: Redirect sang Google hoặc Facebook
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ExternalLogin(string provider, string? returnUrl = null)
+        {
+            var redirectUrl = Url.Action("ExternalLoginCallback", "Account", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider);
+        }
+
+        /// Bước 2: Callback sau khi Google / Facebook xác thực xong
+        [HttpGet]
+        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+        {
+            if (remoteError != null)
+            {
+                ModelState.AddModelError(string.Empty, $"Lỗi từ nhà cung cấp: {remoteError}");
+                return RedirectToAction("Login");
+            }
+
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+                return RedirectToAction("Login");
+
+            // Thử đăng nhập bằng external login đã liên kết
+            var result = await _signInManager.ExternalLoginSignInAsync(
+                info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
+
+            if (result.Succeeded)
+            {
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    return Redirect(returnUrl);
+                return RedirectToAction("Index", "Home");
+            }
+
+            // Chưa có tài khoản → tự động tạo mới
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(email))
+            {
+                ModelState.AddModelError(string.Empty, "Không lấy được email từ tài khoản mạng xã hội.");
+                return RedirectToAction("Login");
+            }
+
+            // Nếu email đã tồn tại → liên kết luôn
+            var existingUser = await _userManager.FindByEmailAsync(email);
+            if (existingUser != null)
+            {
+                await _userManager.AddLoginAsync(existingUser, info);
+                await _signInManager.SignInAsync(existingUser, isPersistent: false);
+                return RedirectToAction("Index", "Home");
+            }
+
+            // Tạo tài khoản mới
+            var fullName = info.Principal.FindFirstValue(ClaimTypes.Name) ?? email;
+            var newUser = new AppUser
+            {
+                UserName = email,
+                Email = email,
+                FullName = fullName,
+                EmailConfirmed = true
+            };
+
+            var createResult = await _userManager.CreateAsync(newUser);
+            if (createResult.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(newUser, "User");
+                await _userManager.AddLoginAsync(newUser, info);
+                await _signInManager.SignInAsync(newUser, isPersistent: false);
+                TempData["Success"] = $"Chào mừng {fullName} đến với Góc Lặng!";
+                return RedirectToAction("Index", "Home");
+            }
+
+            foreach (var error in createResult.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
+
+            return RedirectToAction("Login");
+        }
+
         // ======== ĐĂNG XUẤT ========
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -118,7 +199,6 @@ namespace WebBanHang_2380600870.Controllers
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
 
-            // FIX: Load bookings của user để hiện trong tab Lịch Đặt Chỗ
             var bookings = await _context.Bookings
                 .Where(b => b.UserId == user.Id)
                 .OrderByDescending(b => b.BookingDate)

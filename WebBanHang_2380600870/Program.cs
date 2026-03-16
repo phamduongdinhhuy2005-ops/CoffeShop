@@ -1,4 +1,4 @@
-// Program.cs — FIX: UseSession phải đặt TRƯỚC UseAuthorization
+// Program.cs
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WebBanHang_2380600870.Models;
@@ -13,7 +13,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ===== IDENTITY =====
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
-    // DEVELOPMENT — password đơn giản
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
@@ -22,7 +21,6 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 
     options.User.RequireUniqueEmail = true;
 
-    // Khóa tài khoản sau 5 lần sai
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
@@ -31,6 +29,20 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+// ===== GOOGLE + FACEBOOK OAUTH =====
+// Lấy ClientId/Secret từ User Secrets (không hardcode vào code)
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+    })
+    .AddFacebook(options =>
+    {
+        options.AppId = builder.Configuration["Authentication:Facebook:AppId"]!;
+        options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"]!;
+    });
 
 // ===== COOKIE =====
 builder.Services.ConfigureApplicationCookie(options =>
@@ -101,12 +113,7 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
-
-// ✅ FIX QUAN TRỌNG: UseSession PHẢI đặt sau UseAuthentication
-// và TRƯỚC UseAuthorization — nếu đặt sau UseAuthorization,
-// session sẽ không khởi tạo kịp khi controller cần đọc giỏ hàng
 app.UseSession();
-
 app.UseAuthorization();
 
 app.MapControllerRoute(
