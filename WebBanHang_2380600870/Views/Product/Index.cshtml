@@ -4,6 +4,45 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["ActivePage"] = "Product";
     ViewData["Breadcrumb"] = "Sản phẩm";
+
+    var categories = ViewBag.Categories as IEnumerable<WebBanHang_2380600870.Models.Category>
+                     ?? Enumerable.Empty<WebBanHang_2380600870.Models.Category>();
+
+    // ── Bảng màu cho badge — mỗi danh mục lấy màu theo index, tự mở rộng ──
+    var colorPalette = new[] {
+        new { bg = "rgba(16,185,129,.12)",  text = "#065f46",  border = "rgba(16,185,129,.3)"  },  // xanh lá
+        new { bg = "rgba(162,123,92,.12)",  text = "#92400e",  border = "rgba(162,123,92,.3)"  },  // nâu
+        new { bg = "rgba(249,115,22,.12)",  text = "#c2410c",  border = "rgba(249,115,22,.3)"  },  // cam
+        new { bg = "rgba(59,130,246,.12)",  text = "#1d4ed8",  border = "rgba(59,130,246,.3)"  },  // xanh dương
+        new { bg = "rgba(139,92,246,.12)",  text = "#7c3aed",  border = "rgba(139,92,246,.3)"  },  // tím
+        new { bg = "rgba(236,72,153,.12)",  text = "#9d174d",  border = "rgba(236,72,153,.3)"  },  // hồng
+        new { bg = "rgba(20,184,166,.12)",  text = "#0f766e",  border = "rgba(20,184,166,.3)"  },  // teal
+        new { bg = "rgba(234,179,8,.14)",   text = "#92400e",  border = "rgba(234,179,8,.35)"  },  // vàng
+        new { bg = "rgba(239,68,68,.10)",   text = "#b91c1c",  border = "rgba(239,68,68,.25)"  },  // đỏ
+        new { bg = "rgba(100,116,139,.12)", text = "#334155",  border = "rgba(100,116,139,.3)" },  // xám
+    };
+
+    // Build map: categoryId → color index (theo thứ tự xuất hiện trong DB)
+    var catList = categories.ToList();
+    var catColorMap = new Dictionary<int, int>();
+    for (int ci = 0; ci < catList.Count; ci++)
+        catColorMap[catList[ci].Id] = ci % colorPalette.Length;
+
+    // Helper lấy màu theo categoryId
+    (string bg, string text, string border) GetCatColor(int catId)
+    {
+        int idx = catColorMap.ContainsKey(catId) ? catColorMap[catId] : 0;
+        var c = colorPalette[idx];
+        return (c.bg, c.text, c.border);
+    }
+
+    // Serialize categories sang JS
+    var catJson = System.Text.Json.JsonSerializer.Serialize(
+        catList.Select((c, i) => new { id = c.Id, name = c.Name, colorIdx = i % colorPalette.Length })
+    );
+    var colorJson = System.Text.Json.JsonSerializer.Serialize(
+        colorPalette.Select(c => new { bg = c.bg, text = c.text, border = c.border })
+    );
 }
 
 @* Toast *@
@@ -18,298 +57,174 @@
 
 <style>
     @@keyframes toastIn {
-        from {
-            transform: translateX(110%);
-            opacity: 0
-        }
-
-        to {
-            transform: translateX(0);
-            opacity: 1
-        }
+        from { transform: translateX(110%); opacity: 0 }
+        to   { transform: translateX(0);   opacity: 1 }
     }
 
     .pi-product-img {
-        width: 48px;
-        height: 48px;
-        border-radius: 10px;
-        object-fit: cover;
-        border: 1.5px solid #e2e8f0;
-        background: #f7f7f6;
+        width: 48px; height: 48px; border-radius: 10px;
+        object-fit: cover; border: 1.5px solid #e2e8f0; background: #f7f7f6;
     }
-
     .pi-product-img-placeholder {
-        width: 48px;
-        height: 48px;
-        border-radius: 10px;
-        background: rgba(162,123,92,.08);
-        border: 1.5px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 48px; height: 48px; border-radius: 10px;
+        background: rgba(162,123,92,.08); border: 1.5px solid #e2e8f0;
+        display: flex; align-items: center; justify-content: center;
     }
+    .pi-product-img-placeholder .material-symbols-outlined { font-size: 20px; color: rgba(162,123,92,.4); }
+    .pi-product-name { font-size: .9rem; font-weight: 700; color: #2c3639; }
+    .pi-product-id   { font-size: .72rem; color: rgba(63,78,79,.45); margin-top: 2px; }
 
-        .pi-product-img-placeholder .material-symbols-outlined {
-            font-size: 20px;
-            color: rgba(162,123,92,.4);
-        }
-
-    .pi-product-name {
-        font-size: .9rem;
-        font-weight: 700;
-        color: #2c3639;
-    }
-
-    .pi-product-id {
-        font-size: .72rem;
-        color: rgba(63,78,79,.45);
-        margin-top: 2px;
-    }
-
+    /* ── Badge danh mục — dùng inline style, class chỉ layout ── */
     .pi-cat-badge {
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 99px;
-        font-size: .72rem;
-        font-weight: 700;
+        display: inline-flex; align-items: center; gap: .3rem;
+        padding: .22rem .75rem; border-radius: 99px;
+        font-size: .72rem; font-weight: 700; letter-spacing: .02em;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+    .pi-cat-badge .cat-dot {
+        width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
     }
 
-        .pi-cat-badge.cat-1 {
-            background: rgba(16,185,129,.1);
-            color: #059669;
-        }
+    .pi-price { font-size: .9rem; font-weight: 700; color: #a27b5c; }
 
-        .pi-cat-badge.cat-2 {
-            background: rgba(162,123,92,.1);
-            color: #92400e;
-        }
-
-        .pi-cat-badge.cat-3 {
-            background: rgba(249,115,22,.1);
-            color: #c2410c;
-        }
-
-        .pi-cat-badge.cat-0 {
-            background: rgba(162,123,92,.1);
-            color: #a27b5c;
-        }
-
-    .pi-price {
-        font-size: .9rem;
-        font-weight: 700;
-        color: #a27b5c;
-    }
-
-    .pi-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: .4rem;
-        opacity: 0;
-        transition: opacity .15s;
-    }
-
-    .pi-table tbody tr:hover .pi-actions {
-        opacity: 1;
-    }
+    .pi-actions { display:flex; justify-content:flex-end; gap:.4rem; opacity:0; transition:opacity .15s; }
+    .pi-table tbody tr:hover .pi-actions { opacity: 1; }
 
     .pi-act-btn {
-        display: flex;
-        align-items: center;
-        gap: .3rem;
-        padding: .4rem .75rem;
-        border-radius: 8px;
-        border: none;
-        font-size: .78rem;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background .15s,transform .12s;
-        font-family: 'Work Sans',sans-serif;
+        display: flex; align-items: center; gap: .3rem;
+        padding: .4rem .75rem; border-radius: 8px; border: none;
+        font-size: .78rem; font-weight: 600; cursor: pointer;
+        text-decoration: none; font-family: 'Work Sans',sans-serif;
+        transition: background .15s, transform .12s;
     }
+    .pi-act-btn:hover { transform: translateY(-1px); }
+    .pi-act-btn .material-symbols-outlined { font-size: 15px; }
+    .pi-act-edit  { background: rgba(162,123,92,.1); color: #a27b5c; }
+    .pi-act-edit:hover  { background: rgba(162,123,92,.2); color: #a27b5c; }
+    .pi-act-delete { background: rgba(239,68,68,.08); color: #dc2626; }
+    .pi-act-delete:hover { background: rgba(239,68,68,.16); }
 
-        .pi-act-btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .pi-act-btn .material-symbols-outlined {
-            font-size: 15px;
-        }
-
-    .pi-act-edit {
-        background: rgba(162,123,92,.1);
-        color: #a27b5c;
+    /* ── Filter buttons ── */
+    .pi-filter-area {
+        display: flex; gap: .4rem; flex-wrap: wrap; align-items: center;
     }
-
-        .pi-act-edit:hover {
-            background: rgba(162,123,92,.2);
-            color: #a27b5c;
-        }
-
-    .pi-act-delete {
-        background: rgba(239,68,68,.08);
-        color: #dc2626;
-    }
-
-        .pi-act-delete:hover {
-            background: rgba(239,68,68,.16);
-        }
-
     .pi-filter-btn {
-        padding: .45rem 1rem;
-        border-radius: 99px;
-        border: 1.5px solid rgba(162,123,92,.25);
+        padding: .38rem .9rem; border-radius: 99px;
+        border: 1.5px solid transparent;
         background: transparent;
+        font-family: 'Work Sans',sans-serif; font-size: .75rem; font-weight: 700;
+        cursor: pointer; transition: all .18s;
+        display: inline-flex; align-items: center; gap: .35rem;
+        white-space: nowrap;
+    }
+    .pi-filter-btn .fb-dot {
+        width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+        transition: transform .18s;
+    }
+    .pi-filter-btn:hover .fb-dot,
+    .pi-filter-btn.active .fb-dot { transform: scale(1.4); }
+
+    /* Nút "Tất Cả" luôn dùng màu primary */
+    .pi-filter-all {
+        border-color: rgba(162,123,92,.3);
         color: #a27b5c;
-        font-family: 'Work Sans',sans-serif;
-        font-size: .78rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all .15s;
+    }
+    .pi-filter-all.active, .pi-filter-all:hover {
+        background: #a27b5c; color: #fff; border-color: #a27b5c;
+    }
+    .pi-filter-all.active .fb-dot, .pi-filter-all:hover .fb-dot {
+        background: #fff !important;
     }
 
-        .pi-filter-btn.active, .pi-filter-btn:hover {
-            background: #a27b5c;
-            color: #fff;
-            border-color: #a27b5c;
-        }
-
+    /* ── Delete modal ── */
     .pi-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,.5);
-        backdrop-filter: blur(3px);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity .25s;
+        position: fixed; inset: 0; background: rgba(0,0,0,.5);
+        backdrop-filter: blur(3px); z-index: 9999;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none; transition: opacity .25s;
     }
-
-        .pi-overlay.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-
+    .pi-overlay.show { opacity: 1; pointer-events: all; }
     .pi-modal {
-        background: #fff;
-        border-radius: 18px;
-        padding: 2rem;
-        width: 380px;
+        background: #fff; border-radius: 18px; padding: 2rem; width: 380px;
         box-shadow: 0 20px 60px rgba(0,0,0,.18);
-        transform: scale(.92);
-        transition: transform .25s;
+        transform: scale(.92); transition: transform .25s;
     }
-
-    .pi-overlay.show .pi-modal {
-        transform: scale(1);
-    }
-
+    .pi-overlay.show .pi-modal { transform: scale(1); }
     .pi-modal-icon {
-        width: 52px;
-        height: 52px;
-        background: #fef2f2;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1rem;
+        width: 52px; height: 52px; background: #fef2f2; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;
     }
-
-        .pi-modal-icon .material-symbols-outlined {
-            font-size: 26px;
-            color: #dc2626;
-        }
-
-    .pi-modal h3 {
-        font-size: 1.05rem;
-        font-weight: 800;
-        color: #2c3639;
-        margin-bottom: .5rem;
-    }
-
-    .pi-modal p {
-        font-size: .85rem;
-        color: rgba(63,78,79,.6);
-        line-height: 1.6;
-        margin-bottom: 1.25rem;
-    }
-
-    .pi-modal-actions {
-        display: flex;
-        gap: .6rem;
-        justify-content: flex-end;
-    }
-
+    .pi-modal-icon .material-symbols-outlined { font-size: 26px; color: #dc2626; }
+    .pi-modal h3 { font-size: 1.05rem; font-weight: 800; color: #2c3639; margin-bottom: .5rem; }
+    .pi-modal p  { font-size: .85rem; color: rgba(63,78,79,.6); line-height: 1.6; margin-bottom: 1.25rem; }
+    .pi-modal-actions { display: flex; gap: .6rem; justify-content: flex-end; }
     .pi-btn-cancel {
-        padding: .55rem 1.1rem;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        background: #fff;
-        color: #3f4e4f;
-        font-size: .85rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background .15s;
-        font-family: 'Work Sans',sans-serif;
+        padding: .55rem 1.1rem; border-radius: 10px; border: 1px solid #e2e8f0;
+        background: #fff; color: #3f4e4f; font-size: .85rem; font-weight: 600;
+        cursor: pointer; font-family: 'Work Sans',sans-serif; transition: background .15s;
     }
-
-        .pi-btn-cancel:hover {
-            background: #f7f7f6;
-        }
-
+    .pi-btn-cancel:hover { background: #f7f7f6; }
     .pi-btn-del {
-        display: flex;
-        align-items: center;
-        gap: .35rem;
-        padding: .55rem 1.1rem;
-        border-radius: 10px;
-        border: none;
-        background: #dc2626;
-        color: #fff;
-        font-size: .85rem;
-        font-weight: 700;
-        cursor: pointer;
-        font-family: 'Work Sans',sans-serif;
-        transition: background .15s;
+        display: flex; align-items: center; gap: .35rem;
+        padding: .55rem 1.1rem; border-radius: 10px; border: none;
+        background: #dc2626; color: #fff; font-size: .85rem; font-weight: 700;
+        cursor: pointer; font-family: 'Work Sans',sans-serif; transition: background .15s;
     }
-
-        .pi-btn-del:hover {
-            background: #b91c1c;
-        }
-
-        .pi-btn-del .material-symbols-outlined {
-            font-size: 16px;
-        }
+    .pi-btn-del:hover { background: #b91c1c; }
+    .pi-btn-del .material-symbols-outlined { font-size: 16px; }
 </style>
 
-@* Topbar actions *@
+@* Topbar *@
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
     <div>
         <div style="font-size:1.15rem;font-weight:800;color:#2c3639;">Danh sách sản phẩm</div>
         <div style="font-size:.78rem;color:#94a3b8;margin-top:2px;" id="rowCount">@Model.Count() sản phẩm</div>
     </div>
     <a asp-action="Add"
-           style="display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;border-radius:12px;background:#a27b5c;color:#fff;font-size:.875rem;font-weight:700;text-decoration:none;transition:opacity .15s;box-shadow:0 4px 14px rgba(162,123,92,.3);"
-           onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+       style="display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;border-radius:12px;background:#a27b5c;color:#fff;font-size:.875rem;font-weight:700;text-decoration:none;transition:opacity .15s;box-shadow:0 4px 14px rgba(162,123,92,.3);"
+       onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
         <span class="material-symbols-outlined" style="font-size:20px;">add</span> Thêm Sản Phẩm
     </a>
 </div>
 
-@* Search + filter *@
-<div style="background:#fff;border-radius:14px;border:1px solid rgba(162,123,92,.15);padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
-    <div style="position:relative;flex:1;min-width:180px;">
+@* Search + filter bar *@
+<div style="background:#fff;border-radius:14px;border:1px solid rgba(162,123,92,.15);padding:1rem 1.25rem;margin-bottom:1rem;">
+    @* Row 1: Search *@
+    <div style="position:relative;margin-bottom:.75rem;">
         <span class="material-symbols-outlined" style="position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:18px;color:rgba(63,78,79,.4);pointer-events:none;">search</span>
         <input id="searchInput" oninput="filterTable()" placeholder="Tìm theo tên sản phẩm..."
-               style="width:100%;padding:.6rem .9rem .6rem 2.5rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;font-family:'Work Sans',sans-serif;font-size:.875rem;color:#2c3639;outline:none;transition:border-color .15s;"
+               style="width:100%;padding:.6rem .9rem .6rem 2.5rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;font-family:'Work Sans',sans-serif;font-size:.875rem;color:#2c3639;outline:none;transition:border-color .15s;box-sizing:border-box;"
                onfocus="this.style.borderColor='#a27b5c'" onblur="this.style.borderColor='rgba(162,123,92,.25)'" />
     </div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-        <button class="pi-filter-btn active" onclick="filterCat(0,this)">Tất Cả</button>
-        <button class="pi-filter-btn" onclick="filterCat(1,this)">Trà & Thảo Mộc</button>
-        <button class="pi-filter-btn" onclick="filterCat(2,this)">Cà Phê</button>
-        <button class="pi-filter-btn" onclick="filterCat(3,this)">Bánh Sáng</button>
+
+    @* Row 2: Filter buttons — dynamic *@
+    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+        <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(63,78,79,.4);white-space:nowrap;">Danh mục:</span>
+
+        <button class="pi-filter-btn pi-filter-all active" onclick="filterCat(0,this)">
+            <span class="fb-dot" style="background:#a27b5c;"></span>
+            Tất Cả
+            <span style="font-size:.65rem;font-weight:600;opacity:.6;margin-left:.1rem;">(@Model.Count())</span>
+        </button>
+
+        @{int colorIdx = 0;}
+        @foreach (var cat in catList)
+        {
+            var clr = colorPalette[colorIdx % colorPalette.Length];
+            int catCount = Model.Count(p => p.CategoryId == cat.Id);
+            <button class="pi-filter-btn"
+                    data-cat-id="@cat.Id"
+                    onclick="filterCat(@cat.Id,this)"
+                    style="border-color:@clr.border; color:@clr.text; background:@clr.bg;"
+                    onmouseover="this.style.opacity='.75'"
+                    onmouseout="this.style.opacity='1'">
+                <span class="fb-dot" style="background:@clr.text;"></span>
+                @cat.Name
+                <span style="font-size:.65rem;font-weight:600;opacity:.55;margin-left:.1rem;">(@catCount)</span>
+            </button>
+            colorIdx++;
+        }
     </div>
 </div>
 
@@ -341,6 +256,7 @@
                 <tbody>
                     @foreach (var p in Model)
                     {
+                        var (cbg, ctext, cborder) = GetCatColor(p.CategoryId);
                         <tr data-name="@p.Name.ToLower()" data-cat="@p.CategoryId"
                             style="border-bottom:1px solid rgba(162,123,92,.09);transition:background .12s;"
                             onmouseover="this.style.background='rgba(162,123,92,.03)'" onmouseout="this.style.background='transparent'">
@@ -361,7 +277,11 @@
                                 <div class="pi-product-id">ID #@p.Id</div>
                             </td>
                             <td style="padding:.875rem 1.25rem;">
-                                <span class="pi-cat-badge cat-@p.CategoryId">@(p.Category?.Name ?? "—")</span>
+                                <span class="pi-cat-badge"
+                                      style="background:@cbg; color:@ctext; border-color:@cborder;">
+                                    <span class="cat-dot" style="background:@ctext;"></span>
+                                    @(p.Category?.Name ?? "—")
+                                </span>
                             </td>
                             <td style="padding:.875rem 1.25rem;">
                                 <span class="pi-price">@p.Price.ToString("N0")₫</span>
@@ -406,30 +326,86 @@
     </div>
 </div>
 
+@* Data bridge for JS *@
+<script id="catData" type="application/json">@Html.Raw(catJson)</script>
+<script id="colorData" type="application/json">@Html.Raw(colorJson)</script>
+
 @section Scripts {
     <script>
+        // ── Category filter (client-side, đã có data từ server) ──────────────
+        const CATS   = JSON.parse(document.getElementById('catData').textContent);
+        const COLORS = JSON.parse(document.getElementById('colorData').textContent);
+
         function filterTable() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('#productTable tbody tr').forEach(r => {
-                r.style.display = (r.dataset.name || '').includes(q) ? '' : 'none';
+                const nameMatch = (r.dataset.name || '').includes(q);
+                const catMatch  = (activeCat === 0 || parseInt(r.dataset.cat) === activeCat);
+                r.style.display = (nameMatch && catMatch) ? '' : 'none';
             });
             updateCount();
         }
+
         let activeCat = 0;
         function filterCat(cat, btn) {
             activeCat = cat;
-            document.querySelectorAll('.pi-filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.querySelectorAll('#productTable tbody tr').forEach(r => {
-                r.style.display = (cat === 0 || parseInt(r.dataset.cat) === cat) ? '' : 'none';
+
+            // Reset all filter buttons
+            document.querySelectorAll('.pi-filter-btn').forEach(b => {
+                b.classList.remove('active');
+                // Restore original style từ data attribute
+                const catId = parseInt(b.dataset.catId || '0');
+                if (catId === 0) {
+                    // Nút "Tất Cả"
+                    b.style.background = 'transparent';
+                    b.style.color      = '#a27b5c';
+                    b.style.borderColor = 'rgba(162,123,92,.3)';
+                    const dot = b.querySelector('.fb-dot');
+                    if (dot) dot.style.background = '#a27b5c';
+                } else {
+                    const catObj = CATS.find(c => c.id === catId);
+                    if (catObj) {
+                        const clr = COLORS[catObj.colorIdx];
+                        b.style.background  = clr.bg;
+                        b.style.color       = clr.text;
+                        b.style.borderColor = clr.border;
+                        b.style.opacity     = '1';
+                        const dot = b.querySelector('.fb-dot');
+                        if (dot) dot.style.background = clr.text;
+                    }
+                }
             });
-            updateCount();
+
+            // Active button — darken / solid
+            btn.classList.add('active');
+            if (cat === 0) {
+                btn.style.background  = '#a27b5c';
+                btn.style.color       = '#fff';
+                btn.style.borderColor = '#a27b5c';
+                const dot = btn.querySelector('.fb-dot');
+                if (dot) dot.style.background = '#fff';
+            } else {
+                const catObj = CATS.find(c => c.id === cat);
+                if (catObj) {
+                    const clr = COLORS[catObj.colorIdx];
+                    // Solid version: darker border, higher opacity bg
+                    btn.style.background  = clr.bg.replace(/[\d.]+\)$/, '0.25)');
+                    btn.style.borderColor = clr.text;
+                    btn.style.color       = clr.text;
+                    btn.style.opacity     = '1';
+                }
+            }
+
+            filterTable();
         }
+
         function updateCount() {
-            const v = [...document.querySelectorAll('#productTable tbody tr')].filter(r => r.style.display !== 'none').length;
-            document.getElementById('rowCount').textContent = v + ' sản phẩm';
-            document.getElementById('tableCount').textContent = 'Hiển thị ' + v + ' sản phẩm';
+            const v = [...document.querySelectorAll('#productTable tbody tr')]
+                        .filter(r => r.style.display !== 'none').length;
+            document.getElementById('rowCount').textContent    = v + ' sản phẩm';
+            document.getElementById('tableCount').textContent  = 'Hiển thị ' + v + ' sản phẩm';
         }
+
         function showDelete(id, name) {
             document.getElementById('deleteId').value = id;
             document.getElementById('deleteName').textContent = name;
@@ -439,9 +415,15 @@
         function closeDelete() {
             document.getElementById('deleteOverlay').classList.remove('show');
         }
+
+        // ── Auto dismiss toast ─────────────────────────────────
         setTimeout(() => {
             const t = document.getElementById('hcToast');
-            if (t) { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }
+            if (t) {
+                t.style.opacity = '0';
+                t.style.transition = 'opacity .4s';
+                setTimeout(() => t.remove(), 400);
+            }
         }, 4000);
     </script>
 }

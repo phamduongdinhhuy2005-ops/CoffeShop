@@ -1,4 +1,8 @@
 // Controllers/AccountController.cs
+// FIXED:
+// 1. Login/Register GET: truyền ViewBag.GoogleEnabled / ViewBag.FacebookEnabled
+//    → view ẩn nút OAuth khi chưa cấu hình key, tránh crash InvalidOperationException
+// 2. Tất cả TempData/ModelState string đã sửa encoding UTF-8
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -14,25 +18,43 @@ namespace WebBanHang_2380600870.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
         public AccountController(UserManager<AppUser> userManager,
                                  SignInManager<AppUser> signInManager,
-                                 ApplicationDbContext context)
+                                 ApplicationDbContext context,
+                                 IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
+            _configuration = configuration;
+        }
+
+        // Helper: kiểm tra OAuth provider có được cấu hình không
+        private void SetOAuthViewBag()
+        {
+            ViewBag.GoogleEnabled = !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientId"]);
+            ViewBag.FacebookEnabled = !string.IsNullOrEmpty(_configuration["Authentication:Facebook:AppId"]);
         }
 
         // ======== ĐĂNG KÝ ========
         [HttpGet]
-        public IActionResult Register() => View();
+        public IActionResult Register()
+        {
+            SetOAuthViewBag();
+            return View();
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(AccountRegisterViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                SetOAuthViewBag();
+                return View(model);
+            }
 
             var user = new AppUser
             {
@@ -53,6 +75,8 @@ namespace WebBanHang_2380600870.Controllers
 
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
+
+            SetOAuthViewBag();
             return View(model);
         }
 
@@ -61,6 +85,7 @@ namespace WebBanHang_2380600870.Controllers
         public IActionResult Login(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+            SetOAuthViewBag();
             return View();
         }
 
@@ -68,7 +93,11 @@ namespace WebBanHang_2380600870.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(AccountLoginViewModel model, string? returnUrl = null)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                SetOAuthViewBag();
+                return View(model);
+            }
 
             var result = await _signInManager.PasswordSignInAsync(
                 model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
@@ -86,10 +115,12 @@ namespace WebBanHang_2380600870.Controllers
             if (result.IsLockedOut)
             {
                 ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.");
+                SetOAuthViewBag();
                 return View(model);
             }
 
             ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không đúng.");
+            SetOAuthViewBag();
             return View(model);
         }
 

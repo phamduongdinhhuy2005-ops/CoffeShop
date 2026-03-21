@@ -166,16 +166,33 @@
                  class="w-full rounded-2xl overflow-hidden shadow-2xl"
                  style="aspect-ratio:4/5; background:#e8e0d5; background-image:url('@p.ImageUrl'); background-size:cover; background-position:center; border:1px solid rgba(162,123,92,0.12);">
             </div>
-            <div class="grid grid-cols-4 gap-3">
-                <div class="thumb active aspect-square rounded-xl"
-                     style="background-image:url('@p.ImageUrl'); background-size:cover; background-position:center; border:2px solid #A27B5C;"
-                     onclick="setMainImg('@p.ImageUrl', this)">
-                </div>
-                @foreach (var rp in Model.RelatedProducts.Take(3))
+            @{
+                // Thumbnail list: slot 0 = ảnh chính, slots 1-3 = ProductImages
+                var thumbUrls = new List<string>();
+                thumbUrls.Add(p.ImageUrl ?? "");
+                if (p.Images != null)
                 {
-                    <div class="thumb aspect-square rounded-xl opacity-60"
-                         style="background-image:url('@rp.ImageUrl'); background-size:cover; background-position:center; border:2px solid transparent;"
-                         onclick="setMainImg('@rp.ImageUrl', this)">
+                    foreach (var img in p.Images.Take(3))
+                    {
+                        if (!string.IsNullOrEmpty(img.Url))
+                            thumbUrls.Add(img.Url);
+                    }
+                }
+            }
+            <div class="grid grid-cols-4 gap-3">
+                @for (int ti = 0; ti < thumbUrls.Count; ti++)
+                {
+                    var tUrl = thumbUrls[ti];
+                    <div class="thumb @(ti == 0 ? "active" : "opacity-60") aspect-square rounded-xl"
+                         style="background-image:url('@tUrl'); background-size:cover; background-position:center; border:2px solid @(ti == 0 ? "#A27B5C" : "transparent");"
+                         onclick="setMainImg('@tUrl', this)">
+                    </div>
+                }
+                @* Pad các slot còn trống nếu chưa đủ 4 *@
+                @for (int ti = thumbUrls.Count; ti < 4; ti++)
+                {
+                    <div class="aspect-square rounded-xl"
+                         style="background:#f0ece6; border:2px dashed rgba(162,123,92,0.15);">
                     </div>
                 }
             </div>
@@ -430,7 +447,7 @@
         var qty        = 1;
         var sizeIndex  = 1;
         var SIZE_DELTA = 7000;
-        var basePrice  = @(basePriceValue);
+        var basePrice  = @((long)basePriceValue);
 
         var PAGE_SIZE    = 4;
         var toppingPage  = 0;

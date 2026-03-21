@@ -1,14 +1,10 @@
 ﻿// Controllers/ProductController.cs
-// FIXED & OPTIMIZED:
-// 1. SaveImage() không validate file type → có thể upload file độc hại
-// 2. SaveImage() không giới hạn file size → có thể upload file quá lớn
-// 3. SaveImage() không sanitize tên file → path traversal vulnerability
-// 4. Edit: giữ ImageUrl cũ khi không upload ảnh mới nhưng logic hơi confusing
-// 5. Detail: gọi GetAllAsync() 2 lần → dùng 1 query duy nhất
+// UPDATED: Index() truyền ViewBag.Categories để filter button động trong view
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using WebBanHang_2380600870.Models;
 using WebBanHang_2380600870.Repositories;
 
@@ -19,23 +15,24 @@ namespace WebBanHang_2380600870.Controllers
         private readonly IProductRepository _productRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IWebHostEnvironment _env;
+        private readonly ApplicationDbContext _context;
 
-        // FIX: Danh sách MIME types được phép upload
         private static readonly HashSet<string> AllowedMimeTypes = new(StringComparer.OrdinalIgnoreCase)
         {
             "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"
         };
 
-        // FIX: Giới hạn 5MB
         private const long MaxImageSizeBytes = 5 * 1024 * 1024;
 
         public ProductController(IProductRepository productRepository,
                                  ICategoryRepository categoryRepository,
-                                 IWebHostEnvironment env)
+                                 IWebHostEnvironment env,
+                                 ApplicationDbContext context)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _env = env;
+            _context = context;
         }
 
         // ══════════════════════════════════════════════════════
@@ -46,7 +43,6 @@ namespace WebBanHang_2380600870.Controllers
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
 
-            // FIX: Dùng 1 lần GetAllAsync và filter trong memory
             var allProducts = await _productRepository.GetAllAsync();
             var productList = allProducts.ToList();
 
@@ -76,6 +72,8 @@ namespace WebBanHang_2380600870.Controllers
         public async Task<IActionResult> Index()
         {
             var products = await _productRepository.GetAllAsync();
+            // FIX: Truyền danh mục để view render filter buttons động
+            ViewBag.Categories = await _categoryRepository.GetAllAsync();
             return View(products);
         }
 
@@ -105,7 +103,6 @@ namespace WebBanHang_2380600870.Controllers
             {
                 if (ImageFile != null && ImageFile.Length > 0)
                 {
-                    // FIX: Validate trước khi lưu
                     var validationError = ValidateImageFile(ImageFile);
                     if (validationError != null)
                     {
@@ -139,7 +136,7 @@ namespace WebBanHang_2380600870.Controllers
         }
 
         // ══════════════════════════════════════════════════════
-        //  ADMIN — chỉnh sửa
+        //  ADMIN — chỉnh sửa GET
         // ══════════════════════════════════════════════════════
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id)
@@ -151,59 +148,129 @@ namespace WebBanHang_2380600870.Controllers
             return View(product);
         }
 
+        // ══════════════════════════════════════════════════════
+        //  ADMIN — chỉnh sửa POST (CÓ xử lý extra images)
+        // ══════════════════════════════════════════════════════
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Product product, IFormFile? ImageFile)
+        public async Task<IActionResult> Edit(
+            int id,
+            Product product,
+            IFormFile? ImageFile,
+            List<IFormFile?>? ExtraImages,
+            List<int?>? ExtraImageIds,
+            List<string?>? ExtraImageUrls)
         {
             ModelState.Remove("ImageUrl");
             ModelState.Remove("ImageFile");
             ModelState.Remove("Images");
             ModelState.Remove("Category");
             ModelState.Remove("DiscountPercent");
+            ModelState.Remove("ExtraImages");
+            ModelState.Remove("ExtraImageIds");
+            ModelState.Remove("ExtraImageUrls");
 
             if (id != product.Id) return NotFound();
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var existing = await _productRepository.GetByIdAsync(id);
-                if (existing == null) return NotFound();
-
-                existing.Name = product.Name;
-                existing.Price = product.Price;
-                existing.Description = product.Description;
-                existing.CategoryId = product.CategoryId;
-                existing.IsOnSale = product.IsOnSale;
-                existing.DiscountPercent = product.DiscountPercent;
-
-                if (ImageFile != null && ImageFile.Length > 0)
-                {
-                    // FIX: Validate image file
-                    var validationError = ValidateImageFile(ImageFile);
-                    if (validationError != null)
-                    {
-                        ModelState.AddModelError("ImageFile", validationError);
-                        ViewBag.Categories = await _categoryRepository.GetAllAsync();
-                        return View(product);
-                    }
-
-                    // FIX: Xóa ảnh cũ nếu là file local (không phải URL ngoài)
-                    DeleteOldLocalImage(existing.ImageUrl);
-                    existing.ImageUrl = await SaveImage(ImageFile);
-                }
-                else if (!string.IsNullOrWhiteSpace(product.ImageUrl))
-                {
-                    existing.ImageUrl = product.ImageUrl;
-                }
-                // Nếu cả hai đều trống → giữ nguyên existing.ImageUrl
-
-                await _productRepository.UpdateAsync(existing);
-                TempData["Success"] = $"Đã cập nhật sản phẩm \"{existing.Name}\" thành công!";
-                return RedirectToAction(nameof(Index));
+                ViewBag.Categories = await _categoryRepository.GetAllAsync();
+                return View(product);
             }
 
-            ViewBag.Categories = await _categoryRepository.GetAllAsync();
-            return View(product);
+            var existing = await _context.Products
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (existing == null) return NotFound();
+
+            // ── Cập nhật thông tin cơ bản ──
+            existing.Name = product.Name;
+            existing.Price = product.Price;
+            existing.Description = product.Description;
+            existing.CategoryId = product.CategoryId;
+            existing.IsOnSale = product.IsOnSale;
+            existing.DiscountPercent = product.DiscountPercent;
+
+            // ── Ảnh chính (slot 0) ──
+            if (ImageFile != null && ImageFile.Length > 0)
+            {
+                var err = ValidateImageFile(ImageFile);
+                if (err != null)
+                {
+                    ModelState.AddModelError("ImageFile", err);
+                    ViewBag.Categories = await _categoryRepository.GetAllAsync();
+                    return View(product);
+                }
+                DeleteOldLocalImage(existing.ImageUrl);
+                existing.ImageUrl = await SaveImage(ImageFile);
+            }
+            else if (!string.IsNullOrWhiteSpace(product.ImageUrl))
+            {
+                existing.ImageUrl = product.ImageUrl;
+            }
+
+            // ── Ảnh phụ (slots 1-3) ──
+            var existingImages = existing.Images?.ToList() ?? new List<ProductImage>();
+
+            for (int i = 0; i < 3; i++)
+            {
+                var newFile = (ExtraImages != null && i < ExtraImages.Count) ? ExtraImages[i] : null;
+                var currentUrl = (ExtraImageUrls != null && i < ExtraImageUrls.Count) ? ExtraImageUrls[i] ?? "" : "";
+                var existingImg = i < existingImages.Count ? existingImages[i] : null;
+
+                bool hasNewFile = newFile != null && newFile.Length > 0;
+                bool isDeleted = string.IsNullOrEmpty(currentUrl);
+                bool isNewUrl = !isDeleted && currentUrl != "new_file" && currentUrl.StartsWith("http");
+
+                if (hasNewFile)
+                {
+                    var err = ValidateImageFile(newFile!);
+                    if (err != null) continue;
+
+                    var newUrl = await SaveImage(newFile!);
+                    if (existingImg != null)
+                    {
+                        DeleteOldLocalImage(existingImg.Url);
+                        existingImg.Url = newUrl;
+                        _context.ProductImages.Update(existingImg);
+                    }
+                    else
+                    {
+                        _context.ProductImages.Add(new ProductImage { ProductId = id, Url = newUrl });
+                    }
+                }
+                else if (isNewUrl)
+                {
+                    if (existingImg != null)
+                    {
+                        if (existingImg.Url?.StartsWith("/images/") == true)
+                            DeleteOldLocalImage(existingImg.Url);
+                        existingImg.Url = currentUrl;
+                        _context.ProductImages.Update(existingImg);
+                    }
+                    else
+                    {
+                        _context.ProductImages.Add(new ProductImage { ProductId = id, Url = currentUrl });
+                    }
+                }
+                else if (isDeleted)
+                {
+                    if (existingImg != null)
+                    {
+                        DeleteOldLocalImage(existingImg.Url);
+                        _context.ProductImages.Remove(existingImg);
+                    }
+                }
+                // currentUrl == "new_file" nhưng không có file → giữ nguyên
+            }
+
+            _context.Products.Update(existing);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Đã cập nhật sản phẩm \"{existing.Name}\" thành công!";
+            return RedirectToAction(nameof(Index));
         }
 
         [Authorize(Roles = "Admin")]
@@ -228,7 +295,6 @@ namespace WebBanHang_2380600870.Controllers
             var product = await _productRepository.GetByIdAsync(id);
             string name = product?.Name ?? $"#{id}";
 
-            // FIX: Xóa ảnh local khi xóa sản phẩm
             if (product != null)
                 DeleteOldLocalImage(product.ImageUrl);
 
@@ -238,27 +304,20 @@ namespace WebBanHang_2380600870.Controllers
         }
 
         // ══════════════════════════════════════════════════════
-        //  Helper — validate ảnh upload
+        //  Helpers
         // ══════════════════════════════════════════════════════
         private static string? ValidateImageFile(IFormFile file)
         {
             if (file.Length > MaxImageSizeBytes)
                 return "Ảnh không được vượt quá 5MB.";
-
             if (!AllowedMimeTypes.Contains(file.ContentType))
                 return "Chỉ chấp nhận ảnh định dạng JPG, PNG, WebP hoặc GIF.";
-
-            // FIX: Kiểm tra extension
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" }.Contains(ext))
                 return "File không hợp lệ. Chỉ chấp nhận .jpg, .jpeg, .png, .webp, .gif";
-
             return null;
         }
 
-        // ══════════════════════════════════════════════════════
-        //  Helper — lưu ảnh upload
-        // ══════════════════════════════════════════════════════
         private async Task<string> SaveImage(IFormFile image)
         {
             var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
@@ -266,7 +325,6 @@ namespace WebBanHang_2380600870.Controllers
             if (!Directory.Exists(imagesFolder))
                 Directory.CreateDirectory(imagesFolder);
 
-            // FIX: Chỉ dùng Guid + extension, KHÔNG dùng tên gốc của file (bảo mật)
             var ext = Path.GetExtension(image.FileName).ToLowerInvariant();
             var uniqueFileName = Guid.NewGuid().ToString() + ext;
             var savePath = Path.Combine(imagesFolder, uniqueFileName);
@@ -277,14 +335,10 @@ namespace WebBanHang_2380600870.Controllers
             return "/images/" + uniqueFileName;
         }
 
-        // ══════════════════════════════════════════════════════
-        //  Helper — xóa ảnh local (không xóa URL ngoài)
-        // ══════════════════════════════════════════════════════
         private void DeleteOldLocalImage(string? imageUrl)
         {
             if (string.IsNullOrEmpty(imageUrl) || !imageUrl.StartsWith("/images/"))
-                return; // Không xóa URL ngoài (Google, CDN...)
-
+                return;
             try
             {
                 var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
@@ -292,10 +346,7 @@ namespace WebBanHang_2380600870.Controllers
                 if (System.IO.File.Exists(filePath))
                     System.IO.File.Delete(filePath);
             }
-            catch
-            {
-                // Không throw nếu xóa file thất bại — không critical
-            }
+            catch { }
         }
     }
 }
