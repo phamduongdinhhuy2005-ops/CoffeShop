@@ -1,5 +1,5 @@
 ﻿@* Views/Product/Detail.cshtml *@
-@* FIX: Nút "Thêm vào giỏ" ẩn với Admin — điều kiện đổi từ IsAuthenticated → IsAuthenticated && !IsInRole("Admin") *@
+@* FIX: Gửi toppingPrice (tổng giá topping) lên server để cộng vào UnitPrice *@
 @model WebBanHang_2380600870.Models.ProductDetailViewModel
 @{
     ViewData["Title"] = Model.Product.Name + " | Góc Lặng";
@@ -10,7 +10,6 @@
     var catName = p.Category?.Name ?? "";
     string PriceK(decimal price) => (price / 1000).ToString("0") + "k";
 
-    // ── Fallback toppings (dùng khi localStorage chưa có) ───────
     var fallbackToppings = catId == 2
         ? new[] {
             ("Thêm đá",              "+0k",  0),
@@ -37,110 +36,29 @@
     var sizeLabel = catId == 3 ? "Phần" : "Kích Cỡ";
     var sizeNames = new[] { "Nhỏ", "Vừa", "Lớn" };
 
-    // Pre-compute JSON tại server để tránh C# lambda trong <script> (fix TS1109 warning)
     var fallbackToppingsJson = System.Text.Json.JsonSerializer.Serialize(
         fallbackToppings.Select(t => new { name = t.Item1, price = t.Item3 }));
 
-    // FIX TS1109: Pre-compute basePrice để tránh @(ternary với >) trong <script>
     var basePriceValue = (p.IsOnSale && p.SalePrice > 0) ? p.SalePrice : p.Price;
 }
 
 <style>
-    .thumb {
-        transition: all .2s;
-        cursor: pointer;
-    }
+    .thumb { transition: all .2s; cursor: pointer; }
+    .thumb:hover, .thumb.active { border-color: #A27B5C !important; opacity: 1 !important; }
+    .size-btn { transition: all .18s; cursor: pointer; }
+    .size-btn.active { background: rgba(162,123,92,0.1); border-color: #A27B5C !important; color: #A27B5C; font-weight: 700; }
+    .sugar-btn { transition: all .18s; cursor: pointer; }
+    .sugar-btn.active { background: #A27B5C !important; color: #fff !important; border-color: #A27B5C !important; }
+    .topping-label { transition: background .15s; }
+    .topping-label:has(input:checked) { background: rgba(162,123,92,0.08); border-color: #A27B5C; }
+    .price-flash { animation: priceFlash .25s ease; }
 
-        .thumb:hover, .thumb.active {
-            border-color: #A27B5C !important;
-            opacity: 1 !important;
-        }
-
-    .size-btn {
-        transition: all .18s;
-        cursor: pointer;
-    }
-
-        .size-btn.active {
-            background: rgba(162,123,92,0.1);
-            border-color: #A27B5C !important;
-            color: #A27B5C;
-            font-weight: 700;
-        }
-
-    .sugar-btn {
-        transition: all .18s;
-        cursor: pointer;
-    }
-
-        .sugar-btn.active {
-            background: #A27B5C !important;
-            color: #fff !important;
-            border-color: #A27B5C !important;
-        }
-
-    .topping-label {
-        transition: background .15s;
-    }
-
-        .topping-label:has(input:checked) {
-            background: rgba(162,123,92,0.08);
-            border-color: #A27B5C;
-        }
-
-    .price-flash {
-        animation: priceFlash .25s ease;
-    }
-
-    /* ── Topping pagination ──────────────────────────────── */
-    #toppingPager {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: .375rem;
-        margin-top: .875rem;
-    }
-
-    .tp-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: rgba(162,123,92,.25);
-        cursor: pointer;
-        transition: background .2s, transform .2s;
-        border: none;
-        padding: 0;
-    }
-
-        .tp-dot.active {
-            background: #A27B5C;
-            transform: scale(1.3);
-        }
-
-    .tp-arrow {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 1.5px solid rgba(162,123,92,.3);
-        background: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #a27b5c;
-        transition: background .15s, border-color .15s;
-        font-size: 16px;
-    }
-
-        .tp-arrow:hover:not(:disabled) {
-            background: rgba(162,123,92,.08);
-            border-color: #a27b5c;
-        }
-
-        .tp-arrow:disabled {
-            opacity: .3;
-            cursor: default;
-        }
+    #toppingPager { display:flex; align-items:center; justify-content:center; gap:.375rem; margin-top:.875rem; }
+    .tp-dot { width:6px; height:6px; border-radius:50%; background:rgba(162,123,92,.25); cursor:pointer; transition:background .2s,transform .2s; border:none; padding:0; }
+    .tp-dot.active { background:#A27B5C; transform:scale(1.3); }
+    .tp-arrow { width:28px; height:28px; border-radius:50%; border:1.5px solid rgba(162,123,92,.3); background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#a27b5c; transition:background .15s,border-color .15s; font-size:16px; }
+    .tp-arrow:hover:not(:disabled) { background:rgba(162,123,92,.08); border-color:#a27b5c; }
+    .tp-arrow:disabled { opacity:.3; cursor:default; }
 </style>
 
 <main class="flex-1 max-w-7xl mx-auto w-full px-4 md:px-10 py-8 lg:py-12">
@@ -160,14 +78,13 @@
     <!-- Main grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
 
-        <!-- ── LEFT: Ảnh ── -->
+        <!-- LEFT: Ảnh -->
         <div class="flex flex-col gap-4">
             <div id="mainImg"
                  class="w-full rounded-2xl overflow-hidden shadow-2xl"
                  style="aspect-ratio:4/5; background:#e8e0d5; background-image:url('@p.ImageUrl'); background-size:cover; background-position:center; border:1px solid rgba(162,123,92,0.12);">
             </div>
             @{
-                // Thumbnail list: slot 0 = ảnh chính, slots 1-3 = ProductImages
                 var thumbUrls = new List<string>();
                 thumbUrls.Add(p.ImageUrl ?? "");
                 if (p.Images != null)
@@ -188,7 +105,6 @@
                          onclick="setMainImg('@tUrl', this)">
                     </div>
                 }
-                @* Pad các slot còn trống nếu chưa đủ 4 *@
                 @for (int ti = thumbUrls.Count; ti < 4; ti++)
                 {
                     <div class="aspect-square rounded-xl"
@@ -198,19 +114,14 @@
             </div>
         </div>
 
-        <!-- ── RIGHT ── -->
+        <!-- RIGHT -->
         <div class="flex flex-col">
             <h1 class="text-4xl lg:text-5xl font-black text-slate-custom mb-3 leading-tight"
-                style="font-family:'Playfair Display',serif;">
-                @p.Name
-            </h1>
+                style="font-family:'Playfair Display',serif;">@p.Name</h1>
 
             <div class="flex items-center gap-3 mb-5">
                 <div class="flex" style="color:#A27B5C;">
-                    @for (int i = 0; i < 5; i++)
-                    {
-                        <span class="material-symbols-outlined" style="font-size:18px;">star</span>
-                    }
+                    @for (int i = 0; i < 5; i++) { <span class="material-symbols-outlined" style="font-size:18px;">star</span> }
                 </div>
                 <span class="text-sm font-medium text-teal-custom opacity-70">@categoryName</span>
                 @if (p.IsOnSale && p.DiscountPercent.HasValue)
@@ -237,8 +148,8 @@
 
             <p class="text-teal-custom text-base leading-relaxed mb-8 italic">
                 @(string.IsNullOrWhiteSpace(p.Description)
-                                ? "Một ly đồ uống được chế tác tỉ mỉ, mang đến trải nghiệm khó quên tại Góc Lặng."
-                                : p.Description)
+                    ? "Một ly đồ uống được chế tác tỉ mỉ, mang đến trải nghiệm khó quên tại Góc Lặng."
+                    : p.Description)
             </p>
 
             <!-- Customization -->
@@ -266,16 +177,14 @@
                 <div id="sugarSection" style="display:@(hasSugar ? "block" : "none")">
                     <label class="block text-xs font-bold uppercase tracking-widest text-slate-custom mb-3">Độ Ngọt</label>
                     <div class="flex gap-2 flex-wrap" id="sugarBtns">
-                        @{
-                            var sugars = new[] { "Không đường", "Ít ngọt", "Vừa", "Nhiều đường" };
-                        }
+                        @{var sugars = new[] { "Không đường", "Ít ngọt", "Vừa", "Nhiều đường" };}
                         @for (int i = 0; i < sugars.Length; i++)
                         {
                             <button type="button"
                                     class="sugar-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold"
                                     style="border:1.5px solid @(i == 2 ? "#A27B5C" : "rgba(162,123,92,0.25)");
-                                background:@(i == 2 ? "#A27B5C" : "transparent");
-                                color:@(i == 2 ? "#fff" : "#3F4E4F");"
+                                    background:@(i == 2 ? "#A27B5C" : "transparent");
+                                    color:@(i == 2 ? "#fff" : "#3F4E4F");"
                                     onclick="selectSugar(this)">
                                 @sugars[i]
                             </button>
@@ -318,10 +227,6 @@
                     </button>
                 </div>
 
-                @* ====================================================
-                   FIX: Đổi điều kiện từ IsAuthenticated → IsAuthenticated && !IsInRole("Admin")
-                   Admin thấy badge thông báo thay vì nút thêm giỏ
-                   ==================================================== *@
                 @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
                 {
                     <button type="button" id="addToCartBtn"
@@ -364,27 +269,14 @@
             <div class="mt-8 grid grid-cols-3 gap-4 pt-6" style="border-top:1px solid rgba(162,123,92,0.12);">
                 @{
                     var stats = catId == 3
-                    ? new[] {
-                                new { Label = "Nguyên liệu", Value = "Tươi"  },
-                                new { Label = "Thủ công",    Value = "100%"  },
-                                new { Label = "Nguồn gốc",   Value = "Local" },
-                    }
-                    : catId == 1
-                    ? new[] {
-                                new { Label = "Caffeine",    Value = "~0mg"  },
-                                new { Label = "Antioxidant", Value = "Cao"   },
-                                new { Label = "Nguồn gốc",   Value = "100%"  },
-                    }
-                    : new[] {
-                                new { Label = "Calories",    Value = "~180"  },
-                                new { Label = "Caffeine",    Value = "~120mg"},
-                                new { Label = "Nguồn gốc",   Value = "100%"  },
-                    };
+                        ? new[] { new { Label="Nguyên liệu", Value="Tươi"   }, new { Label="Thủ công",  Value="100%" }, new { Label="Nguồn gốc", Value="Local" } }
+                        : catId == 1
+                        ? new[] { new { Label="Caffeine",   Value="~0mg"   }, new { Label="Antioxidant",Value="Cao"  }, new { Label="Nguồn gốc", Value="100%"  } }
+                        : new[] { new { Label="Calories",   Value="~180"   }, new { Label="Caffeine",  Value="~120mg"},new { Label="Nguồn gốc", Value="100%"  } };
                 }
                 @foreach (var st in stats)
                 {
-                    <div class="text-center @(st != stats[0] ? "border-l" : "")"
-                         style="border-color:rgba(162,123,92,0.12);">
+                    <div class="text-center @(st != stats[0] ? "border-l" : "")" style="border-color:rgba(162,123,92,0.12);">
                         <p class="text-xs font-bold uppercase tracking-wider text-teal-custom opacity-60 mb-1">@st.Label</p>
                         <p class="text-lg font-black text-slate-custom">@st.Value</p>
                     </div>
@@ -399,9 +291,7 @@
         <section class="mt-24 mb-16">
             <div class="flex items-end justify-between mb-10">
                 <div>
-                    <h2 class="text-3xl font-black text-slate-custom" style="font-family:'Playfair Display',serif;">
-                        Có Thể Bạn Cũng Thích
-                    </h2>
+                    <h2 class="text-3xl font-black text-slate-custom" style="font-family:'Playfair Display',serif;">Có Thể Bạn Cũng Thích</h2>
                     <p class="text-teal-custom text-sm mt-1 opacity-70">Những lựa chọn tuyệt vời khác từ Góc Lặng</p>
                 </div>
                 <a asp-controller="Menu" asp-action="Index"
@@ -436,7 +326,6 @@
 
 @section Scripts {
     <script>
-        // Inject keyframes via JS (String.fromCharCode avoids Razor/CSS linter issues)
         (function(){
             var s = document.createElement('style');
             var at = String.fromCharCode(64);
@@ -452,7 +341,6 @@
         var PAGE_SIZE    = 4;
         var toppingPage  = 0;
         var allToppings  = [];
-        // FIX: Lưu tên toppings đã chọn để giữ state khi chuyển trang
         var selectedToppingNames = new Set();
 
         var STORAGE_KEY  = 'goclang_category_options';
@@ -469,11 +357,8 @@
 
         function buildToppingItems(catCfg) {
             if (catCfg && catCfg.toppings && catCfg.toppings.length > 0) {
-                return catCfg.toppings.map(function(t) {
-                    return { name: t.name, price: t.price };
-                });
+                return catCfg.toppings.map(function(t) { return { name: t.name, price: t.price }; });
             }
-            // Fallback JSON pre-computed server-side (tránh C# lambda trong script)
             return @Html.Raw(fallbackToppingsJson);
         }
 
@@ -484,9 +369,7 @@
                 if (sl) sl.textContent = catCfg.sizeLabel;
             }
             var sugarSec = document.getElementById('sugarSection');
-            if (sugarSec) {
-                sugarSec.style.display = catCfg.hasSugar !== false ? 'block' : 'none';
-            }
+            if (sugarSec) sugarSec.style.display = catCfg.hasSugar !== false ? 'block' : 'none';
         }
 
         function renderToppingPage() {
@@ -497,7 +380,7 @@
 
             if (toppingPage >= pages) toppingPage = Math.max(0, pages - 1);
 
-            // FIX: Lưu tên toppings đang checked trên trang hiện tại trước khi rebuild DOM
+            // Persist checked state before re-render
             document.querySelectorAll('.topping-check:checked').forEach(function(cb) {
                 var name = cb.closest('[data-topping-name]')?.getAttribute('data-topping-name');
                 if (name) selectedToppingNames.add(name);
@@ -509,7 +392,6 @@
             grid.innerHTML = slice.map(function(t) {
                 var priceStr = t.price === 0 ? '+0k' : '+' + (t.price / 1000) + 'k';
                 var escaped  = t.name.replace(/"/g, '&quot;');
-                // FIX: Restore checked state nếu topping này đã được chọn trước đó
                 var isChecked = selectedToppingNames.has(t.name) ? ' checked' : '';
                 return '<label class="topping-label flex items-center gap-3 p-3 rounded-xl cursor-pointer"' +
                        ' style="border:1.5px solid rgba(162,123,92,0.18);"' +
@@ -522,24 +404,18 @@
                        '</label>';
             }).join('');
 
-            if (pages <= 1) {
-                pager.style.display = 'none';
-                return;
-            }
+            if (pages <= 1) { pager.style.display = 'none'; return; }
             pager.style.display = 'flex';
             pager.innerHTML =
-                '<button class="tp-arrow" id="tpPrev" onclick="gotoToppingPage(' + (toppingPage - 1) + ')"' +
+                '<button class="tp-arrow" onclick="gotoToppingPage(' + (toppingPage - 1) + ')"' +
                 (toppingPage === 0 ? ' disabled' : '') + '>' +
                 '<span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span></button>';
-
             for (var i = 0; i < pages; i++) {
-                pager.innerHTML +=
-                    '<button class="tp-dot' + (i === toppingPage ? ' active' : '') + '"' +
-                    ' onclick="gotoToppingPage(' + i + ')" title="Trang ' + (i+1) + '"></button>';
+                pager.innerHTML += '<button class="tp-dot' + (i === toppingPage ? ' active' : '') + '"' +
+                    ' onclick="gotoToppingPage(' + i + ')"></button>';
             }
-
             pager.innerHTML +=
-                '<button class="tp-arrow" id="tpNext" onclick="gotoToppingPage(' + (toppingPage + 1) + ')"' +
+                '<button class="tp-arrow" onclick="gotoToppingPage(' + (toppingPage + 1) + ')"' +
                 (toppingPage >= pages - 1 ? ' disabled' : '') + '>' +
                 '<span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span></button>';
         }
@@ -552,27 +428,27 @@
             updateTotal();
         }
 
-        // FIX: Khi check/uncheck topping, cập nhật Set để persist qua các trang
         function onToppingChange(cb) {
             var name = cb.closest('[data-topping-name]')?.getAttribute('data-topping-name');
             if (!name) return;
-            if (cb.checked) {
-                selectedToppingNames.add(name);
-            } else {
-                selectedToppingNames.delete(name);
-            }
+            if (cb.checked) selectedToppingNames.add(name);
+            else selectedToppingNames.delete(name);
             updateTotal();
+        }
+
+        // FIX: Tính tổng giá topping từ Set (persist qua các trang)
+        function calcToppingSum() {
+            var sum = 0;
+            selectedToppingNames.forEach(function(name) {
+                var t = allToppings.find(function(x) { return x.name === name; });
+                if (t) sum += t.price || 0;
+            });
+            return sum;
         }
 
         function calcPrice() {
             var sizeDelta = (sizeIndex - 1) * SIZE_DELTA;
-            var toppingSum = 0;
-            // Use Set as source of truth (persists across pages)
-            selectedToppingNames.forEach(function(name) {
-                var t = allToppings.find(function(x) { return x.name === name; });
-                if (t) toppingSum += t.price || 0;
-            });
-            return basePrice + sizeDelta + toppingSum;
+            return basePrice + sizeDelta + calcToppingSum();
         }
 
         function updateTotal() {
@@ -631,7 +507,7 @@
             thumb.classList.add('active'); thumb.style.borderColor = '#A27B5C'; thumb.style.opacity = '1';
         }
 
-        // ── Thêm vào giỏ hàng ───────────────────────────────────
+        // ── FIX: Gửi toppingPrice tổng lên server ────────────────
         async function addToCart(productId) {
             var btn = document.getElementById('addToCartBtn');
             btn.disabled = true; btn.style.opacity = '0.7';
@@ -639,7 +515,9 @@
             var sugarBtn = document.querySelector('.sugar-btn.active');
             var sugar    = sugarBtn ? sugarBtn.textContent.trim() : 'Vừa';
 
-            var selectedToppings = Array.from(selectedToppingNames); // all checked across pages
+            var selectedToppings = Array.from(selectedToppingNames);
+            // FIX: Tính tổng giá topping để gửi lên server
+            var toppingPriceTotal = calcToppingSum();
 
             var sizeMap = ['S','M','L'];
             var size    = sizeMap[sizeIndex];
@@ -658,18 +536,18 @@
                         'RequestVerificationToken': token
                     },
                     body: new URLSearchParams({
-                        productId: productId,
-                        quantity:  qty,
-                        size:      size,
-                        sugarLevel: sugar,
-                        toppings:  toppingStr
+                        productId:    productId,
+                        quantity:     qty,
+                        size:         size,
+                        sugarLevel:   sugar,
+                        toppings:     toppingStr,
+                        toppingPrice: toppingPriceTotal  // FIX: gửi tổng giá topping
                     })
                 });
 
                 const data = await resp.json();
                 if (data.success) {
                     showToast('✅ Đã thêm vào giỏ hàng!', 'success');
-                    // Cập nhật cart badge
                     const badge = document.getElementById('cartBadge');
                     if (badge && data.cartCount > 0) {
                         badge.textContent = data.cartCount > 99 ? '99+' : data.cartCount;
@@ -712,6 +590,5 @@
         })();
     </script>
 
-    @* Hidden AntiForgery token cho AJAX *@
     @Html.AntiForgeryToken()
 }

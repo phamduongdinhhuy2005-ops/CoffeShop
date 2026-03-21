@@ -1,11 +1,6 @@
-﻿// Controllers/CartController.cs — THAY THẾ TOÀN BỘ FILE CŨ
-// KEY FIXES:
-// [FIX-ADMIN] Add() guard: Admin bị chặn, trả JSON lỗi
-// [FIX-ADMIN] Index(), Checkout() redirect Admin → Admin/Index
-// [FIX-TOPPINGS] Remove/UpdateQuantity nhận đúng toppings param
-// [FIX-PRICE] SalePrice + giá âm Size S
-// [FIX-CART-COUNT] Admin trả 0
-// [NEW] OrderHistory() action
+﻿// Controllers/CartController.cs
+// FIX: toppingPrice param — server cộng giá topping vào UnitPrice
+// NEW: CancelOrder action — user hủy đơn Pending
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -27,26 +22,19 @@ namespace WebBanHang_2380600870.Controllers
             _userManager = userManager;
         }
 
-        private Cart GetCart()
-            => HttpContext.Session.GetObject<Cart>(CartSessionKey) ?? new Cart();
+        private Cart GetCart() => HttpContext.Session.GetObject<Cart>(CartSessionKey) ?? new Cart();
+        private void SaveCart(Cart cart) => HttpContext.Session.SetObject(CartSessionKey, cart);
 
-        private void SaveCart(Cart cart)
-            => HttpContext.Session.SetObject(CartSessionKey, cart);
-
-        // GET /Cart
         public IActionResult Index()
         {
-            if (User.IsInRole("Admin"))
-                return RedirectToAction("Index", "Admin");
-            var cart = GetCart();
-            return View(cart);
+            if (User.IsInRole("Admin")) return RedirectToAction("Index", "Admin");
+            return View(GetCart());
         }
 
-        // POST /Cart/Add
-        // [FIX-ADMIN] Admin bị chặn hoàn toàn — trả JSON thay vì redirect vì gọi qua AJAX
+        // POST /Cart/Add — FIX: thêm toppingPrice
         [HttpPost]
         public async Task<IActionResult> Add(int productId, int quantity = 1, string size = "M",
-            string sugarLevel = "100%", string toppings = "")
+            string sugarLevel = "100%", string toppings = "", decimal toppingPrice = 0)
         {
             if (User.IsInRole("Admin"))
                 return Json(new { success = false, message = "Tài khoản Admin không thể thêm vào giỏ hàng." });
@@ -65,6 +53,9 @@ namespace WebBanHang_2380600870.Controllers
             if (size == "L") price += 7000;
             else if (size == "S") price = Math.Max(0, price - 7000);
 
+            // FIX: cộng giá topping vào UnitPrice
+            if (toppingPrice > 0) price += toppingPrice;
+
             var cart = GetCart();
             cart.AddItem(new CartItem
             {
@@ -79,15 +70,9 @@ namespace WebBanHang_2380600870.Controllers
             });
             SaveCart(cart);
 
-            return Json(new
-            {
-                success = true,
-                message = $"Đã thêm {product.Name} vào giỏ hàng!",
-                cartCount = cart.TotalQuantity
-            });
+            return Json(new { success = true, message = $"Đã thêm {product.Name} vào giỏ hàng!", cartCount = cart.TotalQuantity });
         }
 
-        // POST /Cart/Remove
         [HttpPost]
         public IActionResult Remove(int productId, string size, string sugarLevel, string toppings = "")
         {
@@ -97,20 +82,17 @@ namespace WebBanHang_2380600870.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // POST /Cart/UpdateQuantity
         [HttpPost]
         public IActionResult UpdateQuantity(int productId, string size, string sugarLevel, int quantity, string toppings = "")
         {
             if (quantity < 0) quantity = 0;
             if (quantity > 99) quantity = 99;
-
             var cart = GetCart();
             cart.UpdateQuantity(productId, size, sugarLevel, quantity, toppings);
             SaveCart(cart);
             return RedirectToAction(nameof(Index));
         }
 
-        // POST /Cart/Clear
         [HttpPost]
         public IActionResult Clear()
         {
@@ -120,49 +102,38 @@ namespace WebBanHang_2380600870.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET /Cart/CartCount — AJAX badge
         [HttpGet]
         public IActionResult CartCount()
         {
-            if (User.IsInRole("Admin"))
-                return Json(new { count = 0 });
-            var cart = GetCart();
-            return Json(new { count = cart.TotalQuantity });
+            if (User.IsInRole("Admin")) return Json(new { count = 0 });
+            return Json(new { count = GetCart().TotalQuantity });
         }
 
-        // GET /Cart/Checkout
         [Authorize]
         public async Task<IActionResult> Checkout()
         {
-            if (User.IsInRole("Admin"))
-                return RedirectToAction("Index", "Admin");
-
+            if (User.IsInRole("Admin")) return RedirectToAction("Index", "Admin");
             var cart = GetCart();
             if (cart.Items == null || !cart.Items.Any())
             {
-                TempData["Error"] = "Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.";
+                TempData["Error"] = "Giỏ hàng của bạn đang trống.";
                 return RedirectToAction("Index", "Menu");
             }
-
             var user = await _userManager.GetUserAsync(User);
-            var vm = new CheckoutViewModel
+            return View(new CheckoutViewModel
             {
                 Cart = cart,
                 FullName = user?.FullName ?? "",
                 PhoneNumber = user?.PhoneNumber ?? "",
-            };
-            return View(vm);
+            });
         }
 
-        // POST /Cart/Checkout
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel vm)
         {
-            if (User.IsInRole("Admin"))
-                return RedirectToAction("Index", "Admin");
-
+            if (User.IsInRole("Admin")) return RedirectToAction("Index", "Admin");
             var cart = GetCart();
             if (cart.Items == null || !cart.Items.Any())
             {
@@ -171,19 +142,10 @@ namespace WebBanHang_2380600870.Controllers
             }
 
             ModelState.Remove("Cart");
-
-            if (!ModelState.IsValid)
-            {
-                vm.Cart = cart;
-                return View(vm);
-            }
+            if (!ModelState.IsValid) { vm.Cart = cart; return View(vm); }
 
             var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                TempData["Error"] = "Vui lòng đăng nhập để tiếp tục.";
-                return RedirectToAction("Login", "Account");
-            }
+            if (user == null) { TempData["Error"] = "Vui lòng đăng nhập."; return RedirectToAction("Login", "Account"); }
 
             var order = new Order
             {
@@ -200,54 +162,72 @@ namespace WebBanHang_2380600870.Controllers
                     Quantity = i.Quantity,
                     UnitPrice = i.UnitPrice,
                     ItemNote = $"Size: {i.Size} | Đường: {i.SugarLevel}" +
-                               (string.IsNullOrEmpty(i.Toppings) ? "" : $" | Topping: {i.Toppings}")
+                                (string.IsNullOrEmpty(i.Toppings) ? "" : $" | Topping: {i.Toppings}")
                 }).ToList()
             };
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
-
-            cart.Clear();
-            SaveCart(cart);
+            cart.Clear(); SaveCart(cart);
 
             TempData["Success"] = $"Đặt hàng thành công! Mã đơn hàng #{order.Id}";
             return RedirectToAction("OrderConfirm", new { orderId = order.Id });
         }
 
-        // GET /Cart/OrderConfirm/{orderId}
         [Authorize]
         public async Task<IActionResult> OrderConfirm(int orderId)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
-
             var order = await _context.Orders
-                .Include(o => o.OrderDetails!)
-                .ThenInclude(od => od.Product)
+                .Include(o => o.OrderDetails!).ThenInclude(od => od.Product)
                 .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == user.Id);
-
             if (order == null) return NotFound();
             return View(order);
         }
 
-        // GET /Cart/OrderHistory
         [Authorize]
         public async Task<IActionResult> OrderHistory()
         {
-            if (User.IsInRole("Admin"))
-                return RedirectToAction("Orders", "Admin");
-
+            if (User.IsInRole("Admin")) return RedirectToAction("Orders", "Admin");
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
-
             var orders = await _context.Orders
-                .Include(o => o.OrderDetails!)
-                .ThenInclude(od => od.Product)
+                .Include(o => o.OrderDetails!).ThenInclude(od => od.Product)
                 .Where(o => o.UserId == user.Id)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
-
+            // Pass user info for order detail modal
+            ViewBag.CustomerName = user.FullName ?? user.Email ?? "";
+            ViewBag.CustomerPhone = user.PhoneNumber ?? "";
             return View(orders);
+        }
+
+        // NEW: User hủy đơn hàng (chỉ khi Pending)
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(int orderId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
+
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == user.Id);
+            if (order == null)
+            {
+                TempData["Error"] = "Không tìm thấy đơn hàng.";
+                return RedirectToAction(nameof(OrderHistory));
+            }
+            if (order.Status != OrderStatus.Pending)
+            {
+                TempData["Error"] = "Chỉ có thể hủy đơn hàng đang chờ xác nhận.";
+                return RedirectToAction(nameof(OrderHistory));
+            }
+
+            order.Status = OrderStatus.Cancelled;
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Đã hủy đơn hàng #{order.Id} thành công.";
+            return RedirectToAction(nameof(OrderHistory));
         }
     }
 }

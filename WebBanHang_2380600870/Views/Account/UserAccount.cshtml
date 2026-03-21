@@ -1,5 +1,4 @@
-﻿@* Views/Account/UserAccount.cshtml *@
-@* REDESIGNED: Lấy cảm hứng từ Heritage Cafe — profile header nổi bật,
+﻿@* REDESIGNED: Lấy cảm hứng từ Heritage Cafe — profile header nổi bật,
    sidebar nav với border-left active indicator, order rows đẹp hơn,
    thêm tab Lịch Đặt Chỗ ngay trong trang. *@
 @{
@@ -54,6 +53,63 @@
             items += " +" + (o.OrderDetails.Count - 2) + " món khác";
         return items;
     }
+    string OStatusBg2(WebBanHang_2380600870.Models.OrderStatus s) => s switch
+    {
+        WebBanHang_2380600870.Models.OrderStatus.Pending    => "rgba(234,179,8,0.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Confirmed  => "rgba(59,130,246,0.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Processing => "rgba(139,92,246,0.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Ready      => "rgba(16,185,129,0.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Completed  => "rgba(16,185,129,0.15)",
+        WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "rgba(239,68,68,0.1)",
+        _ => "rgba(100,116,139,0.1)"
+    };
+    string OStatusClr2(WebBanHang_2380600870.Models.OrderStatus s) => s switch
+    {
+        WebBanHang_2380600870.Models.OrderStatus.Pending    => "#b45309",
+        WebBanHang_2380600870.Models.OrderStatus.Confirmed  => "#1d4ed8",
+        WebBanHang_2380600870.Models.OrderStatus.Processing => "#7c3aed",
+        WebBanHang_2380600870.Models.OrderStatus.Ready      => "#065f46",
+        WebBanHang_2380600870.Models.OrderStatus.Completed  => "#065f46",
+        WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "#b91c1c",
+        _ => "#64748b"
+    };
+    string OStatusIcon2(WebBanHang_2380600870.Models.OrderStatus s) => s switch
+    {
+        WebBanHang_2380600870.Models.OrderStatus.Pending    => "hourglass_empty",
+        WebBanHang_2380600870.Models.OrderStatus.Confirmed  => "check_circle",
+        WebBanHang_2380600870.Models.OrderStatus.Processing => "coffee_maker",
+        WebBanHang_2380600870.Models.OrderStatus.Ready      => "done_all",
+        WebBanHang_2380600870.Models.OrderStatus.Completed  => "task_alt",
+        WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "cancel",
+        _ => "help"
+    };
+    // Serialize orders for JS drawer — top-level @{}, tránh RZ1010
+    var uaOrdersJson = System.Text.Json.JsonSerializer.Serialize(
+        orders.Select(o => new {
+            id          = o.Id,
+            date        = o.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
+            status      = (int)o.Status,
+            statusLabel = OrderStatusLabel(o.Status),
+            statusBg    = OStatusBg2(o.Status),
+            statusClr   = OStatusClr2(o.Status),
+            statusIcon  = OStatusIcon2(o.Status),
+            total       = o.TotalAmount,
+            shipping       = o.ShippingAddress ?? "",
+            payment        = o.PaymentMethod == "COD" ? "Thanh toán khi nhận (COD)" : "Chuyển khoản",
+            note           = o.Note ?? "",
+            canCancel      = o.Status == WebBanHang_2380600870.Models.OrderStatus.Pending,
+            customerName   = user != null ? (user.FullName ?? user.Email ?? "") : "",
+            customerPhone  = user != null ? (user.PhoneNumber ?? "") : "",
+            items       = (o.OrderDetails ?? new List<WebBanHang_2380600870.Models.OrderDetail>())
+                            .Select(d => new {
+                                name     = d.Product != null ? d.Product.Name : "Sản phẩm",
+                                img      = d.Product != null ? (d.Product.ImageUrl ?? "") : "",
+                                qty      = d.Quantity,
+                                price    = d.UnitPrice,
+                                itemNote = d.ItemNote ?? ""
+                            })
+        })
+    );
 }
 
 @* ─── Data bridge: truyền server data sang JS qua data attribute ─── *@
@@ -1002,7 +1058,7 @@
                     {
                         @foreach (var order in orders.Take(5))
                         {
-                            <div class="ua-order-row">
+                            <div class="ua-order-row" onclick="uaOpenOrder(@order.Id)" style="cursor:pointer;">
                                 <div class="ua-order-icon">
                                     <span class="material-symbols-outlined">coffee</span>
                                 </div>
@@ -1023,7 +1079,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <button class="ua-order-arrow">
+                                <button class="ua-order-arrow" onclick="event.stopPropagation();uaOpenOrder(@order.Id)">
                                     <span class="material-symbols-outlined">arrow_forward_ios</span>
                                 </button>
                             </div>
@@ -1034,6 +1090,7 @@
                                 Xem tất cả @orders.Count đơn hàng →
                             </a>
                         }
+                        <script id="ua-orders-data" type="application/json">@Html.Raw(uaOrdersJson)</script>
                     }
                 </div>
 
@@ -1159,6 +1216,144 @@
         </div><!-- end body grid -->
     </div><!-- end wrap -->
 </div><!-- end page -->
+@* ── Order Detail Drawer (inline, no page redirect) ── *@
+<style>
+    .ua-od-overlay { position:fixed;inset:0;z-index:9000;background:rgba(28,22,16,.55);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s; }
+    .ua-od-overlay.open { opacity:1;pointer-events:all; }
+    .ua-od-drawer { width:100%;max-width:560px;background:#fff;border-radius:24px 24px 0 0;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .35s cubic-bezier(.22,1,.36,1);box-shadow:0 -8px 48px rgba(44,54,57,.22); }
+    .ua-od-overlay.open .ua-od-drawer { transform:translateY(0); }
+    .ua-od-handle { width:40px;height:4px;background:rgba(162,123,92,.25);border-radius:99px;margin:14px auto 0; }
+    .ua-od-header { display:flex;align-items:flex-start;justify-content:space-between;padding:1.25rem 1.5rem 0;gap:1rem; }
+    .ua-od-num { font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:800;color:#2C3639;margin-bottom:.3rem; }
+    .ua-od-close { width:34px;height:34px;border-radius:50%;background:rgba(162,123,92,.08);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3F4E4F;transition:background .15s; }
+    .ua-od-close:hover { background:rgba(162,123,92,.18); }
+    .ua-od-close .material-symbols-outlined { font-size:18px; }
+    .ua-od-status { margin:1rem 1.5rem 0;border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-weight:700; }
+    .ua-od-section { font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(63,78,79,.45);padding:1.1rem 1.5rem .5rem;border-top:1px solid rgba(162,123,92,.08);margin-top:.5rem; }
+    .ua-od-info { display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;padding:0 1.5rem; }
+    .ua-od-info-item { display:flex;flex-direction:column;gap:.15rem; }
+    .ua-od-info-lbl { font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(63,78,79,.4); }
+    .ua-od-info-val { font-size:.875rem;font-weight:600;color:#2C3639; }
+    .ua-od-products { padding:.25rem 1.5rem 0;display:flex;flex-direction:column;gap:.6rem; }
+    .ua-od-prow { display:flex;gap:.875rem;align-items:flex-start;background:#F7F7F6;border-radius:12px;padding:.75rem; }
+    .ua-od-pimg { width:52px;height:52px;border-radius:9px;object-fit:cover;flex-shrink:0;border:1px solid rgba(162,123,92,.12); }
+    .ua-od-pph { width:52px;height:52px;border-radius:9px;flex-shrink:0;background:rgba(162,123,92,.1);display:flex;align-items:center;justify-content:center;color:rgba(162,123,92,.5); }
+    .ua-od-pinfo { flex:1;min-width:0; }
+    .ua-od-pname { font-size:.875rem;font-weight:700;color:#2C3639; }
+    .ua-od-pnote { font-size:.72rem;color:rgba(63,78,79,.5);margin-top:2px;line-height:1.5; }
+    .ua-od-pqty { font-size:.72rem;color:rgba(63,78,79,.45);margin-top:2px; }
+    .ua-od-pprice { font-size:.875rem;font-weight:800;color:#A27B5C;white-space:nowrap; }
+    .ua-od-total { margin:.75rem 1.5rem;border-radius:12px;background:rgba(162,123,92,.05);border:1px solid rgba(162,123,92,.12);padding:1rem; }
+    .ua-od-trow { display:flex;justify-content:space-between;align-items:center;font-size:.875rem;color:#3F4E4F;margin-bottom:.5rem; }
+    .ua-od-trow:last-child { margin-bottom:0; }
+    .ua-od-tfinal { font-size:1.1rem;font-weight:800;color:#2C3639;border-top:1px solid rgba(162,123,92,.12);padding-top:.6rem;margin-top:.5rem; }
+    .ua-od-tfinal span:last-child { color:#A27B5C; }
+    .ua-od-tl { padding:0 1.5rem .5rem; }
+    .ua-od-step { display:flex;align-items:center;gap:.75rem;padding:.5rem 0; }
+    .ua-od-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0;background:rgba(162,123,92,.2);border:2px solid rgba(162,123,92,.2); }
+    .ua-od-dot.done { background:#A27B5C;border-color:#A27B5C; }
+    .ua-od-dot.current { background:#fff;border-color:#A27B5C;box-shadow:0 0 0 3px rgba(162,123,92,.2); }
+    .ua-od-sline { width:1px;height:18px;background:rgba(162,123,92,.15);margin-left:4px; }
+    .ua-od-slbl { font-size:.8rem;color:rgba(63,78,79,.5); }
+    .ua-od-slbl.done { color:#2C3639;font-weight:600; }
+    .ua-od-slbl.current { color:#A27B5C;font-weight:700; }
+    .ua-od-cancel { margin:.75rem 1.5rem 0;display:flex;align-items:center;justify-content:center;gap:.5rem;width:calc(100% - 3rem);padding:.75rem;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.05);color:#b91c1c;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;transition:background .15s; }
+    .ua-od-cancel:hover { background:rgba(239,68,68,.1); }
+    .ua-od-cancel .material-symbols-outlined { font-size:17px; }
+    .ua-od-bottom { height:28px; }
+    .ua-cc-overlay { position:fixed;inset:0;z-index:10000;background:rgba(28,22,16,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s; }
+    .ua-cc-overlay.open { opacity:1;pointer-events:all; }
+    .ua-cc-box { background:#fff;border-radius:18px;padding:1.75rem 2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(44,54,57,.22);transform:scale(.94) translateY(8px);transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
+    .ua-cc-overlay.open .ua-cc-box { transform:scale(1) translateY(0); }
+</style>
+
+<div class="ua-od-overlay" id="uaOdOverlay" onclick="if(event.target===this)uaCloseOrder()">
+    <div class="ua-od-drawer" id="uaOdDrawer">
+        <div class="ua-od-handle"></div>
+        <div class="ua-od-header">
+            <div>
+                <div class="ua-od-num" id="uaOdNum">Đơn #—</div>
+                <div id="uaOdDate" style="font-size:.78rem;color:rgba(63,78,79,.45);"></div>
+            </div>
+            <button class="ua-od-close" onclick="uaCloseOrder()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="ua-od-status" id="uaOdStatus">
+            <span class="material-symbols-outlined" id="uaOdStatusIcon">hourglass_empty</span>
+            <span id="uaOdStatusLabel">—</span>
+        </div>
+        <div class="ua-od-section">Thông Tin Đơn Hàng</div>
+        <div class="ua-od-info">
+            <div class="ua-od-info-item">
+                <span class="ua-od-info-lbl">Người đặt</span>
+                <span class="ua-od-info-val" id="uaOdCustomerName">—</span>
+            </div>
+            <div class="ua-od-info-item">
+                <span class="ua-od-info-lbl">Số điện thoại</span>
+                <span class="ua-od-info-val" id="uaOdCustomerPhone">—</span>
+            </div>
+            <div class="ua-od-info-item">
+                <span class="ua-od-info-lbl">Địa chỉ giao hàng</span>
+                <span class="ua-od-info-val" id="uaOdShipping">—</span>
+            </div>
+            <div class="ua-od-info-item">
+                <span class="ua-od-info-lbl">Phương thức</span>
+                <span class="ua-od-info-val" id="uaOdPayment">—</span>
+            </div>
+            <div class="ua-od-info-item" id="uaOdNoteWrap" style="grid-column:1/-1;display:none;">
+                <span class="ua-od-info-lbl">Ghi chú</span>
+                <span class="ua-od-info-val" id="uaOdNote">—</span>
+            </div>
+        </div>
+        <div class="ua-od-section">Sản Phẩm</div>
+        <div class="ua-od-products" id="uaOdProducts"></div>
+        <div class="ua-od-total">
+            <div class="ua-od-trow"><span>Tạm tính</span><span id="uaOdSub">—</span></div>
+            <div class="ua-od-trow"><span>Phí giao hàng</span><span style="color:#059669;font-weight:600;">Miễn phí</span></div>
+            <div class="ua-od-trow ua-od-tfinal"><span>Tổng cộng</span><span id="uaOdTotal">—</span></div>
+        </div>
+        <div class="ua-od-section">Trạng Thái Đơn Hàng</div>
+        <div class="ua-od-tl" id="uaOdTimeline"></div>
+        <div id="uaOdCancelWrap" style="display:none;">
+            <button class="ua-od-cancel" onclick="uaAskCancel()">
+                <span class="material-symbols-outlined">cancel</span>Hủy Đơn Hàng
+            </button>
+            <p style="text-align:center;font-size:.7rem;color:rgba(63,78,79,.4);margin:.4rem 1.5rem 0;">Chỉ có thể hủy khi đơn đang "Chờ xác nhận"</p>
+        </div>
+        <div class="ua-od-bottom"></div>
+    </div>
+</div>
+
+<div class="ua-cc-overlay" id="uaCcOverlay">
+    <div class="ua-cc-box">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+            <div style="width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="color:#dc2626;font-size:22px;">cancel</span>
+            </div>
+            <div>
+                <div style="font-size:1rem;font-weight:800;color:#2C3639;">Xác nhận hủy đơn?</div>
+                <div id="uaCcLabel" style="font-size:.78rem;color:rgba(63,78,79,.5);margin-top:2px;"></div>
+            </div>
+        </div>
+        <p style="font-size:.875rem;color:#3F4E4F;line-height:1.7;margin-bottom:1.5rem;">Đơn hàng sẽ không thể khôi phục sau khi hủy. Bạn có chắc chắn không?</p>
+        <div style="display:flex;gap:.75rem;">
+            <button onclick="document.getElementById('uaCcOverlay').classList.remove('open')"
+                    style="flex:1;padding:.65rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;background:transparent;color:#3F4E4F;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;">
+                Không, giữ lại
+            </button>
+            <form asp-controller="Cart" asp-action="CancelOrder" method="post" style="flex:1;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="orderId" id="uaCcOrderId" value="" />
+                <button type="submit"
+                        style="width:100%;padding:.65rem;border:none;border-radius:10px;background:#dc2626;color:#fff;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;">
+                    Hủy đơn hàng
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         /* ── Tab switching ───────────────────────────────────── */
@@ -1199,6 +1394,106 @@
                     setTimeout(function() { toast && toast.remove(); }, 400);
                 }, 4000);
             }
+        });
+
+        /* ── Order Detail Drawer ─────────────────────────────── */
+        var UA_ORDERS = [];
+        var _uaActiveId = null;
+
+        (function(){
+            var el = document.getElementById('ua-orders-data');
+            if (el) { try { UA_ORDERS = JSON.parse(el.textContent); } catch(e){} }
+        })();
+
+        var UA_STEPS = [
+            {val:0,label:'Chờ xác nhận'},{val:1,label:'Đã xác nhận'},
+            {val:2,label:'Đang pha chế'},{val:3,label:'Sẵn sàng'},{val:4,label:'Hoàn thành'}
+        ];
+
+        function vnFmt(n){ return Number(n).toLocaleString('vi-VN')+'đ'; }
+        function uaEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        function uaOpenOrder(id){
+            var o = UA_ORDERS.find(function(x){ return x.id===id; });
+            if (!o) return;
+            _uaActiveId = id;
+
+            document.getElementById('uaOdNum').textContent = 'Đơn #'+o.id;
+            document.getElementById('uaOdDate').textContent = o.date;
+
+            var sb = document.getElementById('uaOdStatus');
+            sb.style.background = o.statusBg; sb.style.color = o.statusClr;
+            document.getElementById('uaOdStatusIcon').textContent = o.statusIcon;
+            document.getElementById('uaOdStatusLabel').textContent = o.statusLabel;
+
+            document.getElementById('uaOdCustomerName').textContent  = o.customerName  || '—';
+            document.getElementById('uaOdCustomerPhone').textContent = o.customerPhone || '—';
+            document.getElementById('uaOdShipping').textContent = o.shipping || 'Chưa có địa chỉ';
+            document.getElementById('uaOdPayment').textContent = o.payment;
+            var nw = document.getElementById('uaOdNoteWrap');
+            if (o.note) { document.getElementById('uaOdNote').textContent=o.note; nw.style.display=''; }
+            else { nw.style.display='none'; }
+
+            document.getElementById('uaOdProducts').innerHTML = (o.items||[]).map(function(item){
+                var imgH = item.img
+                    ? '<img class="ua-od-pimg" src="'+uaEsc(item.img)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>'
+                      +'<div class="ua-od-pph" style="display:none;"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>'
+                    : '<div class="ua-od-pph"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>';
+                var noteH = item.itemNote ? '<div class="ua-od-pnote">'+uaEsc(item.itemNote)+'</div>' : '';
+                return '<div class="ua-od-prow">'+imgH
+                    +'<div class="ua-od-pinfo"><div class="ua-od-pname">'+uaEsc(item.name)+'</div>'
+                    +'<div class="ua-od-pqty">Số lượng: '+item.qty+'</div>'+noteH+'</div>'
+                    +'<div class="ua-od-pprice">'+vnFmt(item.price*item.qty)+'</div></div>';
+            }).join('');
+
+            document.getElementById('uaOdSub').textContent = vnFmt(o.total);
+            document.getElementById('uaOdTotal').textContent = vnFmt(o.total);
+
+            var tl = document.getElementById('uaOdTimeline');
+            if (o.status===5) {
+                tl.innerHTML='<div class="ua-od-step"><div class="ua-od-dot done"></div><div class="ua-od-slbl done">Đã đặt hàng</div></div>'
+                    +'<div class="ua-od-sline"></div>'
+                    +'<div class="ua-od-step"><div class="ua-od-dot" style="background:#ef4444;border-color:#ef4444;"></div>'
+                    +'<div class="ua-od-slbl current" style="color:#b91c1c;">Đơn hàng đã hủy</div></div>';
+            } else {
+                tl.innerHTML = UA_STEPS.map(function(s,i){
+                    var d=o.status>s.val, c=o.status===s.val;
+                    return '<div class="ua-od-step"><div class="ua-od-dot '+(d?'done':c?'current':'')+'"></div>'
+                        +'<div class="ua-od-slbl '+(d?'done':c?'current':'')+'">'+ s.label+'</div></div>'
+                        +(i<UA_STEPS.length-1?'<div class="ua-od-sline" style="margin-left:4px;"></div>':'');
+                }).join('');
+            }
+
+            document.getElementById('uaOdCancelWrap').style.display = o.canCancel ? '' : 'none';
+            document.getElementById('uaOdOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function uaCloseOrder(){
+            document.getElementById('uaOdOverlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function uaAskCancel(){
+            var o = UA_ORDERS.find(function(x){ return x.id===_uaActiveId; });
+            if (!o) return;
+            document.getElementById('uaCcLabel').textContent = 'Đơn #'+o.id+' · '+vnFmt(o.total);
+            document.getElementById('uaCcOrderId').value = o.id;
+            document.getElementById('uaCcOverlay').classList.add('open');
+        }
+
+        // Swipe down to close
+        (function(){
+            var el=document.getElementById('uaOdDrawer'), sy=0;
+            el.addEventListener('touchstart',function(e){sy=e.touches[0].clientY;},{passive:true});
+            el.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-sy>80)uaCloseOrder();},{passive:true});
+        })();
+
+        document.addEventListener('keydown',function(e){
+            if(e.key!=='Escape') return;
+            if(document.getElementById('uaCcOverlay').classList.contains('open'))
+                document.getElementById('uaCcOverlay').classList.remove('open');
+            else uaCloseOrder();
         });
     </script>
 }

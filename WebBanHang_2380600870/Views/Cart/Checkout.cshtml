@@ -1,73 +1,90 @@
 ﻿@* Views/Cart/Checkout.cshtml *@
+@* NEW: Modal xác nhận đơn trước khi submit *@
 @model WebBanHang_2380600870.Models.CheckoutViewModel
 @{
     ViewData["Title"] = "Thanh Toán";
 }
 
-<section class="min-h-screen pt-28 pb-20" style="background-color: #F7F7F6;">
+<style>
+    /* ── Review Modal ── */
+    .rv-overlay { position:fixed;inset:0;z-index:9000;background:rgba(28,22,16,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s; }
+    .rv-overlay.open { opacity:1;pointer-events:all; }
+    .rv-modal { background:#fff;border-radius:24px;padding:0;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(44,54,57,.22);transform:scale(.94) translateY(12px);transition:transform .3s cubic-bezier(.34,1.56,.64,1); }
+    .rv-overlay.open .rv-modal { transform:scale(1) translateY(0); }
+    .rv-header { background:linear-gradient(135deg,#2C3639,#3F4E4F); border-radius:24px 24px 0 0; padding:1.75rem 2rem 1.5rem; }
+    .rv-header-title { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:800; color:#F2EFE9; margin-bottom:.3rem; }
+    .rv-header-sub { font-size:.8rem; color:rgba(220,215,201,.6); }
+    .rv-body { padding:1.5rem 2rem; }
+    .rv-section-label { font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:rgba(63,78,79,.4); margin-bottom:.6rem; margin-top:1.1rem; }
+    .rv-section-label:first-child { margin-top:0; }
+    .rv-info-row { display:flex; align-items:flex-start; gap:.5rem; margin-bottom:.4rem; font-size:.875rem; color:#3F4E4F; }
+    .rv-info-row .material-symbols-outlined { font-size:16px; color:#A27B5C; flex-shrink:0; margin-top:1px; }
+    .rv-item-row { display:flex; align-items:center; gap:.75rem; padding:.65rem 0; border-bottom:1px solid rgba(162,123,92,.08); }
+    .rv-item-row:last-child { border-bottom:none; }
+    .rv-item-img { width:44px; height:44px; border-radius:9px; object-fit:cover; flex-shrink:0; border:1px solid rgba(162,123,92,.12); background:rgba(162,123,92,.06); }
+    .rv-item-name { flex:1; font-size:.875rem; font-weight:600; color:#2C3639; }
+    .rv-item-sub { font-size:.72rem; color:rgba(63,78,79,.5); margin-top:2px; }
+    .rv-item-price { font-size:.875rem; font-weight:800; color:#A27B5C; white-space:nowrap; }
+    .rv-total { background:rgba(162,123,92,.06); border-radius:12px; padding:1rem; margin-top:1rem; display:flex; justify-content:space-between; align-items:center; }
+    .rv-total-label { font-size:.875rem; font-weight:600; color:#3F4E4F; }
+    .rv-total-amount { font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:800; color:#A27B5C; }
+    .rv-footer { padding:1.25rem 2rem 1.75rem; display:flex; gap:.75rem; }
+    .rv-btn-back { flex:1; padding:.75rem; border:1.5px solid rgba(162,123,92,.3); border-radius:12px; background:transparent; color:#3F4E4F; font-family:'Work Sans',sans-serif; font-size:.875rem; font-weight:600; cursor:pointer; }
+    .rv-btn-confirm { flex:2; padding:.75rem; border:none; border-radius:12px; background:#A27B5C; color:#fff; font-family:'Work Sans',sans-serif; font-size:.875rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.5rem; box-shadow:0 4px 16px rgba(162,123,92,.35); }
+    .rv-btn-confirm:hover { background:#8d6a4d; }
+</style>
+
+<section class="min-h-screen pt-28 pb-20" style="background-color:#F7F7F6;">
     <div class="max-w-6xl mx-auto px-4">
 
         <div class="mb-10 text-center">
-            <p class="text-sm tracking-[0.2em] uppercase mb-2" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
-                Bước Cuối Cùng
-            </p>
-            <h1 class="text-4xl font-bold" style="font-family: 'Playfair Display', serif; color: #2C3639;">
-                Thông Tin Thanh Toán
-            </h1>
+            <p class="text-sm tracking-[0.2em] uppercase mb-2" style="color:#A27B5C;font-family:'Work Sans',sans-serif;">Bước Cuối Cùng</p>
+            <h1 class="text-4xl font-bold" style="font-family:'Playfair Display',serif;color:#2C3639;">Thông Tin Thanh Toán</h1>
         </div>
 
-        <form method="post" action="/Cart/Checkout">
+        @* Form thật — bị ẩn, submit bởi JS sau khi user confirm *@
+        <form method="post" action="/Cart/Checkout" id="checkoutForm">
             @Html.AntiForgeryToken()
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                 <!-- Form thông tin -->
                 <div class="lg:col-span-2 space-y-6">
                     <div class="bg-white rounded-2xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold mb-5" style="font-family: 'Playfair Display', serif; color: #2C3639;">
-                            Thông Tin Giao Hàng
-                        </h2>
+                        <h2 class="text-xl font-bold mb-5" style="font-family:'Playfair Display',serif;color:#2C3639;">Thông Tin Giao Hàng</h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium mb-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
-                                    Họ và tên *
-                                </label>
-                                <input type="text" name="FullName" value="@Model.FullName" required
+                                <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Họ và tên *</label>
+                                <input type="text" id="fieldFullName" name="FullName" value="@Model.FullName" required
                                        class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
-                                       style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                       style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
                                        onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
                                        placeholder="Nguyễn Văn A" />
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
-                                    Số điện thoại *
-                                </label>
-                                <input type="tel" name="PhoneNumber" value="@Model.PhoneNumber" required
+                                <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Số điện thoại *</label>
+                                <input type="tel" id="fieldPhone" name="PhoneNumber" value="@Model.PhoneNumber" required
                                        class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
-                                       style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                       style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
                                        onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
                                        placeholder="0901 234 567" />
                             </div>
                         </div>
 
                         <div class="mt-4">
-                            <label class="block text-sm font-medium mb-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
-                                Địa chỉ giao hàng *
-                            </label>
-                            <input type="text" name="ShippingAddress" required
+                            <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Địa chỉ giao hàng *</label>
+                            <input type="text" id="fieldAddress" name="ShippingAddress" required
                                    class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
-                                   style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                   style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
                                    onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
                                    placeholder="Số nhà, đường, phường, quận, thành phố" />
                         </div>
 
                         <div class="mt-4">
-                            <label class="block text-sm font-medium mb-2" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
-                                Ghi chú (tuỳ chọn)
-                            </label>
-                            <textarea name="Note" rows="3"
+                            <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Ghi chú (tuỳ chọn)</label>
+                            <textarea id="fieldNote" name="Note" rows="3"
                                       class="w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none"
-                                      style="border-color: #DCD7C9; font-family: 'Work Sans', sans-serif; color: #2C3639;"
+                                      style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
                                       placeholder="Ghi chú cho đơn hàng, ví dụ: ít đá, thêm siro..."></textarea>
                         </div>
@@ -75,36 +92,32 @@
 
                     <!-- Phương thức thanh toán -->
                     <div class="bg-white rounded-2xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold mb-5" style="font-family: 'Playfair Display', serif; color: #2C3639;">
-                            Phương Thức Thanh Toán
-                        </h2>
+                        <h2 class="text-xl font-bold mb-5" style="font-family:'Playfair Display',serif;color:#2C3639;">Phương Thức Thanh Toán</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <label class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all payment-option"
-                                   style="border-color: #A27B5C; background-color: #FDF9F5;">
-                                <input type="radio" name="PaymentMethod" value="COD" checked class="accent-amber-700 w-4 h-4" />
+                            <label id="pmCOD" class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all"
+                                   style="border-color:#A27B5C;background-color:#FDF9F5;">
+                                <input type="radio" name="PaymentMethod" value="COD" checked class="accent-amber-700 w-4 h-4" onchange="updatePMStyle()" />
                                 <div>
-                                    <p class="font-semibold" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">Tiền mặt (COD)</p>
-                                    <p class="text-xs" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Thanh toán khi nhận hàng</p>
+                                    <p class="font-semibold" style="color:#2C3639;font-family:'Work Sans',sans-serif;">Tiền mặt (COD)</p>
+                                    <p class="text-xs" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Thanh toán khi nhận hàng</p>
                                 </div>
                             </label>
-                            <label class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all"
-                                   style="border-color: #DCD7C9;">
-                                <input type="radio" name="PaymentMethod" value="Transfer" class="accent-amber-700 w-4 h-4" />
+                            <label id="pmTransfer" class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all"
+                                   style="border-color:#DCD7C9;">
+                                <input type="radio" name="PaymentMethod" value="Transfer" class="accent-amber-700 w-4 h-4" onchange="updatePMStyle()" />
                                 <div>
-                                    <p class="font-semibold" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">Chuyển khoản</p>
-                                    <p class="text-xs" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">Thông tin CK sau khi đặt</p>
+                                    <p class="font-semibold" style="color:#2C3639;font-family:'Work Sans',sans-serif;">Chuyển khoản</p>
+                                    <p class="text-xs" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Thông tin CK sau khi đặt</p>
                                 </div>
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tóm tắt -->
+                <!-- Tóm tắt + nút xem lại -->
                 <div class="lg:col-span-1">
                     <div class="bg-white rounded-2xl p-6 shadow-sm sticky top-28">
-                        <h2 class="text-xl font-bold mb-5" style="font-family: 'Playfair Display', serif; color: #2C3639;">
-                            Đơn Hàng
-                        </h2>
+                        <h2 class="text-xl font-bold mb-5" style="font-family:'Playfair Display',serif;color:#2C3639;">Đơn Hàng</h2>
                         <div class="space-y-3 mb-5 max-h-64 overflow-y-auto">
                             @foreach (var item in Model.Cart.Items)
                             {
@@ -112,35 +125,35 @@
                                     <img src="@item.ImageUrl" class="w-12 h-12 object-cover rounded-lg flex-shrink-0"
                                          onerror="this.src='/images/placeholder.jpg'" />
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-medium truncate" style="color: #2C3639; font-family: 'Work Sans', sans-serif;">
-                                            @item.ProductName
-                                        </p>
-                                        <p class="text-xs" style="color: #3F4E4F; font-family: 'Work Sans', sans-serif;">
+                                        <p class="text-sm font-medium truncate" style="color:#2C3639;font-family:'Work Sans',sans-serif;">@item.ProductName</p>
+                                        <p class="text-xs" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">
                                             Size @item.Size · ×@item.Quantity
+                                            @if (!string.IsNullOrEmpty(item.Toppings)) { <text> · @item.Toppings</text> }
                                         </p>
                                     </div>
-                                    <span class="text-sm font-semibold flex-shrink-0" style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                                    <span class="text-sm font-semibold flex-shrink-0" style="color:#A27B5C;font-family:'Work Sans',sans-serif;">
                                         @item.LineTotal.ToString("N0")đ
                                     </span>
                                 </div>
                             }
                         </div>
 
-                        <div class="border-t pt-4 mb-6" style="border-color: #DCD7C9;">
-                            <div class="flex justify-between font-bold text-xl" style="color: #2C3639; font-family: 'Playfair Display', serif;">
+                        <div class="border-t pt-4 mb-6" style="border-color:#DCD7C9;">
+                            <div class="flex justify-between font-bold text-xl" style="color:#2C3639;font-family:'Playfair Display',serif;">
                                 <span>Tổng cộng</span>
-                                <span style="color: #A27B5C;">@Model.Cart.TotalAmount.ToString("N0")đ</span>
+                                <span style="color:#A27B5C;">@Model.Cart.TotalAmount.ToString("N0")đ</span>
                             </div>
                         </div>
 
-                        <button type="submit"
-                                class="w-full py-4 rounded-full text-white font-semibold transition-all duration-300 hover:opacity-90 hover:shadow-lg"
-                                style="background-color: #A27B5C; font-family: 'Work Sans', sans-serif;">
-                            Xác Nhận Đặt Hàng
+                        @* NEW: Nút mở modal review thay vì submit trực tiếp *@
+                        <button type="button" onclick="openReviewModal()"
+                                class="w-full py-4 rounded-full text-white font-semibold transition-all hover:opacity-90 hover:shadow-lg"
+                                style="background-color:#A27B5C;font-family:'Work Sans',sans-serif;">
+                            Kiểm Tra & Xác Nhận Đặt Hàng →
                         </button>
 
-                        <a href="/Cart" class="block text-center mt-3 text-sm transition-colors hover:opacity-70"
-                               style="color: #A27B5C; font-family: 'Work Sans', sans-serif;">
+                        <a href="/Cart" class="block text-center mt-3 text-sm hover:opacity-70"
+                           style="color:#A27B5C;font-family:'Work Sans',sans-serif;">
                             ← Quay lại giỏ hàng
                         </a>
                     </div>
@@ -149,3 +162,113 @@
         </form>
     </div>
 </section>
+
+@* ── Review Modal ── *@
+<div class="rv-overlay" id="rvOverlay" onclick="if(event.target===this)closeReviewModal()">
+    <div class="rv-modal">
+        <div class="rv-header">
+            <div class="rv-header-title">Kiểm Tra Đơn Hàng</div>
+            <div class="rv-header-sub">Vui lòng xem lại trước khi xác nhận đặt hàng</div>
+        </div>
+        <div class="rv-body">
+            <div class="rv-section-label">Thông tin giao hàng</div>
+            <div class="rv-info-row"><span class="material-symbols-outlined">person</span><span id="rvName">—</span></div>
+            <div class="rv-info-row"><span class="material-symbols-outlined">call</span><span id="rvPhone">—</span></div>
+            <div class="rv-info-row"><span class="material-symbols-outlined">location_on</span><span id="rvAddress">—</span></div>
+            <div class="rv-info-row" id="rvNoteRow" style="display:none;">
+                <span class="material-symbols-outlined">chat_bubble</span><span id="rvNote">—</span>
+            </div>
+            <div class="rv-info-row"><span class="material-symbols-outlined">payments</span><span id="rvPayment">—</span></div>
+
+            <div class="rv-section-label">Sản phẩm</div>
+            <div id="rvItemsList">
+                @foreach (var item in Model.Cart.Items)
+                {
+                    <div class="rv-item-row"
+                         data-name="@item.ProductName"
+                         data-img="@item.ImageUrl"
+                         data-sub="Size @item.Size · ×@item.Quantity@(!string.IsNullOrEmpty(item.Toppings) ? " · " + item.Toppings : "")"
+                         data-price="@item.LineTotal.ToString("N0")đ">
+                        <img class="rv-item-img" src="@item.ImageUrl" onerror="this.src='/images/placeholder.jpg'" />
+                        <div class="rv-item-name">
+                            @item.ProductName
+                            <div class="rv-item-sub">Size @item.Size · ×@item.Quantity @(!string.IsNullOrEmpty(item.Toppings) ? "· " + item.Toppings : "")</div>
+                        </div>
+                        <div class="rv-item-price">@item.LineTotal.ToString("N0")đ</div>
+                    </div>
+                }
+            </div>
+
+            <div class="rv-total">
+                <span class="rv-total-label">Tổng cộng</span>
+                <span class="rv-total-amount">@Model.Cart.TotalAmount.ToString("N0")đ</span>
+            </div>
+        </div>
+        <div class="rv-footer">
+            <button type="button" class="rv-btn-back" onclick="closeReviewModal()">
+                ← Chỉnh sửa
+            </button>
+            <button type="button" class="rv-btn-confirm" onclick="submitOrder()">
+                <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+                Xác Nhận Đặt Hàng
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openReviewModal(){
+    var form = document.getElementById('checkoutForm');
+    // Validate required fields first
+    var name = document.getElementById('fieldFullName').value.trim();
+    var phone = document.getElementById('fieldPhone').value.trim();
+    var address = document.getElementById('fieldAddress').value.trim();
+    if(!name||!phone||!address){
+        // Let browser native validation handle it
+        form.reportValidity();
+        return;
+    }
+
+    // Fill review modal
+    document.getElementById('rvName').textContent = name;
+    document.getElementById('rvPhone').textContent = phone;
+    document.getElementById('rvAddress').textContent = address;
+
+    var note = document.getElementById('fieldNote').value.trim();
+    var noteRow = document.getElementById('rvNoteRow');
+    if(note){ document.getElementById('rvNote').textContent = note; noteRow.style.display=''; }
+    else { noteRow.style.display='none'; }
+
+    var pm = form.querySelector('input[name="PaymentMethod"]:checked');
+    document.getElementById('rvPayment').textContent = pm && pm.value==='Transfer'
+        ? 'Chuyển khoản ngân hàng' : 'Tiền mặt khi nhận hàng (COD)';
+
+    document.getElementById('rvOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeReviewModal(){
+    document.getElementById('rvOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function submitOrder(){
+    document.getElementById('rvOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('checkoutForm').submit();
+}
+
+function updatePMStyle(){
+    var cod = document.querySelector('input[value="COD"]').checked;
+    document.getElementById('pmCOD').style.borderColor = cod ? '#A27B5C' : '#DCD7C9';
+    document.getElementById('pmCOD').style.backgroundColor = cod ? '#FDF9F5' : 'transparent';
+    document.getElementById('pmTransfer').style.borderColor = !cod ? '#A27B5C' : '#DCD7C9';
+    document.getElementById('pmTransfer').style.backgroundColor = !cod ? '#FDF9F5' : 'transparent';
+}
+
+document.addEventListener('keydown',function(e){
+    if(e.key==='Escape') closeReviewModal();
+});
+</script>
+}
