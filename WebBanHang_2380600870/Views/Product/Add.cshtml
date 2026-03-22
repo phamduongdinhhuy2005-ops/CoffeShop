@@ -19,6 +19,135 @@
     .hc-toast-icon { color:#a27b5c; font-size:22px; flex-shrink:0; }
     .hc-toast-msg { font-size:.875rem; font-weight:500; color:#2c3639; }
     .hc-toast-close { margin-left:auto; background:none; border:none; cursor:pointer; color:#94a3b8; flex-shrink:0; }
+
+    /* ══ 4-SLOT IMAGE GALLERY (same as Edit) ══ */
+    .img-gallery-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .625rem;
+        margin-bottom: 1.1rem;
+    }
+    .img-slot {
+        position: relative;
+        aspect-ratio: 1 / 1;
+        border-radius: 11px;
+        overflow: hidden;
+        background: #f3f0eb;
+        border: 2px solid #e2e8f0;
+        cursor: pointer;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .img-slot:hover { border-color: rgba(162,123,92,.55); box-shadow: 0 4px 14px rgba(162,123,92,.14); }
+    .img-slot.slot-main { border-color: #a27b5c; }
+    .slot-badge {
+        position: absolute; top: .38rem; left: .38rem; z-index: 3;
+        background: rgba(44,54,57,.68); color: #fff;
+        font-family: 'Work Sans', sans-serif;
+        font-size: .58rem; font-weight: 700;
+        padding: .15rem .48rem; border-radius: 99px;
+        letter-spacing: .04em; pointer-events: none;
+        backdrop-filter: blur(4px);
+    }
+    .img-slot.slot-main .slot-badge { background: rgba(162,123,92,.85); }
+    .slot-main-label {
+        position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
+        background: rgba(162,123,92,.82);
+        font-family: 'Work Sans', sans-serif;
+        font-size: .58rem; font-weight: 700; color: #fff;
+        text-align: center; padding: .22rem 0;
+        letter-spacing: .08em; text-transform: uppercase;
+        pointer-events: none;
+    }
+    .img-slot img {
+        width: 100%; height: 100%; object-fit: cover;
+        display: block; transition: transform .35s;
+    }
+    .img-slot:hover img { transform: scale(1.04); }
+    .slot-empty {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: .35rem; color: rgba(63,78,79,.35);
+        pointer-events: none;
+    }
+    .slot-empty .material-symbols-outlined { font-size: 26px; }
+    .slot-empty span { font-size: .68rem; font-weight: 600; text-align: center; line-height: 1.35; }
+    .slot-overlay {
+        position: absolute; inset: 0; z-index: 2;
+        background: rgba(28,22,16,.52);
+        display: flex; align-items: center; justify-content: center; gap: .45rem;
+        opacity: 0; transition: opacity .2s;
+    }
+    .img-slot:hover .slot-overlay { opacity: 1; }
+    .slot-action-btn {
+        width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(255,255,255,.18); border: 1.5px solid rgba(255,255,255,.65);
+        color: #fff; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .15s; backdrop-filter: blur(6px);
+    }
+    .slot-action-btn:hover { background: rgba(255,255,255,.36); }
+    .slot-action-btn.del:hover { background: rgba(220,38,38,.55); border-color: rgba(220,38,38,.8); }
+    .slot-action-btn.url-btn:hover { background: rgba(162,123,92,.7); border-color: rgba(162,123,92,.9); }
+    .slot-action-btn .material-symbols-outlined { font-size: 15px; pointer-events: none; }
+
+    /* URL Mini Modal */
+    .url-modal-overlay {
+        position: fixed; inset: 0; z-index: 10000;
+        background: rgba(28,22,16,.45); backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .url-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .url-modal-box {
+        background: #fff; border-radius: 16px; padding: 1.5rem 1.75rem;
+        width: 100%; max-width: 420px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        transform: translateY(12px) scale(.97);
+        transition: transform .22s cubic-bezier(.34,1.56,.64,1);
+    }
+    .url-modal-overlay.open .url-modal-box { transform: translateY(0) scale(1); }
+    .url-modal-title {
+        font-size: .78rem; font-weight: 800; text-transform: uppercase;
+        letter-spacing: .1em; color: #2c3639; margin-bottom: 1rem;
+        display: flex; align-items: center; gap: .45rem;
+    }
+    .url-modal-title .material-symbols-outlined { font-size: 17px; color: #a27b5c; }
+    .url-modal-input {
+        width: 100%; padding: .65rem 1rem;
+        border: 1.5px solid #e2e8f0; border-radius: 10px;
+        font-size: .88rem; font-family: 'Work Sans', sans-serif;
+        color: #2c3639; background: #fafaf9; outline: none;
+        transition: border-color .2s, box-shadow .2s;
+        box-sizing: border-box; margin-bottom: 1rem;
+    }
+    .url-modal-input:focus { border-color: #a27b5c; box-shadow: 0 0 0 3px rgba(162,123,92,.12); background: #fff; }
+    .url-modal-actions { display: flex; gap: .6rem; justify-content: flex-end; }
+    .url-modal-cancel {
+        padding: .55rem 1.1rem; border-radius: 10px;
+        border: 1px solid #e2e8f0; background: #fff; color: #3f4e4f;
+        font-size: .85rem; font-weight: 600; cursor: pointer;
+        font-family: 'Work Sans', sans-serif; transition: background .15s;
+    }
+    .url-modal-cancel:hover { background: #f7f7f6; }
+    .url-modal-apply {
+        padding: .55rem 1.25rem; border-radius: 10px;
+        border: none; background: #a27b5c; color: #fff;
+        font-size: .85rem; font-weight: 700; cursor: pointer;
+        font-family: 'Work Sans', sans-serif;
+        box-shadow: 0 4px 12px rgba(162,123,92,.28);
+        transition: background .15s, transform .12s;
+    }
+    .url-modal-apply:hover { background: rgba(162,123,92,.88); transform: translateY(-1px); }
+
+    /* Choose popup */
+    .img-hint {
+        display: flex; align-items: center; gap: .45rem;
+        background: rgba(162,123,92,.06); border: 1px dashed rgba(162,123,92,.3);
+        border-radius: 9px; padding: .6rem .875rem;
+        font-size: .73rem; color: rgba(63,78,79,.55); margin-top: .25rem;
+    }
+    .img-hint .material-symbols-outlined { font-size: 14px; color: #a27b5c; flex-shrink: 0; }
 </style>
 
 <div class="hc-toast" id="hcToast">
@@ -30,7 +159,7 @@
 <form asp-action="Add" method="post" enctype="multipart/form-data" id="addForm">
     @Html.AntiForgeryToken()
 
-    <div style="display:grid; grid-template-columns:1fr 340px; gap:1.5rem; align-items:start;">
+    <div style="display:grid; grid-template-columns:1fr 360px; gap:1.5rem; align-items:start;">
 
         @* Cột trái *@
         <div style="display:flex;flex-direction:column;gap:1.25rem;">
@@ -79,37 +208,92 @@
         <div style="display:flex;flex-direction:column;gap:1.25rem;">
             <div class="hc-card">
                 <div style="font-size:.9rem;font-weight:700;color:#2c3639;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem;">
-                    <span class="material-symbols-outlined" style="color:#a27b5c;font-size:20px;">image</span>
-                    Hình ảnh
+                    <span class="material-symbols-outlined" style="color:#a27b5c;font-size:20px;">photo_library</span>
+                    Hình Ảnh Sản Phẩm
+                    <span style="margin-left:auto;font-size:.65rem;font-weight:500;color:#94a3b8;letter-spacing:.03em;text-transform:none;">Tối đa 4 ảnh</span>
                 </div>
 
-                @* Preview *@
-                <div id="imgPreviewWrap"
-                     style="width:100%;aspect-ratio:1;border-radius:12px;border:2px dashed rgba(162,123,92,.3);background:#fafaf9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;margin-bottom:1rem;overflow:hidden;cursor:pointer;"
-                     onclick="document.getElementById('imgFileInput').click()">
-                    <img id="imgPreview" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:10px;" />
-                    <span id="imgPlaceholder" class="material-symbols-outlined" style="font-size:40px;color:rgba(162,123,92,.4);">add_photo_alternate</span>
-                    <span id="imgPlaceholderTxt" style="font-size:.78rem;color:#94a3b8;">Nhấn để chọn ảnh</span>
+                @* 4-SLOT GRID *@
+                <div class="img-gallery-grid">
+
+                    @* SLOT 0 — Ảnh chính *@
+                    <div class="img-slot slot-main" id="slot0" onclick="slotClick(0)">
+                        <span class="slot-badge">1</span>
+                        <div class="slot-empty" id="slotEmpty0">
+                            <span class="material-symbols-outlined">add_photo_alternate</span>
+                            <span>Thêm ảnh chính</span>
+                        </div>
+                        <div class="slot-main-label">Ảnh chính</div>
+                    </div>
+
+                    @* SLOT 1 — Ảnh phụ 1 *@
+                    <div class="img-slot" id="slot1" onclick="slotClick(1)">
+                        <span class="slot-badge">2</span>
+                        <div class="slot-empty" id="slotEmpty1">
+                            <span class="material-symbols-outlined">add_photo_alternate</span>
+                            <span>Chưa có ảnh</span>
+                        </div>
+                    </div>
+
+                    @* SLOT 2 — Ảnh phụ 2 *@
+                    <div class="img-slot" id="slot2" onclick="slotClick(2)">
+                        <span class="slot-badge">3</span>
+                        <div class="slot-empty" id="slotEmpty2">
+                            <span class="material-symbols-outlined">add_photo_alternate</span>
+                            <span>Chưa có ảnh</span>
+                        </div>
+                    </div>
+
+                    @* SLOT 3 — Ảnh phụ 3 *@
+                    <div class="img-slot" id="slot3" onclick="slotClick(3)">
+                        <span class="slot-badge">4</span>
+                        <div class="slot-empty" id="slotEmpty3">
+                            <span class="material-symbols-outlined">add_photo_alternate</span>
+                            <span>Chưa có ảnh</span>
+                        </div>
+                    </div>
+
                 </div>
 
-                @* File input - khi chọn file thì clear URL input *@
-                <input type="file" id="imgFileInput" name="ImageFile" accept="image/*" style="display:none;"
-                       onchange="onFileSelected(this)" />
+                @* Hidden file inputs — một per slot *@
+                <input type="file" id="fileSlot0" name="ImageFile"  accept="image/*" style="display:none;" onchange="handleFile(0,this)" />
+                <input type="file" id="fileSlot1" name="ExtraFile0" accept="image/*" style="display:none;" onchange="handleFile(1,this)" />
+                <input type="file" id="fileSlot2" name="ExtraFile1" accept="image/*" style="display:none;" onchange="handleFile(2,this)" />
+                <input type="file" id="fileSlot3" name="ExtraFile2" accept="image/*" style="display:none;" onchange="handleFile(3,this)" />
 
-                <button type="button" onclick="document.getElementById('imgFileInput').click()"
-                        style="width:100%;padding:.65rem;border:1.5px solid rgba(162,123,92,.35);border-radius:10px;background:transparent;color:#a27b5c;font-family:'Work Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s;margin-bottom:.75rem;"
-                        onmouseover="this.style.background='rgba(162,123,92,.06)'" onmouseout="this.style.background='transparent'">
-                    <span class="material-symbols-outlined" style="font-size:18px;">upload</span> Chọn ảnh từ máy
-                </button>
+                @* Hidden URL inputs *@
+                <input type="hidden" name="ImageUrl"         id="hiddenImageUrl"  value="" />
+                <input type="hidden" name="ExtraImageUrls[0]" id="extraUrl0"      value="" />
+                <input type="hidden" name="ExtraImageUrls[1]" id="extraUrl1"      value="" />
+                <input type="hidden" name="ExtraImageUrls[2]" id="extraUrl2"      value="" />
 
-                @* URL input - có name="ImageUrl" để submit khi không có file *@
-                <div>
-                    <label class="hc-form-label" style="margin-bottom:.4rem;">Hoặc dán URL ảnh</label>
-                    <input type="text" id="urlInput" name="ImageUrl" class="hc-input"
-                           placeholder="https://..." oninput="onUrlInput(this.value)" />
+                @* URL paste cho ảnh chính *@
+                <div style="margin-top:.75rem;">
+                    <label class="hc-form-label" style="margin-bottom:.4rem;">Hoặc dán URL ảnh chính</label>
+                    <input type="text" id="urlInput" class="hc-input"
+                           placeholder="https://..."
+                           style="font-size:.83rem;padding:.52rem .875rem;"
+                           oninput="applyUrlPreview()" />
                 </div>
 
-                <p style="font-size:.72rem;color:#94a3b8;margin-top:.5rem;">Nếu chọn file, file sẽ được dùng thay URL.</p>
+                @* Drag & Drop zone *@
+                <div id="dropZone"
+                     style="margin-top:.875rem;border:2px dashed #dcd7c9;border-radius:11px;padding:1.1rem 1rem;text-align:center;cursor:pointer;background:#fafaf9;transition:border-color .2s,background .2s;"
+                     onclick="triggerFile(0)"
+                     ondragover="event.preventDefault();this.style.borderColor='#a27b5c';"
+                     ondragleave="this.style.borderColor='';"
+                     ondrop="handleDrop(event)">
+                    <span class="material-symbols-outlined" style="font-size:24px;color:#a27b5c;display:block;margin-bottom:.3rem;">cloud_upload</span>
+                    <p style="font-size:.75rem;color:rgba(63,78,79,.6);margin:0;line-height:1.5;">
+                        <strong style="color:#a27b5c;">Kéo &amp; thả</strong> hoặc nhấn để tải ảnh chính lên<br/>
+                        <span style="color:rgba(63,78,79,.4);font-size:.7rem;">PNG, JPG, WEBP — tối đa 5MB</span>
+                    </p>
+                </div>
+
+                <div class="img-hint" style="margin-top:.75rem;">
+                    <span class="material-symbols-outlined">info</span>
+                    Nhấn ô ảnh để chọn: tải file lên <span style="font-weight:700;color:#a27b5c;">↑</span> hoặc dán URL <span style="font-weight:700;color:#a27b5c;">🔗</span>
+                </div>
             </div>
 
             @* Actions *@
@@ -120,8 +304,8 @@
                     <span class="material-symbols-outlined" style="font-size:20px;">save</span> Lưu sản phẩm
                 </button>
                 <a asp-action="Index"
-                       style="width:100%;padding:.75rem;border:1.5px solid rgba(44,54,57,.2);border-radius:10px;color:#2c3639;text-decoration:none;font-size:.9rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s;"
-                       onmouseover="this.style.background='rgba(44,54,57,.05)'" onmouseout="this.style.background='transparent'">
+                   style="width:100%;padding:.75rem;border:1.5px solid rgba(44,54,57,.2);border-radius:10px;color:#2c3639;text-decoration:none;font-size:.9rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s;"
+                   onmouseover="this.style.background='rgba(44,54,57,.05)'" onmouseout="this.style.background='transparent'">
                     <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span> Hủy
                 </a>
             </div>
@@ -130,42 +314,233 @@
     </div>
 </form>
 
+@* URL Input Modal *@
+<div class="url-modal-overlay" id="urlModal" onclick="closeUrlModal(event)">
+    <div class="url-modal-box">
+        <div class="url-modal-title">
+            <span class="material-symbols-outlined">link</span>
+            <span id="urlModalTitle">Dán URL ảnh</span>
+        </div>
+        <input class="url-modal-input" type="url" id="urlModalInput"
+               placeholder="https://example.com/image.jpg"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();applyUrlModal();}" />
+        <div style="font-size:.72rem;color:#94a3b8;margin-top:-.6rem;margin-bottom:.875rem;">
+            Hỗ trợ liên kết ảnh từ Google, Pinterest, Unsplash...
+        </div>
+        <div class="url-modal-actions">
+            <button type="button" class="url-modal-cancel" onclick="document.getElementById('urlModal').classList.remove('open')">Hủy</button>
+            <button type="button" class="url-modal-apply" onclick="applyUrlModal()">
+                <span style="display:flex;align-items:center;gap:.35rem;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">check</span> Áp dụng
+                </span>
+            </button>
+        </div>
+    </div>
+</div>
+
+@* Choose method popup *@
+<div id="choosePopup"
+     style="position:fixed;z-index:10001;display:none;background:#fff;border-radius:14px;padding:.75rem;box-shadow:0 12px 40px rgba(44,54,57,.18);border:1px solid rgba(162,123,92,.2);min-width:200px;">
+    <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;padding:.25rem .5rem .6rem;">Thêm ảnh bằng</div>
+    <button type="button" id="chooseUpload"
+            style="width:100%;display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;border:none;background:transparent;border-radius:9px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:.85rem;font-weight:600;color:#2c3639;transition:background .15s;text-align:left;"
+            onmouseover="this.style.background='rgba(162,123,92,.08)'" onmouseout="this.style.background='transparent'">
+        <span class="material-symbols-outlined" style="font-size:18px;color:#a27b5c;">upload</span>
+        Tải file lên
+    </button>
+    <button type="button" id="chooseUrl"
+            style="width:100%;display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;border:none;background:transparent;border-radius:9px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:.85rem;font-weight:600;color:#2c3639;transition:background .15s;text-align:left;"
+            onmouseover="this.style.background='rgba(162,123,92,.08)'" onmouseout="this.style.background='transparent'">
+        <span class="material-symbols-outlined" style="font-size:18px;color:#a27b5c;">link</span>
+        Dán URL ảnh
+    </button>
+</div>
+<div id="chooseBackdrop" style="position:fixed;inset:0;z-index:10000;display:none;" onclick="closeChoosePopup()"></div>
+
 <div id="hc-toast-bridge" data-msg="@(TempData["Error"]?.ToString() ?? "")" data-error="1" style="display:none;"></div>
 <div id="hc-success-bridge" data-msg="@(TempData["Success"]?.ToString() ?? "")" style="display:none;"></div>
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
-        // Khi chọn FILE: clear URL input để không conflict, hiển thị preview
-        function onFileSelected(input) {
-            var file = input.files[0];
-            if (!file) return;
-            // Clear URL input - file wins over URL
-            document.getElementById('urlInput').value = '';
-            // Show preview
-            var reader = new FileReader();
-            reader.onload = function(e) { showPreview(e.target.result); };
-            reader.readAsDataURL(file);
+        var _activeSlot = 0;
+
+        // ── SLOT CLICK — mở choose popup khi slot trống ──
+        function slotClick(slot) {
+            if (document.getElementById('slotImg' + slot)) return; // đã có ảnh, overlay xử lý
+            openChoosePopup(slot, document.getElementById('slot' + slot));
         }
 
-        // Khi nhập URL: clear file input, hiển thị preview
-        function onUrlInput(url) {
-            if (url.trim()) {
-                document.getElementById('imgFileInput').value = '';
-                showPreview(url.trim());
+        // ── CHOOSE POPUP ──
+        function openChoosePopup(slot, anchorEl) {
+            _activeSlot = slot;
+            var popup    = document.getElementById('choosePopup');
+            var backdrop = document.getElementById('chooseBackdrop');
+            var rect = anchorEl.getBoundingClientRect();
+            popup.style.left = (rect.right + window.scrollX + 8) + 'px';
+            popup.style.top  = (rect.top  + window.scrollY + rect.height / 2 - 30) + 'px';
+            popup.style.display = 'block';
+            var pw = popup.offsetWidth, ph = popup.offsetHeight;
+            if (rect.right + pw + 16 > window.innerWidth)
+                popup.style.left = Math.max(8, rect.left + window.scrollX - pw - 8) + 'px';
+            var topPx = parseFloat(popup.style.top);
+            if (topPx + ph > window.scrollY + window.innerHeight - 8)
+                popup.style.top = (window.scrollY + window.innerHeight - ph - 12) + 'px';
+            backdrop.style.display = 'block';
+            document.getElementById('chooseUpload').onclick = function () { closeChoosePopup(); triggerFile(_activeSlot); };
+            document.getElementById('chooseUrl').onclick    = function () { closeChoosePopup(); openUrlModal(_activeSlot); };
+        }
+
+        function closeChoosePopup() {
+            document.getElementById('choosePopup').style.display    = 'none';
+            document.getElementById('chooseBackdrop').style.display = 'none';
+        }
+
+        // ── FILE UPLOAD ──
+        function triggerFile(slot) {
+            document.getElementById('fileSlot' + slot).click();
+        }
+
+        function handleFile(slot, input) {
+            var file = input.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (e) { applyPreview(slot, e.target.result); };
+            reader.readAsDataURL(file);
+            if (slot === 0) {
+                document.getElementById('urlInput').value       = '';
+                document.getElementById('hiddenImageUrl').value = '';
+            } else {
+                document.getElementById('extraUrl' + (slot - 1)).value = '';
             }
         }
 
-        function showPreview(src) {
-            var img = document.getElementById('imgPreview');
-            img.src = src;
-            img.style.display = 'block';
-            document.getElementById('imgPlaceholder').style.display = 'none';
-            document.getElementById('imgPlaceholderTxt').style.display = 'none';
+        // ── URL MODAL ──
+        function openUrlModal(slot) {
+            _activeSlot = slot;
+            var input = document.getElementById('urlModalInput');
+            document.getElementById('urlModalTitle').textContent =
+                slot === 0 ? 'Dán URL ảnh chính' : 'Dán URL ảnh phụ ' + (slot + 1);
+            input.value = slot === 0
+                ? document.getElementById('hiddenImageUrl').value
+                : (document.getElementById('extraUrl' + (slot - 1)).value || '');
+            document.getElementById('urlModal').classList.add('open');
+            setTimeout(function () { input.focus(); input.select(); }, 120);
         }
 
+        function closeUrlModal(e) {
+            if (e && e.target !== document.getElementById('urlModal')) return;
+            document.getElementById('urlModal').classList.remove('open');
+        }
+
+        function applyUrlModal() {
+            var url = document.getElementById('urlModalInput').value.trim();
+            if (!url) { document.getElementById('urlModal').classList.remove('open'); return; }
+            document.getElementById('urlModal').classList.remove('open');
+            if (_activeSlot === 0) {
+                document.getElementById('fileSlot0').value       = '';
+                document.getElementById('urlInput').value        = url;
+                document.getElementById('hiddenImageUrl').value  = url;
+            } else {
+                document.getElementById('fileSlot' + _activeSlot).value           = '';
+                document.getElementById('extraUrl' + (_activeSlot - 1)).value     = url;
+            }
+            applyPreview(_activeSlot, url);
+        }
+
+        // Sync URL text field → hidden
+        function applyUrlPreview() {
+            var url = document.getElementById('urlInput').value.trim();
+            document.getElementById('fileSlot0').value       = '';
+            document.getElementById('hiddenImageUrl').value  = url;
+            if (url) applyPreview(0, url);
+        }
+
+        // ── PREVIEW + OVERLAY ──
+        function applyPreview(slot, src) {
+            var slotEl   = document.getElementById('slot' + slot);
+            var existImg = document.getElementById('slotImg' + slot);
+            var emptyEl  = document.getElementById('slotEmpty' + slot);
+            if (emptyEl) emptyEl.style.display = 'none';
+            if (existImg) {
+                existImg.src = src;
+            } else {
+                var img = document.createElement('img');
+                img.id  = 'slotImg' + slot;
+                img.src = src;
+                img.alt = 'Ảnh ' + (slot + 1);
+                var ov = slotEl.querySelector('.slot-overlay');
+                if (ov) slotEl.insertBefore(img, ov);
+                else    slotEl.appendChild(img);
+            }
+            ensureOverlay(slot, slotEl);
+        }
+
+        function ensureOverlay(slot, slotEl) {
+            if (slotEl.querySelector('.slot-overlay')) return;
+            var ov = document.createElement('div');
+            ov.className = 'slot-overlay';
+            ov.innerHTML =
+                '<button type="button" class="slot-action-btn" onclick="event.stopPropagation();triggerFile(' + slot + ')" title="Tải file">' +
+                    '<span class="material-symbols-outlined">upload</span></button>' +
+                '<button type="button" class="slot-action-btn url-btn" onclick="event.stopPropagation();openUrlModal(' + slot + ')" title="Dán URL">' +
+                    '<span class="material-symbols-outlined">link</span></button>' +
+                '<button type="button" class="slot-action-btn del" onclick="event.stopPropagation();clearSlot(' + slot + ')" title="Xóa">' +
+                    '<span class="material-symbols-outlined">delete</span></button>';
+            slotEl.appendChild(ov);
+        }
+
+        // ── CLEAR SLOT ──
+        function clearSlot(slot) {
+            var slotEl   = document.getElementById('slot' + slot);
+            var existImg = document.getElementById('slotImg' + slot);
+            var emptyEl  = document.getElementById('slotEmpty' + slot);
+            var ov       = slotEl.querySelector('.slot-overlay');
+            if (existImg) existImg.remove();
+            if (ov)       ov.remove();
+            var fi = document.getElementById('fileSlot' + slot);
+            if (fi) fi.value = '';
+            if (emptyEl) {
+                emptyEl.style.display = '';
+            } else {
+                var empty = document.createElement('div');
+                empty.id        = 'slotEmpty' + slot;
+                empty.className = 'slot-empty';
+                empty.innerHTML = '<span class="material-symbols-outlined">add_photo_alternate</span>' +
+                    '<span>' + (slot === 0 ? 'Thêm ảnh chính' : 'Chưa có ảnh') + '</span>';
+                slotEl.appendChild(empty);
+            }
+            if (slot === 0) {
+                document.getElementById('urlInput').value       = '';
+                document.getElementById('hiddenImageUrl').value = '';
+            } else {
+                document.getElementById('extraUrl' + (slot - 1)).value = '';
+            }
+        }
+
+        // ── DRAG & DROP ──
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').style.borderColor = '';
+            var file = e.dataTransfer.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+            var dt = new DataTransfer();
+            dt.items.add(file);
+            var fi = document.getElementById('fileSlot0');
+            fi.files = dt.files;
+            handleFile(0, fi);
+        }
+
+        // ── KEYBOARD ──
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            document.getElementById('urlModal').classList.remove('open');
+            closeChoosePopup();
+        });
+
+        // ── TOAST ──
         function showToast(msg, isError) {
-            var t = document.getElementById('hcToast');
+            var t    = document.getElementById('hcToast');
             var icon = document.getElementById('hcToastIcon');
             document.getElementById('hcToastMsg').textContent = msg;
             t.classList.toggle('error', !!isError);
@@ -175,14 +550,13 @@
         }
         function hideToast() { document.getElementById('hcToast').classList.remove('show'); }
 
-        (function() {
+        (function () {
             var errBridge = document.getElementById('hc-toast-bridge');
             var sucBridge = document.getElementById('hc-success-bridge');
-            if (errBridge && errBridge.getAttribute('data-msg')) {
-                setTimeout(function() { showToast(errBridge.getAttribute('data-msg'), true); }, 200);
-            } else if (sucBridge && sucBridge.getAttribute('data-msg')) {
-                setTimeout(function() { showToast(sucBridge.getAttribute('data-msg'), false); }, 200);
-            }
+            if (errBridge && errBridge.getAttribute('data-msg'))
+                setTimeout(function () { showToast(errBridge.getAttribute('data-msg'), true); }, 200);
+            else if (sucBridge && sucBridge.getAttribute('data-msg'))
+                setTimeout(function () { showToast(sucBridge.getAttribute('data-msg'), false); }, 200);
         })();
     </script>
 }

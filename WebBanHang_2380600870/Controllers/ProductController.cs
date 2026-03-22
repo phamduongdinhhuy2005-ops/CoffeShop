@@ -70,13 +70,23 @@ namespace WebBanHang_2380600870.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Add(Product product, IFormFile? ImageFile)
+        public async Task<IActionResult> Add(
+    Product product,
+    IFormFile? ImageFile,
+    IFormFile? ExtraFile0,
+    IFormFile? ExtraFile1,
+    IFormFile? ExtraFile2,
+    List<string?>? ExtraImageUrls)
         {
             ModelState.Remove("ImageUrl");
             ModelState.Remove("ImageFile");
             ModelState.Remove("Images");
             ModelState.Remove("Category");
             ModelState.Remove("DiscountPercent");
+            ModelState.Remove("ExtraFile0");
+            ModelState.Remove("ExtraFile1");
+            ModelState.Remove("ExtraFile2");
+            ModelState.Remove("ExtraImageUrls");
 
             if (!ModelState.IsValid)
             {
@@ -85,6 +95,7 @@ namespace WebBanHang_2380600870.Controllers
                 return View(product);
             }
 
+            // ── Ảnh chính ──
             if (ImageFile != null && ImageFile.Length > 0)
             {
                 var err = ValidateImageFile(ImageFile);
@@ -97,8 +108,41 @@ namespace WebBanHang_2380600870.Controllers
                 }
                 product.ImageUrl = await SaveImage(ImageFile);
             }
+            // Nếu không có file thì giữ nguyên ImageUrl từ hidden input (URL paste)
 
+            // Lưu sản phẩm trước để có Id
             await _productRepository.AddAsync(product);
+
+            // ── Ảnh phụ (3 slots) ──
+            var extraFiles = new IFormFile?[] { ExtraFile0, ExtraFile1, ExtraFile2 };
+            for (int i = 0; i < 3; i++)
+            {
+                var newFile = extraFiles[i];
+                var urlFromHidden = (ExtraImageUrls != null && i < ExtraImageUrls.Count)
+                    ? (ExtraImageUrls[i] ?? "") : "";
+
+                bool hasFile = newFile != null && newFile.Length > 0;
+                bool hasUrl = !string.IsNullOrEmpty(urlFromHidden) && urlFromHidden != "new_file";
+
+                if (hasFile)
+                {
+                    var err = ValidateImageFile(newFile!);
+                    if (err != null)
+                    {
+                        _logger.LogWarning("Extra slot {Slot} validation failed: {Err}", i, err);
+                        continue;
+                    }
+                    var savedUrl = await SaveImage(newFile!);
+                    _context.ProductImages.Add(new ProductImage { ProductId = product.Id, Url = savedUrl });
+                }
+                else if (hasUrl)
+                {
+                    _context.ProductImages.Add(new ProductImage { ProductId = product.Id, Url = urlFromHidden });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
             TempData["Success"] = $"Đã thêm sản phẩm \"{product.Name}\" thành công!";
             return RedirectToAction(nameof(Index));
         }
