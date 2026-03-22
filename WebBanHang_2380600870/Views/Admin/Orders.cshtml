@@ -17,16 +17,14 @@
 }
 <style>
     @@keyframes toastIn {
-        from {
-            transform: translateX(110%);
-            opacity: 0
-        }
-
-        to {
-            transform: translateX(0);
-            opacity: 1
-        }
+        from { transform: translateX(110%); opacity: 0 }
+        to   { transform: translateX(0);   opacity: 1 }
     }
+    .pag-dot{width:6px;height:6px;border-radius:50%;background:rgba(162,123,92,.25);cursor:pointer;border:none;padding:0;transition:background .2s,transform .2s;}
+    .pag-dot-active{background:#a27b5c;transform:scale(1.3);}
+    .pag-arrow{width:28px;height:28px;border-radius:50%;border:1.5px solid rgba(162,123,92,.3);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#a27b5c;transition:background .15s;}
+    .pag-arrow:hover:not([disabled]){background:rgba(162,123,92,.08);}
+    .pag-arrow[disabled]{opacity:.3;cursor:default;}
 </style>
 
 @* Stat cards *@
@@ -84,7 +82,7 @@
     else
     {
         <div style="overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+            <table id="orderTable" style="width:100%;border-collapse:collapse;font-size:.875rem;">
                 <thead>
                     <tr style="background:rgba(162,123,92,.07);border-bottom:2px solid rgba(162,123,92,.15);">
                         <th style="text-align:left;padding:1rem 1.25rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#a27b5c;">#</th>
@@ -141,6 +139,7 @@
                 </tbody>
             </table>
         </div>
+        <div id="orderPager"></div>
     }
 </div>
 
@@ -150,5 +149,31 @@
             const t = document.getElementById('hcToast');
             if (t) { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }
         }, 4000);
+
+        // ── Pagination ──
+        (function(){
+            var PAGE=10, page=0;
+            var rows=Array.from(document.querySelectorAll('#orderTable tbody tr'));
+            if(rows.length<=PAGE){ return; }
+            function renderPage(p){
+                page=p;
+                rows.forEach(function(r,i){ r.style.display=(i>=p*PAGE&&i<(p+1)*PAGE)?'':'none'; });
+                buildPager(Math.ceil(rows.length/PAGE));
+            }
+            function buildPager(pages){
+                var el=document.getElementById('orderPager');
+                if(!el)return;
+                var h='<div style="display:flex;align-items:center;justify-content:center;gap:.375rem;padding:1rem 0;">';
+                h+='<button class="pag-arrow" onclick="orderPage('+(page-1)+')" '+(page===0?'disabled':'')+'><span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span></button>';
+                for(var i=0;i<pages;i++){
+                    h+='<button class="pag-dot'+(i===page?' pag-dot-active':'')+'" onclick="orderPage('+i+')" title="Trang '+(i+1)+'"></button>';
+                }
+                h+='<span style="font-size:.78rem;font-style:italic;color:rgba(162,123,92,.6);margin:0 .3rem;">'+(page+1)+'/'+pages+'</span>';
+                h+='<button class="pag-arrow" onclick="orderPage('+(page+1)+')" '+(page>=pages-1?'disabled':'')+'><span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span></button>';
+                el.innerHTML=h+'</div>';
+            }
+            window.orderPage=function(p){ var pages=Math.ceil(rows.length/PAGE); if(p<0||p>=pages)return; renderPage(p); };
+            renderPage(0);
+        })();
     </script>
 }

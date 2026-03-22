@@ -1,70 +1,32 @@
-﻿@* REDESIGNED: Lấy cảm hứng từ Heritage Cafe — profile header nổi bật,
-   sidebar nav với border-left active indicator, order rows đẹp hơn,
-   thêm tab Lịch Đặt Chỗ ngay trong trang. *@
+﻿@* Views/Account/UserAccount.cshtml *@
 @{
     ViewData["Title"] = "Tài Khoản | Góc Lặng";
     Layout = "_Layout";
-    var user = ViewBag.User as WebBanHang_2380600870.Models.AppUser;
-    var orders = ViewBag.Orders as List<WebBanHang_2380600870.Models.Order> ?? new();
-    var bookings = ViewBag.Bookings as List<WebBanHang_2380600870.Models.Booking> ?? new();
+    var user    = ViewBag.User    as WebBanHang_2380600870.Models.AppUser;
+    var orders  = ViewBag.Orders  as List<WebBanHang_2380600870.Models.Order>   ?? new();
+    var bookings= ViewBag.Bookings as List<WebBanHang_2380600870.Models.Booking> ?? new();
     var activeTab = TempData["ActiveTab"]?.ToString() ?? "profile";
     var joinedStr = user?.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy") ?? "";
 
-    // Helper: lấy label + css class cho trạng thái đơn hàng
-    // Khai báo ở đây để dùng trong @foreach mà không cần @{ } lồng nhau
-    string OrderStatusLabel(WebBanHang_2380600870.Models.OrderStatus s) => s switch
-    {
-        WebBanHang_2380600870.Models.OrderStatus.Pending => "Chờ xác nhận",
-        WebBanHang_2380600870.Models.OrderStatus.Confirmed => "Đã xác nhận",
+    string OrderStatusLabel(WebBanHang_2380600870.Models.OrderStatus s) => s switch {
+        WebBanHang_2380600870.Models.OrderStatus.Pending    => "Chờ xác nhận",
+        WebBanHang_2380600870.Models.OrderStatus.Confirmed  => "Đã xác nhận",
         WebBanHang_2380600870.Models.OrderStatus.Processing => "Đang pha chế",
-        WebBanHang_2380600870.Models.OrderStatus.Ready => "Sẵn sàng",
-        WebBanHang_2380600870.Models.OrderStatus.Completed => "Hoàn thành",
-        WebBanHang_2380600870.Models.OrderStatus.Cancelled => "Đã hủy",
+        WebBanHang_2380600870.Models.OrderStatus.Ready      => "Sẵn sàng",
+        WebBanHang_2380600870.Models.OrderStatus.Completed  => "Hoàn thành",
+        WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "Đã hủy",
         _ => "Không xác định"
     };
-    string OrderStatusClass(WebBanHang_2380600870.Models.OrderStatus s) => s switch
-    {
-        WebBanHang_2380600870.Models.OrderStatus.Pending => "ua-status ua-status-pending",
-        WebBanHang_2380600870.Models.OrderStatus.Confirmed => "ua-status ua-status-confirmed",
-        WebBanHang_2380600870.Models.OrderStatus.Processing => "ua-status ua-status-processing",
-        WebBanHang_2380600870.Models.OrderStatus.Ready => "ua-status ua-status-ready",
-        WebBanHang_2380600870.Models.OrderStatus.Completed => "ua-status ua-status-completed",
-        WebBanHang_2380600870.Models.OrderStatus.Cancelled => "ua-status ua-status-cancelled",
-        _ => "ua-status ua-status-pending"
+    string OrderStatusBg(WebBanHang_2380600870.Models.OrderStatus s) => s switch {
+        WebBanHang_2380600870.Models.OrderStatus.Pending    => "rgba(234,179,8,.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Confirmed  => "rgba(59,130,246,.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Processing => "rgba(139,92,246,.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Ready      => "rgba(16,185,129,.12)",
+        WebBanHang_2380600870.Models.OrderStatus.Completed  => "rgba(16,185,129,.15)",
+        WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "rgba(239,68,68,.10)",
+        _ => "rgba(100,116,139,.10)"
     };
-    string BStatusLabel(WebBanHang_2380600870.Models.BookingStatus s) => s switch {
-        WebBanHang_2380600870.Models.BookingStatus.Pending   => "Chờ xác nhận",
-        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "Đã xác nhận",
-        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "Đã hủy",
-        _ => "Không rõ"
-    };
-    string BStatusCss(WebBanHang_2380600870.Models.BookingStatus s) => s switch {
-        WebBanHang_2380600870.Models.BookingStatus.Pending   => "ua-bstatus-pending",
-        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "ua-bstatus-confirmed",
-        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "ua-bstatus-cancelled",
-        _ => "ua-bstatus-pending"
-    };
-    string OrderItems(WebBanHang_2380600870.Models.Order o)
-    {
-        if (o.OrderDetails == null || !o.OrderDetails.Any()) return "";
-        var items = string.Join(", ", o.OrderDetails.Take(2)
-            .Select(d => (d.Product != null ? d.Product.Name : "Sản phẩm") + " x" + d.Quantity));
-        if (o.OrderDetails.Count > 2)
-            items += " +" + (o.OrderDetails.Count - 2) + " món khác";
-        return items;
-    }
-    string OStatusBg2(WebBanHang_2380600870.Models.OrderStatus s) => s switch
-    {
-        WebBanHang_2380600870.Models.OrderStatus.Pending    => "rgba(234,179,8,0.12)",
-        WebBanHang_2380600870.Models.OrderStatus.Confirmed  => "rgba(59,130,246,0.12)",
-        WebBanHang_2380600870.Models.OrderStatus.Processing => "rgba(139,92,246,0.12)",
-        WebBanHang_2380600870.Models.OrderStatus.Ready      => "rgba(16,185,129,0.12)",
-        WebBanHang_2380600870.Models.OrderStatus.Completed  => "rgba(16,185,129,0.15)",
-        WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "rgba(239,68,68,0.1)",
-        _ => "rgba(100,116,139,0.1)"
-    };
-    string OStatusClr2(WebBanHang_2380600870.Models.OrderStatus s) => s switch
-    {
+    string OrderStatusClr(WebBanHang_2380600870.Models.OrderStatus s) => s switch {
         WebBanHang_2380600870.Models.OrderStatus.Pending    => "#b45309",
         WebBanHang_2380600870.Models.OrderStatus.Confirmed  => "#1d4ed8",
         WebBanHang_2380600870.Models.OrderStatus.Processing => "#7c3aed",
@@ -73,8 +35,7 @@
         WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "#b91c1c",
         _ => "#64748b"
     };
-    string OStatusIcon2(WebBanHang_2380600870.Models.OrderStatus s) => s switch
-    {
+    string OrderStatusIcon(WebBanHang_2380600870.Models.OrderStatus s) => s switch {
         WebBanHang_2380600870.Models.OrderStatus.Pending    => "hourglass_empty",
         WebBanHang_2380600870.Models.OrderStatus.Confirmed  => "check_circle",
         WebBanHang_2380600870.Models.OrderStatus.Processing => "coffee_maker",
@@ -83,989 +44,524 @@
         WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "cancel",
         _ => "help"
     };
-    // Serialize orders for JS drawer — top-level @{}, tránh RZ1010
+    string OrderBorderClr(WebBanHang_2380600870.Models.OrderStatus s) => s switch {
+        WebBanHang_2380600870.Models.OrderStatus.Pending    => "#f59e0b",
+        WebBanHang_2380600870.Models.OrderStatus.Confirmed  => "#3b82f6",
+        WebBanHang_2380600870.Models.OrderStatus.Processing => "#8b5cf6",
+        WebBanHang_2380600870.Models.OrderStatus.Ready      => "#10b981",
+        WebBanHang_2380600870.Models.OrderStatus.Completed  => "#10b981",
+        WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "#ef4444",
+        _ => "#94a3b8"
+    };
+    string BStatusLabel(WebBanHang_2380600870.Models.BookingStatus s) => s switch {
+        WebBanHang_2380600870.Models.BookingStatus.Pending   => "Chờ xác nhận",
+        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "Đã xác nhận",
+        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "Đã hủy",
+        _ => "Không rõ"
+    };
+    string BStatusBg(WebBanHang_2380600870.Models.BookingStatus s) => s switch {
+        WebBanHang_2380600870.Models.BookingStatus.Pending   => "rgba(234,179,8,.12)",
+        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "rgba(16,185,129,.12)",
+        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "rgba(239,68,68,.10)",
+        _ => "rgba(100,116,139,.10)"
+    };
+    string BStatusClr(WebBanHang_2380600870.Models.BookingStatus s) => s switch {
+        WebBanHang_2380600870.Models.BookingStatus.Pending   => "#b45309",
+        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "#065f46",
+        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "#b91c1c",
+        _ => "#64748b"
+    };
+    // NOTE: BStatusBorder removed — was declared but never used (CS8321)
+    string OrderItems(WebBanHang_2380600870.Models.Order o) {
+        if (o.OrderDetails == null || !o.OrderDetails.Any()) return "";
+        var items = string.Join(", ", o.OrderDetails.Take(2)
+            .Select(d => (d.Product != null ? d.Product.Name : "Sản phẩm") + " x" + d.Quantity));
+        if (o.OrderDetails.Count > 2)
+            items += " +" + (o.OrderDetails.Count - 2) + " món khác";
+        return items;
+    }
+
     var uaOrdersJson = System.Text.Json.JsonSerializer.Serialize(
         orders.Select(o => new {
-            id          = o.Id,
-            date        = o.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
-            status      = (int)o.Status,
-            statusLabel = OrderStatusLabel(o.Status),
-            statusBg    = OStatusBg2(o.Status),
-            statusClr   = OStatusClr2(o.Status),
-            statusIcon  = OStatusIcon2(o.Status),
-            total       = o.TotalAmount,
-            shipping       = o.ShippingAddress ?? "",
-            payment        = o.PaymentMethod == "COD" ? "Thanh toán khi nhận (COD)" : "Chuyển khoản",
-            note           = o.Note ?? "",
-            canCancel      = o.Status == WebBanHang_2380600870.Models.OrderStatus.Pending,
-            customerName   = user != null ? (user.FullName ?? user.Email ?? "") : "",
-            customerPhone  = user != null ? (user.PhoneNumber ?? "") : "",
-            items       = (o.OrderDetails ?? new List<WebBanHang_2380600870.Models.OrderDetail>())
-                            .Select(d => new {
-                                name     = d.Product != null ? d.Product.Name : "Sản phẩm",
-                                img      = d.Product != null ? (d.Product.ImageUrl ?? "") : "",
-                                qty      = d.Quantity,
-                                price    = d.UnitPrice,
-                                itemNote = d.ItemNote ?? ""
-                            })
+            id           = o.Id,
+            date         = o.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
+            status       = (int)o.Status,
+            statusLabel  = OrderStatusLabel(o.Status),
+            statusBg     = OrderStatusBg(o.Status),
+            statusClr    = OrderStatusClr(o.Status),
+            statusIcon   = OrderStatusIcon(o.Status),
+            borderClr    = OrderBorderClr(o.Status),
+            total        = o.TotalAmount,
+            shipping     = o.ShippingAddress ?? "",
+            payment      = o.PaymentMethod == "COD" ? "Thanh toán khi nhận (COD)" : "Chuyển khoản",
+            note         = o.Note ?? "",
+            canCancel    = o.Status == WebBanHang_2380600870.Models.OrderStatus.Pending,
+            canDelete    = o.Status == WebBanHang_2380600870.Models.OrderStatus.Cancelled
+                        || o.Status == WebBanHang_2380600870.Models.OrderStatus.Completed,
+            customerName  = user != null ? (user.FullName ?? user.Email ?? "") : "",
+            customerPhone = user != null ? (user.PhoneNumber ?? "") : "",
+            items        = (o.OrderDetails ?? new List<WebBanHang_2380600870.Models.OrderDetail>())
+                             .Select(d => new {
+                                 name     = d.Product != null ? d.Product.Name : "Sản phẩm",
+                                 img      = d.Product != null ? (d.Product.ImageUrl ?? "") : "",
+                                 qty      = d.Quantity,
+                                 price    = d.UnitPrice,
+                                 itemNote = d.ItemNote ?? ""
+                             })
         })
     );
 }
 
-@* ─── Data bridge: truyền server data sang JS qua data attribute ─── *@
-<div id="ua-bridge"
-     data-active-tab="@activeTab"
-     style="display:none;"></div>
+<div id="ua-bridge" data-active-tab="@activeTab" style="display:none;"></div>
 
 <style>
-    /* ── Page shell ───────────────────────────────────────────── */
-    .ua-page {
-        background: #F7F7F6;
-        min-height: 100vh;
-        padding: 2.5rem 1rem 4rem;
-    }
-
-    .ua-wrap {
-        max-width: 1100px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-    }
-
-    /* ── Profile hero ─────────────────────────────────────────── */
-    .ua-hero {
-        background: linear-gradient(135deg, #2C3639 0%, #3F4E4F 60%, #2C3639 100%);
-        border-radius: 24px;
-        padding: 2.5rem 2.5rem 2rem;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 8px 32px rgba(44,54,57,0.18);
-    }
-
-        .ua-hero::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse 55% 70% at 5% 50%, rgba(162,123,92,0.18) 0%, transparent 70%), radial-gradient(ellipse 40% 60% at 95% 20%, rgba(162,123,92,0.10) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-    .ua-hero-pattern {
-        position: absolute;
-        inset: 0;
-        background-image: repeating-linear-gradient(45deg, rgba(162,123,92,0.04) 0, rgba(162,123,92,0.04) 1px, transparent 1px, transparent 56px), repeating-linear-gradient(-45deg, rgba(162,123,92,0.04) 0, rgba(162,123,92,0.04) 1px, transparent 1px, transparent 56px);
-        pointer-events: none;
-    }
-
-    .ua-hero-inner {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        gap: 2rem;
-        flex-wrap: wrap;
-    }
-
-    .ua-avatar {
-        width: 88px;
-        height: 88px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #A27B5C, #3F4E4F);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        font-weight: 800;
-        color: #fff;
-        font-family: 'Playfair Display', serif;
-        border: 3px solid rgba(162,123,92,0.5);
-        flex-shrink: 0;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-    }
-
-    .ua-hero-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .ua-hero-name {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.75rem;
-        font-weight: 900;
-        color: #F2EFE9;
-        line-height: 1.2;
-        margin-bottom: .35rem;
-    }
-
-    .ua-hero-email {
-        font-size: .875rem;
-        color: rgba(220,215,201,0.65);
-        margin-bottom: .75rem;
-    }
-
-    .ua-hero-meta {
-        display: flex;
-        gap: 1.25rem;
-        flex-wrap: wrap;
-    }
-
-    .ua-hero-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: .4rem;
-        font-size: .72rem;
-        font-weight: 700;
-        letter-spacing: .06em;
-        padding: .3rem .8rem;
-        border-radius: 99px;
-        background: rgba(162,123,92,0.18);
-        border: 1px solid rgba(162,123,92,0.35);
-        color: #DCD7C9;
-    }
-
-        .ua-hero-chip .material-symbols-outlined {
-            font-size: 14px;
-            color: #A27B5C;
-        }
-
-    .ua-hero-stats {
-        display: flex;
-        gap: 1.5rem;
-        flex-shrink: 0;
-    }
-
-    .ua-stat {
-        text-align: center;
-        padding: .75rem 1.25rem;
-        background: rgba(255,255,255,0.07);
-        border: 1px solid rgba(162,123,92,0.2);
-        border-radius: 14px;
-        backdrop-filter: blur(8px);
-    }
-
-    .ua-stat-num {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #A27B5C;
-        line-height: 1;
-    }
-
-    .ua-stat-label {
-        font-size: .65rem;
-        font-weight: 700;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-        color: rgba(220,215,201,0.5);
-        margin-top: .35rem;
-    }
-
-    /* ── Body grid ────────────────────────────────────────────── */
-    .ua-body {
-        display: grid;
-        grid-template-columns: 220px 1fr;
-        gap: 1.5rem;
-        align-items: start;
-    }
-
-    @@media (max-width: 768px) {
-        .ua-body {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* ── Sidebar ──────────────────────────────────────────────── */
-    .ua-sidebar {
-        background: #fff;
-        border-radius: 20px;
-        border: 1px solid rgba(162,123,92,0.15);
-        padding: .5rem;
-        box-shadow: 0 2px 16px rgba(44,54,57,0.06);
-        position: sticky;
-        top: 6.5rem;
-    }
-
-    .ua-nav-item {
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-        padding: .75rem 1rem;
-        border-radius: 12px;
-        border: none;
-        background: transparent;
-        width: 100%;
-        text-align: left;
-        cursor: pointer;
-        font-family: 'Work Sans', sans-serif;
-        font-size: .875rem;
-        font-weight: 600;
-        color: #3F4E4F;
-        transition: all .15s;
-        border-left: 3px solid transparent;
-        position: relative;
-    }
-
-        .ua-nav-item:hover {
-            background: rgba(162,123,92,0.07);
-            color: #A27B5C;
-            border-left-color: rgba(162,123,92,0.3);
-        }
-
-        .ua-nav-item.active {
-            background: rgba(162,123,92,0.1);
-            color: #A27B5C;
-            border-left-color: #A27B5C;
-        }
-
-        .ua-nav-item .material-symbols-outlined {
-            font-size: 18px;
-            flex-shrink: 0;
-            color: rgba(162,123,92,0.6);
-        }
-
-        .ua-nav-item.active .material-symbols-outlined {
-            color: #A27B5C;
-        }
-
-    .ua-nav-sep {
-        height: 1px;
-        background: rgba(162,123,92,0.12);
-        margin: .35rem .5rem;
-    }
-
-    .ua-nav-badge {
-        margin-left: auto;
-        font-size: .65rem;
-        font-weight: 800;
-        padding: .15rem .5rem;
-        border-radius: 99px;
-        background: rgba(162,123,92,0.15);
-        color: #A27B5C;
-    }
-
-    /* ── Content panels ───────────────────────────────────────── */
-    .ua-panel {
-        display: none;
-    }
-
-        .ua-panel.active {
-            display: block;
-        }
-
-    .ua-card {
-        background: #fff;
-        border-radius: 20px;
-        border: 1px solid rgba(162,123,92,0.15);
-        box-shadow: 0 2px 16px rgba(44,54,57,0.06);
-        overflow: hidden;
-    }
-
-    .ua-card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid rgba(162,123,92,0.1);
-    }
-
-    .ua-card-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.2rem;
-        font-weight: 800;
-        color: #2C3639;
-    }
-
-    .ua-card-body {
-        padding: 2rem;
-    }
-
-    /* ── Form inputs ──────────────────────────────────────────── */
-    .ua-label {
-        display: block;
-        font-size: .72rem;
-        font-weight: 800;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-        color: #2C3639;
-        margin-bottom: .5rem;
-    }
-
-    .ua-input {
-        width: 100%;
-        padding: .75rem 1rem;
-        border: 1.5px solid rgba(162,123,92,0.25);
-        border-radius: 10px;
-        font-family: 'Work Sans', sans-serif;
-        font-size: .9rem;
-        color: #2C3639;
-        background: #FAFAF9;
-        outline: none;
-        transition: border-color .15s, box-shadow .15s;
-        box-sizing: border-box;
-    }
-
-        .ua-input:focus {
-            border-color: #A27B5C;
-            box-shadow: 0 0 0 3px rgba(162,123,92,0.1);
-            background: #fff;
-        }
-
-        .ua-input:disabled {
-            background: #F7F7F6;
-            color: rgba(63,78,79,0.5);
-            cursor: not-allowed;
-        }
-
-    .ua-pw-wrap {
-        position: relative;
-    }
-
-        .ua-pw-wrap .ua-input {
-            padding-right: 44px;
-        }
-
-    .ua-pw-eye {
-        position: absolute;
-        right: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: #3F4E4F;
-        padding: 0;
-    }
-
-    .ua-btn-primary {
-        padding: .75rem 2rem;
-        background: #2C3639;
-        color: #fff;
-        border: none;
-        border-radius: 99px;
-        font-family: 'Work Sans', sans-serif;
-        font-size: .875rem;
-        font-weight: 700;
-        cursor: pointer;
-        letter-spacing: .08em;
-        transition: all .2s;
-    }
-
-        .ua-btn-primary:hover {
-            background: #A27B5C;
-            box-shadow: 0 4px 16px rgba(162,123,92,0.35);
-            transform: translateY(-1px);
-        }
-
-    /* ── Order rows (Heritage-style) ──────────────────────────── */
-    .ua-order-row {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1.25rem 2rem;
-        border-bottom: 1px solid rgba(162,123,92,0.08);
-        transition: background .15s;
-    }
-
-        .ua-order-row:last-child {
-            border-bottom: none;
-        }
-
-        .ua-order-row:hover {
-            background: rgba(162,123,92,0.03);
-        }
-
-    .ua-order-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: rgba(162,123,92,0.07);
-        border: 1px solid rgba(162,123,92,0.18);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        color: #A27B5C;
-    }
-
-        .ua-order-icon .material-symbols-outlined {
-            font-size: 20px;
-        }
-
-    .ua-order-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .ua-order-num {
-        font-family: 'Playfair Display', serif;
-        font-size: 1rem;
-        font-weight: 700;
-        color: #2C3639;
-    }
-
-    .ua-order-items {
-        font-size: .8rem;
-        color: rgba(63,78,79,0.55);
-        margin-top: .15rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .ua-order-meta {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-top: .4rem;
-    }
-
-    .ua-order-meta-item {
-        display: flex;
-        align-items: center;
-        gap: .35rem;
-        font-size: .7rem;
-        font-weight: 700;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        color: rgba(63,78,79,0.4);
-    }
-
-        .ua-order-meta-item .material-symbols-outlined {
-            font-size: 12px;
-        }
-
-    .ua-order-total {
-        font-size: .875rem;
-        font-weight: 800;
-        color: #A27B5C;
-        flex-shrink: 0;
-    }
-
-    .ua-order-arrow {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        color: rgba(63,78,79,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all .15s;
-        flex-shrink: 0;
-    }
-
-        .ua-order-arrow:hover {
-            background: rgba(162,123,92,0.08);
-            color: #A27B5C;
-        }
-
-        .ua-order-arrow .material-symbols-outlined {
-            font-size: 16px;
-        }
-
-    /* status badges */
-    .ua-status {
-        display: inline-block;
-        padding: .2rem .65rem;
-        border-radius: 99px;
-        font-size: .65rem;
-        font-weight: 800;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        flex-shrink: 0;
-    }
-
-    .ua-status-pending {
-        background: rgba(234,179,8,0.1);
-        color: #b45309;
-        border: 1px solid rgba(234,179,8,0.25);
-    }
-
-    .ua-status-confirmed {
-        background: rgba(59,130,246,0.1);
-        color: #1d4ed8;
-        border: 1px solid rgba(59,130,246,0.2);
-    }
-
-    .ua-status-processing {
-        background: rgba(139,92,246,0.1);
-        color: #7c3aed;
-        border: 1px solid rgba(139,92,246,0.2);
-    }
-
-    .ua-status-ready {
-        background: rgba(16,185,129,0.1);
-        color: #065f46;
-        border: 1px solid rgba(16,185,129,0.2);
-    }
-
-    .ua-status-completed {
-        background: rgba(16,185,129,0.12);
-        color: #065f46;
-        border: 1px solid rgba(16,185,129,0.25);
-    }
-
-    .ua-status-cancelled {
-        background: rgba(239,68,68,0.08);
-        color: #b91c1c;
-        border: 1px solid rgba(239,68,68,0.2);
-    }
-
-    /* booking status */
-    .ua-bstatus-pending {
-        background: rgba(234,179,8,0.1);
-        color: #b45309;
-    }
-
-    .ua-bstatus-confirmed {
-        background: rgba(16,185,129,0.1);
-        color: #065f46;
-    }
-
-    .ua-bstatus-cancelled {
-        background: rgba(239,68,68,0.08);
-        color: #b91c1c;
-    }
-
-    /* ── Empty state ──────────────────────────────────────────── */
-    .ua-empty {
-        text-align: center;
-        padding: 3.5rem 1rem;
-    }
-
-        .ua-empty .material-symbols-outlined {
-            font-size: 52px;
-            color: rgba(162,123,92,0.25);
-            display: block;
-            margin-bottom: 1rem;
-        }
-
-    .ua-empty-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.1rem;
-        color: #2C3639;
-        margin-bottom: .5rem;
-    }
-
-    .ua-empty-sub {
-        font-size: .875rem;
-        color: rgba(63,78,79,0.45);
-        margin-bottom: 1.5rem;
-    }
-
-    .ua-empty-link {
-        display: inline-block;
-        padding: .65rem 1.75rem;
-        border-radius: 99px;
-        background: #A27B5C;
-        color: #fff;
-        font-size: .8rem;
-        font-weight: 700;
-        letter-spacing: .06em;
-        text-decoration: none;
-        transition: opacity .15s;
-    }
-
-        .ua-empty-link:hover {
-            opacity: .85;
-            text-decoration: none;
-            color: #fff;
-        }
-
-    /* ── View-all link ────────────────────────────────────────── */
-    .ua-view-all {
-        display: block;
-        text-align: center;
-        padding: 1rem;
-        font-size: .75rem;
-        font-weight: 800;
-        letter-spacing: .12em;
-        text-transform: uppercase;
-        color: #A27B5C;
-        text-decoration: none;
-        border-top: 1px solid rgba(162,123,92,0.1);
-        transition: background .15s;
-    }
-
-        .ua-view-all:hover {
-            background: rgba(162,123,92,0.04);
-            text-decoration: none;
-        }
-
-    /* ── Toast ────────────────────────────────────────────────── */
-    .ua-toast {
-        padding: 1rem 1.25rem;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-        font-size: .875rem;
-        font-weight: 600;
-        margin-bottom: 1.25rem;
-    }
-
-    .ua-toast-success {
-        background: rgba(16,185,129,0.08);
-        border: 1px solid rgba(16,185,129,0.25);
-        color: #065f46;
-    }
-
-    .ua-toast-error {
-        background: rgba(239,68,68,0.07);
-        border: 1px solid rgba(239,68,68,0.2);
-        color: #b91c1c;
-    }
-
-    .ua-toast .material-symbols-outlined {
-        font-size: 20px;
-        flex-shrink: 0;
-    }
-
-    /* ── Booking cards ────────────────────────────────────────── */
-    .ua-booking-list { display: flex; flex-direction: column; gap: .75rem; }
-
-    .ua-booking-card {
-        background: #fff;
-        border: 1px solid rgba(162,123,92,.14);
-        border-radius: 16px;
-        padding: 1.1rem 1.25rem;
-        transition: border-color .2s, box-shadow .2s;
-    }
-
-        .ua-booking-card:hover {
-            border-color: rgba(162,123,92,.32);
-            box-shadow: 0 4px 18px rgba(44,54,57,.08);
-        }
-
-    /* Status accent bar on left */
-    .ua-booking-card.bc-pending  { border-left: 3.5px solid #f59e0b; }
-    .ua-booking-card.bc-confirmed{ border-left: 3.5px solid #10b981; }
-    .ua-booking-card.bc-cancelled{ border-left: 3.5px solid #ef4444; }
-
-    .ua-booking-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: .75rem;
-        flex-wrap: wrap;
-        margin-bottom: .75rem;
-    }
-
-    .ua-booking-datetime {
-        display: flex; align-items: center; gap: .45rem;
-    }
-
-    .ua-booking-date {
-        font-family: 'Playfair Display', serif;
-        font-size: .95rem;
-        font-weight: 700;
-        color: #2C3639;
-    }
-
-    .ua-booking-time-chip {
-        font-family: 'Work Sans', sans-serif;
-        font-size: .7rem; font-weight: 700;
-        background: rgba(162,123,92,.1); color: #A27B5C;
-        padding: .15rem .55rem; border-radius: 99px;
-        white-space: nowrap;
-    }
-
-    .ua-booking-meta {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: .35rem .75rem;
-        font-size: .8rem;
-        margin-bottom: .6rem;
-    }
-
-        .ua-booking-meta-item {
-            display: flex; align-items: center; gap: .3rem;
-        }
-
-        .ua-booking-meta-label {
-            color: rgba(63,78,79,.5);
-            font-family: 'Work Sans', sans-serif;
-            font-size: .75rem;
-            white-space: nowrap;
-        }
-
-        .ua-booking-meta-val {
-            color: #2C3639;
-            font-family: 'Work Sans', sans-serif;
-            font-weight: 600;
-            font-size: .8rem;
-        }
-
-    .ua-booking-note {
-        display: flex; align-items: flex-start; gap: .4rem;
-        background: rgba(162,123,92,.06);
-        border-radius: 8px; padding: .5rem .75rem;
-        font-family: 'Cormorant Garamond', serif;
-        font-style: italic; font-size: .88rem;
-        color: #3F4E4F; opacity: .85;
-        margin-top: .5rem;
-    }
-
-    /* Status badge — same as before */
-    .ua-bstatus-pending  { background: rgba(234,179,8,.12);  color: #b45309; }
-    .ua-bstatus-confirmed{ background: rgba(16,185,129,.12); color: #065f46; }
-    .ua-bstatus-cancelled{ background: rgba(239,68,68,.1);   color: #b91c1c; }
-
-    /* responsive */
-    @@media (max-width: 600px) {
-        .ua-hero {
-            padding: 1.5rem 1.25rem 1.25rem;
-        }
-
-        .ua-hero-stats {
-            gap: .75rem;
-        }
-
-        .ua-stat {
-            padding: .6rem .9rem;
-        }
-
-        .ua-card-body {
-            padding: 1.25rem;
-        }
-
-        .ua-order-row {
-            padding: 1rem 1.25rem;
-        }
-
-        .ua-booking-card {
-            padding: 1rem 1.25rem;
-        }
-    }
+/* ══ PAGE ══════════════════════════════════════════════ */
+.ua-page { background:#F7F7F6; min-height:100vh; padding:2.5rem 1rem 4rem; }
+.ua-wrap { max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:2rem; }
+
+/* ══ HERO ══════════════════════════════════════════════ */
+.ua-hero {
+    background:linear-gradient(135deg,#2C3639 0%,#3F4E4F 60%,#2C3639 100%);
+    border-radius:24px; padding:2.5rem 2.5rem 2rem;
+    position:relative; overflow:hidden;
+    box-shadow:0 8px 32px rgba(44,54,57,.18);
+}
+.ua-hero::before {
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(ellipse 55% 70% at 5% 50%,rgba(162,123,92,.18) 0%,transparent 70%),
+               radial-gradient(ellipse 40% 60% at 95% 20%,rgba(162,123,92,.10) 0%,transparent 70%);
+    pointer-events:none;
+}
+.ua-hero-pattern {
+    position:absolute; inset:0;
+    background-image:repeating-linear-gradient(45deg,rgba(162,123,92,.04) 0,rgba(162,123,92,.04) 1px,transparent 1px,transparent 56px),
+                     repeating-linear-gradient(-45deg,rgba(162,123,92,.04) 0,rgba(162,123,92,.04) 1px,transparent 1px,transparent 56px);
+    pointer-events:none;
+}
+.ua-hero-inner { position:relative; z-index:1; display:flex; align-items:center; gap:2rem; flex-wrap:wrap; }
+.ua-avatar {
+    width:88px; height:88px; border-radius:50%;
+    background:linear-gradient(135deg,#A27B5C,#3F4E4F);
+    display:flex; align-items:center; justify-content:center;
+    font-size:2rem; font-weight:800; color:#fff;
+    font-family:'Playfair Display',serif;
+    border:3px solid rgba(162,123,92,.5); flex-shrink:0;
+    box-shadow:0 4px 20px rgba(0,0,0,.25);
+}
+.ua-hero-info { flex:1; min-width:0; }
+.ua-hero-name { font-family:'Playfair Display',serif; font-size:1.75rem; font-weight:900; color:#F2EFE9; line-height:1.2; margin-bottom:.35rem; }
+.ua-hero-email { font-size:.875rem; color:rgba(220,215,201,.65); margin-bottom:.75rem; }
+.ua-hero-meta { display:flex; gap:1.25rem; flex-wrap:wrap; }
+.ua-hero-chip {
+    display:inline-flex; align-items:center; gap:.4rem;
+    font-size:.72rem; font-weight:700; letter-spacing:.06em;
+    padding:.3rem .8rem; border-radius:99px;
+    background:rgba(162,123,92,.18); border:1px solid rgba(162,123,92,.35); color:#DCD7C9;
+}
+.ua-hero-chip .material-symbols-outlined { font-size:14px; color:#A27B5C; }
+.ua-hero-stats { display:flex; gap:1.5rem; flex-shrink:0; }
+.ua-stat {
+    text-align:center; padding:.75rem 1.25rem;
+    background:rgba(255,255,255,.07); border:1px solid rgba(162,123,92,.2);
+    border-radius:14px; backdrop-filter:blur(8px);
+}
+.ua-stat-num { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:800; color:#A27B5C; line-height:1; }
+.ua-stat-label { font-size:.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:rgba(220,215,201,.5); margin-top:.35rem; }
+
+/* ══ BODY GRID ══════════════════════════════════════════ */
+.ua-body { display:grid; grid-template-columns:220px 1fr; gap:1.5rem; align-items:start; }
+@@media(max-width:768px){ .ua-body{ grid-template-columns:1fr; } }
+
+/* ══ SIDEBAR ════════════════════════════════════════════ */
+.ua-sidebar {
+    background:#fff; border-radius:20px;
+    border:1px solid rgba(162,123,92,.15);
+    padding:.5rem; box-shadow:0 2px 16px rgba(44,54,57,.06);
+    position:sticky; top:6.5rem;
+}
+.ua-nav-item {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.75rem 1rem; border-radius:12px;
+    border:none; background:transparent; width:100%;
+    text-align:left; cursor:pointer;
+    font-family:'Work Sans',sans-serif; font-size:.875rem; font-weight:600;
+    color:#3F4E4F; transition:all .15s;
+    border-left:3px solid transparent; text-decoration:none;
+}
+.ua-nav-item:hover { background:rgba(162,123,92,.07); color:#A27B5C; border-left-color:rgba(162,123,92,.3); }
+.ua-nav-item.active { background:rgba(162,123,92,.1); color:#A27B5C; border-left-color:#A27B5C; }
+.ua-nav-item .material-symbols-outlined { font-size:18px; flex-shrink:0; color:rgba(162,123,92,.6); }
+.ua-nav-item.active .material-symbols-outlined { color:#A27B5C; }
+.ua-nav-sep { height:1px; background:rgba(162,123,92,.12); margin:.35rem .5rem; }
+.ua-nav-badge {
+    margin-left:auto; font-size:.65rem; font-weight:800;
+    padding:.15rem .5rem; border-radius:99px;
+    background:rgba(162,123,92,.15); color:#A27B5C;
+}
+
+/* ══ PANELS ═════════════════════════════════════════════ */
+.ua-panel { display:none; }
+.ua-panel.active { display:block; }
+.ua-card {
+    background:#fff; border-radius:20px;
+    border:1px solid rgba(162,123,92,.15);
+    box-shadow:0 2px 16px rgba(44,54,57,.06); overflow:hidden;
+}
+.ua-card-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1.5rem 2rem; border-bottom:1px solid rgba(162,123,92,.1);
+}
+.ua-card-title { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:800; color:#2C3639; }
+.ua-card-body { padding:2rem; }
+
+/* ══ FORM ════════════════════════════════════════════════ */
+.ua-label { display:block; font-size:.72rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#2C3639; margin-bottom:.5rem; }
+.ua-input {
+    width:100%; padding:.75rem 1rem;
+    border:1.5px solid rgba(162,123,92,.25); border-radius:10px;
+    font-family:'Work Sans',sans-serif; font-size:.9rem; color:#2C3639;
+    background:#FAFAF9; outline:none;
+    transition:border-color .15s, box-shadow .15s; box-sizing:border-box;
+}
+.ua-input:focus { border-color:#A27B5C; box-shadow:0 0 0 3px rgba(162,123,92,.1); background:#fff; }
+.ua-input:disabled { background:#F7F7F6; color:rgba(63,78,79,.5); cursor:not-allowed; }
+.ua-pw-wrap { position:relative; }
+.ua-pw-wrap .ua-input { padding-right:44px; }
+.ua-pw-eye { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#3F4E4F; padding:0; }
+.ua-btn-primary {
+    padding:.75rem 2rem; background:#2C3639; color:#fff;
+    border:none; border-radius:99px;
+    font-family:'Work Sans',sans-serif; font-size:.875rem; font-weight:700;
+    cursor:pointer; letter-spacing:.08em; transition:all .2s;
+}
+.ua-btn-primary:hover { background:#A27B5C; box-shadow:0 4px 16px rgba(162,123,92,.35); transform:translateY(-1px); }
+
+/* ══ SHARED ITEM CARD ═══════════════════════════════════ */
+.sh-card {
+    border:1px solid rgba(162,123,92,.14);
+    border-radius:16px;
+    background:#fff;
+    transition:border-color .2s, box-shadow .2s;
+    position:relative;
+    overflow:hidden;
+}
+.sh-card:hover { border-color:rgba(162,123,92,.32); box-shadow:0 4px 18px rgba(44,54,57,.08); }
+.sh-card::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    border-radius:16px 0 0 16px;
+}
+.sh-card-pending::before   { background:#f59e0b; }
+.sh-card-confirmed::before { background:#10b981; }
+.sh-card-cancelled::before { background:#ef4444; }
+.sh-card-processing::before{ background:#8b5cf6; }
+.sh-card-ready::before     { background:#10b981; }
+.sh-card-completed::before { background:#10b981; }
+
+/* ══ ORDER ROW ══════════════════════════════════════════ */
+.ua-order-row {
+    display:flex; align-items:center; gap:1rem;
+    padding:1.1rem 1.5rem 1.1rem 1.75rem;
+    cursor:pointer;
+    border-bottom:1px solid rgba(162,123,92,.07);
+    transition:background .15s;
+}
+.ua-order-row:last-of-type { border-bottom:none; }
+.ua-order-row:hover { background:rgba(162,123,92,.03); }
+.ua-order-icon {
+    width:44px; height:44px; border-radius:50%;
+    background:rgba(162,123,92,.08); border:1px solid rgba(162,123,92,.18);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; color:#A27B5C;
+}
+.ua-order-icon .material-symbols-outlined { font-size:20px; }
+.ua-order-info { flex:1; min-width:0; }
+.ua-order-num { font-family:'Playfair Display',serif; font-size:.95rem; font-weight:700; color:#2C3639; }
+.ua-order-items { font-size:.78rem; color:rgba(63,78,79,.5); margin-top:.15rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ua-order-meta { display:flex; align-items:center; gap:.75rem; margin-top:.35rem; flex-wrap:wrap; }
+.ua-order-meta-item { display:flex; align-items:center; gap:.3rem; font-size:.7rem; font-weight:700; letter-spacing:.04em; color:rgba(63,78,79,.4); }
+.ua-order-meta-item .material-symbols-outlined { font-size:12px; }
+.ua-order-total { font-size:.875rem; font-weight:800; color:#A27B5C; flex-shrink:0; }
+.ua-del-icon-btn {
+    width:30px; height:30px; border-radius:50%;
+    border:1.5px solid rgba(239,68,68,.22);
+    background:rgba(239,68,68,.05); color:#dc2626;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:all .15s;
+}
+.ua-del-icon-btn:hover { background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.5); }
+.ua-del-icon-btn .material-symbols-outlined { font-size:14px; }
+.ua-order-arrow { width:30px; height:30px; border-radius:50%; background:transparent; border:none; cursor:pointer; color:rgba(63,78,79,.3); display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; }
+.ua-order-arrow:hover { background:rgba(162,123,92,.08); color:#A27B5C; }
+.ua-order-arrow .material-symbols-outlined { font-size:15px; }
+.ua-status-badge {
+    display:inline-block; padding:.2rem .65rem; border-radius:99px;
+    font-size:.62rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
+}
+
+/* ══ BOOKING CARD ════════════════════════════════════════ */
+.ua-bk-card { padding:1.1rem 1.4rem 1.1rem 1.75rem; }
+.ua-bk-top {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:.75rem; flex-wrap:wrap; margin-bottom:.65rem;
+}
+.ua-bk-datetime { display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; }
+.ua-bk-date { font-family:'Playfair Display',serif; font-size:.92rem; font-weight:700; color:#2C3639; }
+.ua-bk-time { font-size:.68rem; font-weight:700; background:rgba(162,123,92,.1); color:#A27B5C; padding:.15rem .55rem; border-radius:99px; white-space:nowrap; }
+.ua-bk-top-right { display:flex; align-items:center; gap:.5rem; }
+.ua-bk-info { display:grid; grid-template-columns:1fr 1fr; gap:.28rem .75rem; font-size:.78rem; }
+.ua-bk-info-item { display:flex; align-items:center; gap:.3rem; }
+.ua-bk-info-label { color:rgba(63,78,79,.45); white-space:nowrap; }
+.ua-bk-info-val { color:#2C3639; font-weight:600; }
+.ua-bk-note {
+    display:flex; align-items:flex-start; gap:.35rem;
+    background:rgba(162,123,92,.06); border-radius:8px;
+    padding:.45rem .7rem; font-size:.82rem; font-style:italic;
+    color:#3F4E4F; opacity:.85; margin-top:.5rem;
+}
+.ua-bk-created { margin-top:.45rem; font-size:.68rem; color:rgba(63,78,79,.35); }
+.ua-new-booking-pill {
+    display:inline-flex; align-items:center; gap:.4rem;
+    font-size:.72rem; font-weight:700; letter-spacing:.06em;
+    color:#3F4E4F; padding:.4rem 1rem; border-radius:99px;
+    border:1.5px solid rgba(44,54,57,.18);
+    background:transparent; text-decoration:none;
+    transition:all .18s; cursor:pointer;
+}
+.ua-new-booking-pill:hover { background:#2C3639; color:#DCD7C9; border-color:#2C3639; text-decoration:none; }
+.ua-new-booking-pill .material-symbols-outlined { font-size:14px; }
+
+/* ══ EMPTY ══════════════════════════════════════════════ */
+.ua-empty { text-align:center; padding:3.5rem 1rem; }
+.ua-empty .material-symbols-outlined { font-size:52px; color:rgba(162,123,92,.25); display:block; margin-bottom:1rem; }
+.ua-empty-title { font-family:'Playfair Display',serif; font-size:1.1rem; color:#2C3639; margin-bottom:.5rem; }
+.ua-empty-sub { font-size:.875rem; color:rgba(63,78,79,.45); margin-bottom:1.5rem; }
+.ua-empty-link {
+    display:inline-block; padding:.65rem 1.75rem; border-radius:99px;
+    background:#A27B5C; color:#fff; font-size:.8rem; font-weight:700; letter-spacing:.06em;
+    text-decoration:none; transition:opacity .15s;
+}
+.ua-empty-link:hover { opacity:.85; text-decoration:none; color:#fff; }
+.ua-view-all {
+    display:block; text-align:center; padding:1rem;
+    font-size:.72rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
+    color:#A27B5C; text-decoration:none;
+    border-top:1px solid rgba(162,123,92,.1); transition:background .15s;
+}
+.ua-view-all:hover { background:rgba(162,123,92,.04); text-decoration:none; }
+
+/* ══ TOAST ══════════════════════════════════════════════ */
+.ua-toast { padding:1rem 1.25rem; border-radius:12px; display:flex; align-items:center; gap:.75rem; font-size:.875rem; font-weight:600; margin-bottom:1.25rem; }
+.ua-toast-success { background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.25); color:#065f46; }
+.ua-toast-error   { background:rgba(239,68,68,.07);  border:1px solid rgba(239,68,68,.2);  color:#b91c1c; }
+.ua-toast .material-symbols-outlined { font-size:20px; flex-shrink:0; }
+
+@@media(max-width:600px){
+    .ua-hero { padding:1.5rem 1.25rem 1.25rem; }
+    .ua-hero-stats { gap:.75rem; }
+    .ua-stat { padding:.6rem .9rem; }
+    .ua-card-body { padding:1.25rem; }
+    .ua-order-row { padding:1rem 1.25rem; }
+    .ua-bk-card { padding:.9rem 1.1rem; }
+}
 </style>
 
 <div class="ua-page">
-    <div class="ua-wrap">
+  <div class="ua-wrap">
 
-        @* ── TOAST ── *@
-        @if (TempData["Success"] != null)
-        {
-            <div class="ua-toast ua-toast-success" id="uaToast">
-                <span class="material-symbols-outlined" style="color:#10b981;">check_circle</span>
-                @TempData["Success"]
-            </div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="ua-toast ua-toast-error" id="uaToast">
-                <span class="material-symbols-outlined" style="color:#ef4444;">error</span>
-                @TempData["Error"]
-            </div>
-        }
+    @* TOAST *@
+    @if (TempData["Success"] != null)
+    {
+        <div class="ua-toast ua-toast-success" id="uaToast">
+            <span class="material-symbols-outlined" style="color:#10b981;">check_circle</span>
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="ua-toast ua-toast-error" id="uaToast">
+            <span class="material-symbols-outlined" style="color:#ef4444;">error</span>
+            @TempData["Error"]
+        </div>
+    }
 
-        @* ── PROFILE HERO ── *@
-        <div class="ua-hero">
-            <div class="ua-hero-pattern"></div>
-            <div class="ua-hero-inner">
-                <div class="ua-avatar">
-                    @(user?.FullName?.Substring(0, 1).ToUpper() ?? user?.Email?.Substring(0, 1).ToUpper() ?? "U")
+    @* HERO *@
+    <div class="ua-hero">
+        <div class="ua-hero-pattern"></div>
+        <div class="ua-hero-inner">
+            <div class="ua-avatar">
+                @(user?.FullName?.Substring(0,1).ToUpper() ?? user?.Email?.Substring(0,1).ToUpper() ?? "U")
+            </div>
+            <div class="ua-hero-info">
+                <h1 class="ua-hero-name">@(user?.FullName ?? "Chưa cập nhật tên")</h1>
+                <p class="ua-hero-email">@user?.Email</p>
+                <div class="ua-hero-meta">
+                    <span class="ua-hero-chip"><span class="material-symbols-outlined">verified</span>Thành viên</span>
+                    <span class="ua-hero-chip"><span class="material-symbols-outlined">calendar_month</span>Từ @joinedStr</span>
+                    @if (!string.IsNullOrEmpty(user?.PhoneNumber))
+                    {
+                        <span class="ua-hero-chip"><span class="material-symbols-outlined">call</span>@user.PhoneNumber</span>
+                    }
                 </div>
-                <div class="ua-hero-info">
-                    <h1 class="ua-hero-name">@(user?.FullName ?? "Chưa cập nhật tên")</h1>
-                    <p class="ua-hero-email">@user?.Email</p>
-                    <div class="ua-hero-meta">
-                        <span class="ua-hero-chip">
-                            <span class="material-symbols-outlined">verified</span>
-                            Thành viên
-                        </span>
-                        <span class="ua-hero-chip">
-                            <span class="material-symbols-outlined">calendar_month</span>
-                            Từ @joinedStr
-                        </span>
-                        @if (!string.IsNullOrEmpty(user?.PhoneNumber))
-                        {
-                            <span class="ua-hero-chip">
-                                <span class="material-symbols-outlined">call</span>
-                                @user.PhoneNumber
-                            </span>
-                        }
-                    </div>
+            </div>
+            <div class="ua-hero-stats">
+                <div class="ua-stat">
+                    <div class="ua-stat-num">@orders.Count</div>
+                    <div class="ua-stat-label">Đơn Hàng</div>
                 </div>
-                <div class="ua-hero-stats">
-                    <div class="ua-stat">
-                        <div class="ua-stat-num">@orders.Count</div>
-                        <div class="ua-stat-label">Đơn Hàng</div>
+                <div class="ua-stat">
+                    <div class="ua-stat-num" style="font-size:1.1rem;">
+                        @(orders.Where(o=>o.Status==WebBanHang_2380600870.Models.OrderStatus.Completed).Sum(o=>o.TotalAmount).ToString("N0"))đ
                     </div>
-                    <div class="ua-stat">
-                        <div class="ua-stat-num" style="font-size:1.1rem;">
-                            @(orders.Where(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Completed)
-                                                        .Sum(o => o.TotalAmount).ToString("N0"))đ
-                        </div>
-                        <div class="ua-stat-label">Tổng Chi</div>
-                    </div>
+                    <div class="ua-stat-label">Tổng Chi</div>
                 </div>
             </div>
         </div>
+    </div>
 
-        @* ── BODY GRID ── *@
-        <div class="ua-body">
+    @* BODY *@
+    <div class="ua-body">
 
-            @* ── SIDEBAR ── *@
-            <aside class="ua-sidebar">
-                <button class="ua-nav-item active" onclick="uaTab('profile',this)" id="nav-profile">
-                    <span class="material-symbols-outlined">person</span>
-                    Thông Tin
-                </button>
-                <button class="ua-nav-item" onclick="uaTab('password',this)" id="nav-password">
-                    <span class="material-symbols-outlined">lock</span>
-                    Đổi Mật Khẩu
-                </button>
-                <div class="ua-nav-sep"></div>
-                <button class="ua-nav-item" onclick="uaTab('orders',this)" id="nav-orders">
-                    <span class="material-symbols-outlined">receipt_long</span>
-                    Đặt Hàng
-                    @if (orders.Any())
-                    {
-                        <span class="ua-nav-badge">@orders.Count</span>
-                    }
-                </button>
-                <button class="ua-nav-item" onclick="uaTab('bookings',this)" id="nav-bookings">
-                    <span class="material-symbols-outlined">event_seat</span>
-                    Lịch Đặt Chỗ
-                    @if (bookings.Count > 0)
-                    {
-                        <span class="ua-nav-badge">@bookings.Count</span>
-                    }
-                </button>
-                <div class="ua-nav-sep"></div>
-                <a asp-controller="Booking" asp-action="Index"
-                       class="ua-nav-item" style="text-decoration:none;">
-                    <span class="material-symbols-outlined">add_circle</span>
-                    Đặt Chỗ Mới
-                </a>
-            </aside>
+        @* SIDEBAR *@
+        <aside class="ua-sidebar">
+            <button class="ua-nav-item active" onclick="uaTab('profile',this)" id="nav-profile">
+                <span class="material-symbols-outlined">person</span>Thông Tin
+            </button>
+            <button class="ua-nav-item" onclick="uaTab('password',this)" id="nav-password">
+                <span class="material-symbols-outlined">lock</span>Đổi Mật Khẩu
+            </button>
+            <div class="ua-nav-sep"></div>
+            <button class="ua-nav-item" onclick="uaTab('orders',this)" id="nav-orders">
+                <span class="material-symbols-outlined">receipt_long</span>Đặt Hàng
+                @if (orders.Any()) { <span class="ua-nav-badge">@orders.Count</span> }
+            </button>
+            <button class="ua-nav-item" onclick="uaTab('bookings',this)" id="nav-bookings">
+                <span class="material-symbols-outlined">event_seat</span>Lịch Đặt Chỗ
+                @if (bookings.Count > 0) { <span class="ua-nav-badge">@bookings.Count</span> }
+            </button>
+            <div class="ua-nav-sep"></div>
+            <a asp-controller="Booking" asp-action="Index" class="ua-nav-item" style="text-decoration:none;">
+                <span class="material-symbols-outlined">add_circle</span>Đặt Chỗ Mới
+            </a>
+        </aside>
 
-            @* ── MAIN PANELS ── *@
-            <div>
+        @* PANELS *@
+        <div>
 
-                @* ── TAB: THÔNG TIN ── *@
-                <div class="ua-panel ua-card" id="panel-profile">
-                    <div class="ua-card-header">
-                        <span class="ua-card-title">Thông Tin Cá Nhân</span>
-                    </div>
-                    <div class="ua-card-body">
-                        <form asp-controller="Account" asp-action="UpdateProfile" method="post">
-                            @Html.AntiForgeryToken()
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                                <div>
-                                    <label class="ua-label">Họ & Tên</label>
-                                    <input type="text" name="fullName" class="ua-input"
-                                           value="@user?.FullName" placeholder="Nguyễn Văn A" />
-                                </div>
-                                <div>
-                                    <label class="ua-label">Email</label>
-                                    <input type="email" class="ua-input" value="@user?.Email" disabled />
-                                    <p class="text-xs mt-1.5" style="color:rgba(63,78,79,0.45);">Email không thể thay đổi</p>
-                                </div>
-                                <div>
-                                    <label class="ua-label">Số Điện Thoại</label>
-                                    <input type="tel" name="phoneNumber" class="ua-input"
-                                           value="@user?.PhoneNumber" placeholder="0912 345 678" />
-                                </div>
-                                <div>
-                                    <label class="ua-label">Thành Viên Từ</label>
-                                    <input type="text" class="ua-input" value="@joinedStr" disabled />
-                                </div>
+            @* ── THÔNG TIN ── *@
+            <div class="ua-panel ua-card" id="panel-profile">
+                <div class="ua-card-header"><span class="ua-card-title">Thông Tin Cá Nhân</span></div>
+                <div class="ua-card-body">
+                    <form asp-controller="Account" asp-action="UpdateProfile" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                            <div>
+                                <label class="ua-label">Họ &amp; Tên</label>
+                                <input type="text" name="fullName" class="ua-input" value="@user?.FullName" placeholder="Nguyễn Văn A" />
                             </div>
-                            <div class="pt-4 border-t" style="border-color:rgba(162,123,92,0.12);">
-                                <button type="submit" class="ua-btn-primary">Lưu Thay Đổi</button>
+                            <div>
+                                <label class="ua-label">Email</label>
+                                <input type="email" class="ua-input" value="@user?.Email" disabled />
+                                <p class="text-xs mt-1.5" style="color:rgba(63,78,79,.45);">Email không thể thay đổi</p>
                             </div>
-                        </form>
-                    </div>
-                </div>
-
-                @* ── TAB: ĐỔI MẬT KHẨU ── *@
-                <div class="ua-panel ua-card" id="panel-password">
-                    <div class="ua-card-header">
-                        <span class="ua-card-title">Đổi Mật Khẩu</span>
-                    </div>
-                    <div class="ua-card-body">
-                        <form asp-controller="Account" asp-action="ChangePassword" method="post">
-                            @Html.AntiForgeryToken()
-                            <div class="flex flex-col gap-5 max-w-md">
-                                <div>
-                                    <label class="ua-label">Mật Khẩu Hiện Tại</label>
-                                    <div class="ua-pw-wrap">
-                                        <input type="password" name="currentPassword" id="pwd0"
-                                               class="ua-input" placeholder="••••••••" />
-                                        <button type="button" class="ua-pw-eye"
-                                                onclick="uaTogglePwd('pwd0','eye0')">
-                                            <span class="material-symbols-outlined" id="eye0" style="font-size:18px;">visibility</span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="ua-label">Mật Khẩu Mới</label>
-                                    <div class="ua-pw-wrap">
-                                        <input type="password" name="newPassword" id="pwd1"
-                                               class="ua-input" placeholder="Tối thiểu 6 ký tự" />
-                                        <button type="button" class="ua-pw-eye"
-                                                onclick="uaTogglePwd('pwd1','eye1')">
-                                            <span class="material-symbols-outlined" id="eye1" style="font-size:18px;">visibility</span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="ua-label">Xác Nhận Mật Khẩu Mới</label>
-                                    <div class="ua-pw-wrap">
-                                        <input type="password" name="confirmPassword" id="pwd2"
-                                               class="ua-input" placeholder="Nhập lại mật khẩu mới" />
-                                        <button type="button" class="ua-pw-eye"
-                                                onclick="uaTogglePwd('pwd2','eye2')">
-                                            <span class="material-symbols-outlined" id="eye2" style="font-size:18px;">visibility</span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="pt-4 border-t" style="border-color:rgba(162,123,92,0.12);">
-                                    <button type="submit" class="ua-btn-primary">Cập Nhật Mật Khẩu</button>
-                                </div>
+                            <div>
+                                <label class="ua-label">Số Điện Thoại</label>
+                                <input type="tel" name="phoneNumber" class="ua-input" value="@user?.PhoneNumber" placeholder="0912 345 678" />
                             </div>
-                        </form>
-                    </div>
-                </div>
-
-                @* ── TAB: ĐẶT HÀNG ── *@
-                <div class="ua-panel ua-card" id="panel-orders">
-                    <div class="ua-card-header">
-                        <span class="ua-card-title">Lịch Sử Đặt Hàng</span>
-                        @if (orders.Count > 3)
-                        {
-                            <a asp-controller="Cart" asp-action="OrderHistory"
-                                   style="font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#A27B5C;text-decoration:none;">
-                                Xem Tất Cả
-                            </a>
-                        }
-                    </div>
-
-                    @if (!orders.Any())
-                    {
-                        <div class="ua-empty">
-                            <span class="material-symbols-outlined">receipt_long</span>
-                            <p class="ua-empty-title">Chưa có đơn hàng nào</p>
-                            <p class="ua-empty-sub">Hãy thêm vào giỏ và đặt món yêu thích.</p>
-                            <a asp-controller="Menu" asp-action="Index" class="ua-empty-link">Xem Thực Đơn</a>
+                            <div>
+                                <label class="ua-label">Thành Viên Từ</label>
+                                <input type="text" class="ua-input" value="@joinedStr" disabled />
+                            </div>
                         </div>
-                    }
-                    else
+                        <div class="pt-4 border-t" style="border-color:rgba(162,123,92,.12);">
+                            <button type="submit" class="ua-btn-primary">Lưu Thay Đổi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @* ── ĐỔI MẬT KHẨU ── *@
+            <div class="ua-panel ua-card" id="panel-password">
+                <div class="ua-card-header"><span class="ua-card-title">Đổi Mật Khẩu</span></div>
+                <div class="ua-card-body">
+                    <form asp-controller="Account" asp-action="ChangePassword" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="flex flex-col gap-5 max-w-md">
+                            <div>
+                                <label class="ua-label">Mật Khẩu Hiện Tại</label>
+                                <div class="ua-pw-wrap">
+                                    <input type="password" name="currentPassword" id="pwd0" class="ua-input" placeholder="••••••••" />
+                                    <button type="button" class="ua-pw-eye" onclick="uaTogglePwd('pwd0','eye0')">
+                                        <span class="material-symbols-outlined" id="eye0" style="font-size:18px;">visibility</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="ua-label">Mật Khẩu Mới</label>
+                                <div class="ua-pw-wrap">
+                                    <input type="password" name="newPassword" id="pwd1" class="ua-input" placeholder="Tối thiểu 6 ký tự" />
+                                    <button type="button" class="ua-pw-eye" onclick="uaTogglePwd('pwd1','eye1')">
+                                        <span class="material-symbols-outlined" id="eye1" style="font-size:18px;">visibility</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="ua-label">Xác Nhận Mật Khẩu Mới</label>
+                                <div class="ua-pw-wrap">
+                                    <input type="password" name="confirmPassword" id="pwd2" class="ua-input" placeholder="Nhập lại mật khẩu mới" />
+                                    <button type="button" class="ua-pw-eye" onclick="uaTogglePwd('pwd2','eye2')">
+                                        <span class="material-symbols-outlined" id="eye2" style="font-size:18px;">visibility</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pt-4 border-t" style="border-color:rgba(162,123,92,.12);">
+                                <button type="submit" class="ua-btn-primary">Cập Nhật Mật Khẩu</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @* ── ĐẶT HÀNG ── *@
+            <div class="ua-panel ua-card" id="panel-orders">
+                <div class="ua-card-header">
+                    <span class="ua-card-title">Lịch Sử Đặt Hàng</span>
+                    @if (orders.Count > 3)
                     {
-                        @foreach (var order in orders.Take(5))
-                        {
-                            <div class="ua-order-row" onclick="uaOpenOrder(@order.Id)" style="cursor:pointer;">
+                        <a asp-controller="Cart" asp-action="OrderHistory"
+                           style="font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#A27B5C;text-decoration:none;">
+                            Xem Tất Cả
+                        </a>
+                    }
+                </div>
+
+                @if (!orders.Any())
+                {
+                    <div class="ua-empty">
+                        <span class="material-symbols-outlined">receipt_long</span>
+                        <p class="ua-empty-title">Chưa có đơn hàng nào</p>
+                        <p class="ua-empty-sub">Hãy thêm vào giỏ và đặt món yêu thích.</p>
+                        <a asp-controller="Menu" asp-action="Index" class="ua-empty-link">Xem Thực Đơn</a>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var order in orders.Take(5))
+                    {
+                        bool canDel = order.Status == WebBanHang_2380600870.Models.OrderStatus.Cancelled
+                                   || order.Status == WebBanHang_2380600870.Models.OrderStatus.Completed;
+                        var statusKey = order.Status.ToString().ToLower();
+                        <div class="sh-card sh-card-@statusKey" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none;border-bottom:1px solid rgba(162,123,92,.07);">
+                            <div class="ua-order-row" onclick="uaOpenOrder(@order.Id)">
                                 <div class="ua-order-icon">
-                                    <span class="material-symbols-outlined">coffee</span>
+                                    <span class="material-symbols-outlined">@OrderStatusIcon(order.Status)</span>
                                 </div>
                                 <div class="ua-order-info">
-                                    <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
+                                    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
                                         <span class="ua-order-num">Đơn #@order.Id</span>
-                                        <span class="@OrderStatusClass(order.Status)">@OrderStatusLabel(order.Status)</span>
+                                        <span class="ua-status-badge"
+                                              style="background:@OrderStatusBg(order.Status);color:@OrderStatusClr(order.Status);">
+                                            @OrderStatusLabel(order.Status)
+                                        </span>
                                     </div>
                                     <p class="ua-order-items">@OrderItems(order)</p>
                                     <div class="ua-order-meta">
@@ -1079,192 +575,197 @@
                                         </span>
                                     </div>
                                 </div>
-                                <button class="ua-order-arrow" onclick="event.stopPropagation();uaOpenOrder(@order.Id)">
-                                    <span class="material-symbols-outlined">arrow_forward_ios</span>
-                                </button>
+                                @if (canDel)
+                                {
+                                    <form asp-controller="Cart" asp-action="DeleteOrder" method="post"
+                                          onclick="event.stopPropagation()">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="orderId" value="@order.Id" />
+                                        <button type="button" class="ua-del-icon-btn"
+                                                onclick="event.stopPropagation();uaConfirmDeleteOrder(this.closest('form'),@order.Id)"
+                                                title="Xóa khỏi lịch sử">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button class="ua-order-arrow" onclick="event.stopPropagation();uaOpenOrder(@order.Id)">
+                                        <span class="material-symbols-outlined">arrow_forward_ios</span>
+                                    </button>
+                                }
                             </div>
-                        }
-                        @if (orders.Count > 5)
-                        {
-                            <a asp-controller="Cart" asp-action="OrderHistory" class="ua-view-all">
-                                Xem tất cả @orders.Count đơn hàng →
-                            </a>
-                        }
-                        <script id="ua-orders-data" type="application/json">@Html.Raw(uaOrdersJson)</script>
+                        </div>
                     }
-                </div>
+                    @if (orders.Count > 5)
+                    {
+                        <a asp-controller="Cart" asp-action="OrderHistory" class="ua-view-all">
+                            Xem tất cả @orders.Count đơn hàng →
+                        </a>
+                    }
+                    <script id="ua-orders-data" type="application/json">@Html.Raw(uaOrdersJson)</script>
+                }
+            </div>
 
-                @* ── TAB: LỊCH ĐẶT CHỖ ── *@
-                <div class="ua-panel ua-card" id="panel-bookings">
-                    <div class="ua-card-header">
-                        <span class="ua-card-title">Lịch Sử Đặt Chỗ</span>
+            @* ── LỊCH ĐẶT CHỖ ── *@
+            <div class="ua-panel ua-card" id="panel-bookings">
+                <div class="ua-card-header">
+                    <span class="ua-card-title">Lịch Sử Đặt Chỗ</span>
+                    <div style="display:flex;align-items:center;gap:.75rem;">
                         <a asp-controller="Booking" asp-action="MyBookings"
                            style="font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#A27B5C;text-decoration:none;">
                             Xem Tất Cả
                         </a>
+                        <a asp-controller="Booking" asp-action="Index" class="ua-new-booking-pill">
+                            <span class="material-symbols-outlined">add</span>Đặt Chỗ Mới
+                        </a>
                     </div>
-
-                    @if (!bookings.Any())
-                    {
-                        <div class="ua-empty">
-                            <span class="material-symbols-outlined">event_seat</span>
-                            <p class="ua-empty-title">Chưa có lịch đặt chỗ nào</p>
-                            <p class="ua-empty-sub">Hãy đặt chỗ trước để có trải nghiệm tốt nhất tại Góc Lặng.</p>
-                            <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
-                                <a asp-controller="Booking" asp-action="Index" class="ua-empty-link">
-                                    Đặt Chỗ Ngay
-                                </a>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="ua-card-body">
-                            <div class="ua-booking-list">
-                                @foreach (var bk in bookings.Take(5))
-                                {
-                                    var bcCss = bk.Status switch {
-                                        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "bc-confirmed",
-                                        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "bc-cancelled",
-                                        _ => "bc-pending"
-                                    };
-                                    <div class="ua-booking-card @bcCss">
-
-                                        <!-- Top row: date + time chip + status badge -->
-                                        <div class="ua-booking-top">
-                                            <div class="ua-booking-datetime">
-                                                <span class="material-symbols-outlined" style="font-size:15px;color:#A27B5C;flex-shrink:0;">calendar_today</span>
-                                                <span class="ua-booking-date">@bk.BookingDate.ToString("dd/MM/yyyy")</span>
-                                                <span class="ua-booking-time-chip">@bk.BookingTime</span>
-                                            </div>
-                                            <span class="ua-status @BStatusCss(bk.Status)">
-                                                @BStatusLabel(bk.Status)
-                                            </span>
-                                        </div>
-
-                                        <!-- Info grid: 4 fields -->
-                                        <div class="ua-booking-meta">
-                                            <div class="ua-booking-meta-item">
-                                                <span class="material-symbols-outlined" style="font-size:13px;color:rgba(162,123,92,.55);">person</span>
-                                                <span class="ua-booking-meta-label">Họ tên:</span>
-                                                <span class="ua-booking-meta-val">@bk.FullName</span>
-                                            </div>
-                                            <div class="ua-booking-meta-item">
-                                                <span class="material-symbols-outlined" style="font-size:13px;color:rgba(162,123,92,.55);">groups</span>
-                                                <span class="ua-booking-meta-label">Số khách:</span>
-                                                <span class="ua-booking-meta-val">@bk.GuestCount người</span>
-                                            </div>
-                                            <div class="ua-booking-meta-item">
-                                                <span class="material-symbols-outlined" style="font-size:13px;color:rgba(162,123,92,.55);">call</span>
-                                                <span class="ua-booking-meta-label">SĐT:</span>
-                                                <span class="ua-booking-meta-val">@bk.Phone</span>
-                                            </div>
-                                            @if (!string.IsNullOrEmpty(bk.Occasion))
-                                            {
-                                                <div class="ua-booking-meta-item">
-                                                    <span class="material-symbols-outlined" style="font-size:13px;color:rgba(162,123,92,.55);">celebration</span>
-                                                    <span class="ua-booking-meta-label">Dịp:</span>
-                                                    <span class="ua-booking-meta-val">@bk.Occasion</span>
-                                                </div>
-                                            }
-                                        </div>
-
-                                        <!-- Special request note -->
-                                        @if (!string.IsNullOrEmpty(bk.SpecialRequest))
-                                        {
-                                            <div class="ua-booking-note">
-                                                <span class="material-symbols-outlined" style="font-size:14px;color:#A27B5C;flex-shrink:0;margin-top:1px;">chat_bubble</span>
-                                                @bk.SpecialRequest
-                                            </div>
-                                        }
-
-                                        <!-- Created at -->
-                                        <div style="margin-top:.55rem;font-size:.7rem;color:rgba(63,78,79,.38);font-family:'Work Sans',sans-serif;">
-                                            Đặt lúc @bk.CreatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")
-                                        </div>
-
-                                    </div>
-                                }
-                            </div>
-
-                            @if (bookings.Count > 5)
-                            {
-                                <div style="text-align:center;padding:1rem 0 .25rem;">
-                                    <a asp-controller="Booking" asp-action="MyBookings"
-                                       style="font-size:.78rem;font-weight:700;color:#A27B5C;text-decoration:none;">
-                                        Xem thêm @(bookings.Count - 5) lịch đặt chỗ →
-                                    </a>
-                                </div>
-                            }
-                        </div>
-
-                        <!-- Footer: new booking button -->
-                        <div style="padding:1rem 1.5rem 1.25rem;border-top:1px solid rgba(162,123,92,.08);display:flex;justify-content:flex-end;">
-                            <a asp-controller="Booking" asp-action="Index"
-                               style="display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:700;
-                                      color:#fff;background:#3F4E4F;padding:.5rem 1.2rem;border-radius:9999px;
-                                      text-decoration:none;transition:opacity .2s;"
-                               onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
-                                <span class="material-symbols-outlined" style="font-size:15px;">add</span>
-                                Đặt Chỗ Mới
-                            </a>
-                        </div>
-                    }
                 </div>
 
-            </div><!-- end panels -->
-        </div><!-- end body grid -->
-    </div><!-- end wrap -->
-</div><!-- end page -->
-@* ── Order Detail Drawer (inline, no page redirect) ── *@
+                @if (!bookings.Any())
+                {
+                    <div class="ua-empty">
+                        <span class="material-symbols-outlined">event_seat</span>
+                        <p class="ua-empty-title">Chưa có lịch đặt chỗ nào</p>
+                        <p class="ua-empty-sub">Hãy đặt chỗ trước để có trải nghiệm tốt nhất tại Góc Lặng.</p>
+                        <a asp-controller="Booking" asp-action="Index" class="ua-empty-link">Đặt Chỗ Ngay</a>
+                    </div>
+                }
+                else
+                {
+                    <div style="display:flex;flex-direction:column;gap:0;">
+                        @foreach (var bk in bookings.Take(5))
+                        {
+                            bool bkCanDel = bk.Status != WebBanHang_2380600870.Models.BookingStatus.Confirmed;
+                            <div class="sh-card sh-card-@(bk.Status == WebBanHang_2380600870.Models.BookingStatus.Confirmed ? "confirmed" : bk.Status == WebBanHang_2380600870.Models.BookingStatus.Cancelled ? "cancelled" : "pending")"
+                                 style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none;border-bottom:1px solid rgba(162,123,92,.07);">
+                                <div class="ua-bk-card">
+                                    <div class="ua-bk-top">
+                                        <div class="ua-bk-datetime">
+                                            <span class="material-symbols-outlined" style="font-size:14px;color:#A27B5C;flex-shrink:0;">calendar_today</span>
+                                            <span class="ua-bk-date">@bk.BookingDate.ToString("dd/MM/yyyy")</span>
+                                            <span class="ua-bk-time">@bk.BookingTime</span>
+                                        </div>
+                                        <div class="ua-bk-top-right">
+                                            <span class="ua-status-badge"
+                                                  style="background:@BStatusBg(bk.Status);color:@BStatusClr(bk.Status);">
+                                                @BStatusLabel(bk.Status)
+                                            </span>
+                                            @if (bkCanDel)
+                                            {
+                                                <form asp-controller="Booking" asp-action="DeleteBooking" method="post" style="line-height:0;">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="bookingId" value="@bk.Id" />
+                                                    <button type="button" class="ua-del-icon-btn"
+                                                            onclick="uaBkConfirmDelete(this.closest('form'),'@bk.BookingDate.ToString("dd/MM/yyyy")','@bk.BookingTime')"
+                                                            title="Xóa lịch đặt chỗ">
+                                                        <span class="material-symbols-outlined">delete</span>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="ua-bk-info">
+                                        <div class="ua-bk-info-item">
+                                            <span class="material-symbols-outlined" style="font-size:12px;color:rgba(162,123,92,.55);">person</span>
+                                            <span class="ua-bk-info-label">Họ tên:</span>
+                                            <span class="ua-bk-info-val">@bk.FullName</span>
+                                        </div>
+                                        <div class="ua-bk-info-item">
+                                            <span class="material-symbols-outlined" style="font-size:12px;color:rgba(162,123,92,.55);">groups</span>
+                                            <span class="ua-bk-info-label">Số khách:</span>
+                                            <span class="ua-bk-info-val">@bk.GuestCount người</span>
+                                        </div>
+                                        <div class="ua-bk-info-item">
+                                            <span class="material-symbols-outlined" style="font-size:12px;color:rgba(162,123,92,.55);">call</span>
+                                            <span class="ua-bk-info-label">SĐT:</span>
+                                            <span class="ua-bk-info-val">@bk.Phone</span>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(bk.Occasion))
+                                        {
+                                            <div class="ua-bk-info-item">
+                                                <span class="material-symbols-outlined" style="font-size:12px;color:rgba(162,123,92,.55);">celebration</span>
+                                                <span class="ua-bk-info-label">Dịp:</span>
+                                                <span class="ua-bk-info-val">@bk.Occasion</span>
+                                            </div>
+                                        }
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(bk.SpecialRequest))
+                                    {
+                                        <div class="ua-bk-note">
+                                            <span class="material-symbols-outlined" style="font-size:13px;color:#A27B5C;flex-shrink:0;">chat_bubble</span>
+                                            @bk.SpecialRequest
+                                        </div>
+                                    }
+                                    <div class="ua-bk-created">Đặt lúc @bk.CreatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    @if (bookings.Count > 5)
+                    {
+                        <a asp-controller="Booking" asp-action="MyBookings" class="ua-view-all">
+                            Xem thêm @(bookings.Count - 5) lịch đặt chỗ →
+                        </a>
+                    }
+                }
+            </div>
+
+        </div>
+    </div>
+
+  </div>
+</div>
+
+@* ── ORDER DETAIL DRAWER ── *@
 <style>
-    .ua-od-overlay { position:fixed;inset:0;z-index:9000;background:rgba(28,22,16,.55);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s; }
-    .ua-od-overlay.open { opacity:1;pointer-events:all; }
-    .ua-od-drawer { width:100%;max-width:560px;background:#fff;border-radius:24px 24px 0 0;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .35s cubic-bezier(.22,1,.36,1);box-shadow:0 -8px 48px rgba(44,54,57,.22); }
-    .ua-od-overlay.open .ua-od-drawer { transform:translateY(0); }
-    .ua-od-handle { width:40px;height:4px;background:rgba(162,123,92,.25);border-radius:99px;margin:14px auto 0; }
-    .ua-od-header { display:flex;align-items:flex-start;justify-content:space-between;padding:1.25rem 1.5rem 0;gap:1rem; }
-    .ua-od-num { font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:800;color:#2C3639;margin-bottom:.3rem; }
-    .ua-od-close { width:34px;height:34px;border-radius:50%;background:rgba(162,123,92,.08);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3F4E4F;transition:background .15s; }
-    .ua-od-close:hover { background:rgba(162,123,92,.18); }
-    .ua-od-close .material-symbols-outlined { font-size:18px; }
-    .ua-od-status { margin:1rem 1.5rem 0;border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-weight:700; }
-    .ua-od-section { font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(63,78,79,.45);padding:1.1rem 1.5rem .5rem;border-top:1px solid rgba(162,123,92,.08);margin-top:.5rem; }
-    .ua-od-info { display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;padding:0 1.5rem; }
-    .ua-od-info-item { display:flex;flex-direction:column;gap:.15rem; }
-    .ua-od-info-lbl { font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(63,78,79,.4); }
-    .ua-od-info-val { font-size:.875rem;font-weight:600;color:#2C3639; }
-    .ua-od-products { padding:.25rem 1.5rem 0;display:flex;flex-direction:column;gap:.6rem; }
-    .ua-od-prow { display:flex;gap:.875rem;align-items:flex-start;background:#F7F7F6;border-radius:12px;padding:.75rem; }
-    .ua-od-pimg { width:52px;height:52px;border-radius:9px;object-fit:cover;flex-shrink:0;border:1px solid rgba(162,123,92,.12); }
-    .ua-od-pph { width:52px;height:52px;border-radius:9px;flex-shrink:0;background:rgba(162,123,92,.1);display:flex;align-items:center;justify-content:center;color:rgba(162,123,92,.5); }
-    .ua-od-pinfo { flex:1;min-width:0; }
-    .ua-od-pname { font-size:.875rem;font-weight:700;color:#2C3639; }
-    .ua-od-pnote { font-size:.72rem;color:rgba(63,78,79,.5);margin-top:2px;line-height:1.5; }
-    .ua-od-pqty { font-size:.72rem;color:rgba(63,78,79,.45);margin-top:2px; }
-    .ua-od-pprice { font-size:.875rem;font-weight:800;color:#A27B5C;white-space:nowrap; }
-    .ua-od-total { margin:.75rem 1.5rem;border-radius:12px;background:rgba(162,123,92,.05);border:1px solid rgba(162,123,92,.12);padding:1rem; }
-    .ua-od-trow { display:flex;justify-content:space-between;align-items:center;font-size:.875rem;color:#3F4E4F;margin-bottom:.5rem; }
-    .ua-od-trow:last-child { margin-bottom:0; }
-    .ua-od-tfinal { font-size:1.1rem;font-weight:800;color:#2C3639;border-top:1px solid rgba(162,123,92,.12);padding-top:.6rem;margin-top:.5rem; }
-    .ua-od-tfinal span:last-child { color:#A27B5C; }
-    .ua-od-tl { padding:0 1.5rem .5rem; }
-    .ua-od-step { display:flex;align-items:center;gap:.75rem;padding:.5rem 0; }
-    .ua-od-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0;background:rgba(162,123,92,.2);border:2px solid rgba(162,123,92,.2); }
-    .ua-od-dot.done { background:#A27B5C;border-color:#A27B5C; }
-    .ua-od-dot.current { background:#fff;border-color:#A27B5C;box-shadow:0 0 0 3px rgba(162,123,92,.2); }
-    .ua-od-sline { width:1px;height:18px;background:rgba(162,123,92,.15);margin-left:4px; }
-    .ua-od-slbl { font-size:.8rem;color:rgba(63,78,79,.5); }
-    .ua-od-slbl.done { color:#2C3639;font-weight:600; }
-    .ua-od-slbl.current { color:#A27B5C;font-weight:700; }
-    .ua-od-cancel { margin:.75rem 1.5rem 0;display:flex;align-items:center;justify-content:center;gap:.5rem;width:calc(100% - 3rem);padding:.75rem;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.05);color:#b91c1c;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;transition:background .15s; }
-    .ua-od-cancel:hover { background:rgba(239,68,68,.1); }
-    .ua-od-cancel .material-symbols-outlined { font-size:17px; }
-    .ua-od-bottom { height:28px; }
-    .ua-cc-overlay { position:fixed;inset:0;z-index:10000;background:rgba(28,22,16,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s; }
-    .ua-cc-overlay.open { opacity:1;pointer-events:all; }
-    .ua-cc-box { background:#fff;border-radius:18px;padding:1.75rem 2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(44,54,57,.22);transform:scale(.94) translateY(8px);transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
-    .ua-cc-overlay.open .ua-cc-box { transform:scale(1) translateY(0); }
+    .ua-od-overlay{position:fixed;inset:0;z-index:9000;background:rgba(28,22,16,.55);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+    .ua-od-overlay.open{opacity:1;pointer-events:all;}
+    .ua-od-drawer{width:100%;max-width:560px;background:#fff;border-radius:24px 24px 0 0;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .35s cubic-bezier(.22,1,.36,1);box-shadow:0 -8px 48px rgba(44,54,57,.22);}
+    .ua-od-overlay.open .ua-od-drawer{transform:translateY(0);}
+    .ua-od-handle{width:40px;height:4px;background:rgba(162,123,92,.25);border-radius:99px;margin:14px auto 0;}
+    .ua-od-header{display:flex;align-items:flex-start;justify-content:space-between;padding:1.25rem 1.5rem 0;gap:1rem;}
+    .ua-od-num{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:800;color:#2C3639;margin-bottom:.3rem;}
+    .ua-od-close{width:34px;height:34px;border-radius:50%;background:rgba(162,123,92,.08);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3F4E4F;transition:background .15s;}
+    .ua-od-close:hover{background:rgba(162,123,92,.18);}
+    .ua-od-close .material-symbols-outlined{font-size:18px;}
+    .ua-od-status{margin:1rem 1.5rem 0;border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-weight:700;}
+    .ua-od-section{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(63,78,79,.45);padding:1.1rem 1.5rem .5rem;border-top:1px solid rgba(162,123,92,.08);margin-top:.5rem;}
+    .ua-od-info{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;padding:0 1.5rem;}
+    .ua-od-info-item{display:flex;flex-direction:column;gap:.15rem;}
+    .ua-od-info-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(63,78,79,.4);}
+    .ua-od-info-val{font-size:.875rem;font-weight:600;color:#2C3639;}
+    .ua-od-products{padding:.25rem 1.5rem 0;display:flex;flex-direction:column;gap:.6rem;}
+    .ua-od-prow{display:flex;gap:.875rem;align-items:flex-start;background:#F7F7F6;border-radius:12px;padding:.75rem;}
+    .ua-od-pimg{width:52px;height:52px;border-radius:9px;object-fit:cover;flex-shrink:0;border:1px solid rgba(162,123,92,.12);}
+    .ua-od-pph{width:52px;height:52px;border-radius:9px;flex-shrink:0;background:rgba(162,123,92,.1);display:flex;align-items:center;justify-content:center;color:rgba(162,123,92,.5);}
+    .ua-od-pinfo{flex:1;min-width:0;}
+    .ua-od-pname{font-size:.875rem;font-weight:700;color:#2C3639;}
+    .ua-od-pnote{font-size:.72rem;color:rgba(63,78,79,.5);margin-top:2px;line-height:1.5;}
+    .ua-od-pqty{font-size:.72rem;color:rgba(63,78,79,.45);margin-top:2px;}
+    .ua-od-pprice{font-size:.875rem;font-weight:800;color:#A27B5C;white-space:nowrap;}
+    .ua-od-total{margin:.75rem 1.5rem;border-radius:12px;background:rgba(162,123,92,.05);border:1px solid rgba(162,123,92,.12);padding:1rem;}
+    .ua-od-trow{display:flex;justify-content:space-between;align-items:center;font-size:.875rem;color:#3F4E4F;margin-bottom:.5rem;}
+    .ua-od-trow:last-child{margin-bottom:0;}
+    .ua-od-tfinal{font-size:1.1rem;font-weight:800;color:#2C3639;border-top:1px solid rgba(162,123,92,.12);padding-top:.6rem;margin-top:.5rem;}
+    .ua-od-tfinal span:last-child{color:#A27B5C;}
+    .ua-od-tl{padding:0 1.5rem .5rem;}
+    .ua-od-step{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;}
+    .ua-od-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:rgba(162,123,92,.2);border:2px solid rgba(162,123,92,.2);}
+    .ua-od-dot.done{background:#A27B5C;border-color:#A27B5C;}
+    .ua-od-dot.current{background:#fff;border-color:#A27B5C;box-shadow:0 0 0 3px rgba(162,123,92,.2);}
+    .ua-od-sline{width:1px;height:18px;background:rgba(162,123,92,.15);margin-left:4px;}
+    .ua-od-slbl{font-size:.8rem;color:rgba(63,78,79,.5);}
+    .ua-od-slbl.done{color:#2C3639;font-weight:600;}
+    .ua-od-slbl.current{color:#A27B5C;font-weight:700;}
+    .ua-od-cancel{margin:.75rem 1.5rem 0;display:flex;align-items:center;justify-content:center;gap:.5rem;width:calc(100% - 3rem);padding:.75rem;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.05);color:#b91c1c;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;transition:background .15s;}
+    .ua-od-cancel:hover{background:rgba(239,68,68,.1);}
+    .ua-od-cancel .material-symbols-outlined{font-size:17px;}
+    .ua-od-bottom{height:28px;}
+    .ua-cc-overlay{position:fixed;inset:0;z-index:10000;background:rgba(28,22,16,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+    .ua-cc-overlay.open{opacity:1;pointer-events:all;}
+    .ua-cc-box{background:#fff;border-radius:18px;padding:1.75rem 2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(44,54,57,.22);transform:scale(.94) translateY(8px);transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
+    .ua-cc-overlay.open .ua-cc-box{transform:scale(1) translateY(0);}
 </style>
 
 <div class="ua-od-overlay" id="uaOdOverlay" onclick="if(event.target===this)uaCloseOrder()">
@@ -1275,9 +776,7 @@
                 <div class="ua-od-num" id="uaOdNum">Đơn #—</div>
                 <div id="uaOdDate" style="font-size:.78rem;color:rgba(63,78,79,.45);"></div>
             </div>
-            <button class="ua-od-close" onclick="uaCloseOrder()">
-                <span class="material-symbols-outlined">close</span>
-            </button>
+            <button class="ua-od-close" onclick="uaCloseOrder()"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="ua-od-status" id="uaOdStatus">
             <span class="material-symbols-outlined" id="uaOdStatusIcon">hourglass_empty</span>
@@ -1285,26 +784,11 @@
         </div>
         <div class="ua-od-section">Thông Tin Đơn Hàng</div>
         <div class="ua-od-info">
-            <div class="ua-od-info-item">
-                <span class="ua-od-info-lbl">Người đặt</span>
-                <span class="ua-od-info-val" id="uaOdCustomerName">—</span>
-            </div>
-            <div class="ua-od-info-item">
-                <span class="ua-od-info-lbl">Số điện thoại</span>
-                <span class="ua-od-info-val" id="uaOdCustomerPhone">—</span>
-            </div>
-            <div class="ua-od-info-item">
-                <span class="ua-od-info-lbl">Địa chỉ giao hàng</span>
-                <span class="ua-od-info-val" id="uaOdShipping">—</span>
-            </div>
-            <div class="ua-od-info-item">
-                <span class="ua-od-info-lbl">Phương thức</span>
-                <span class="ua-od-info-val" id="uaOdPayment">—</span>
-            </div>
-            <div class="ua-od-info-item" id="uaOdNoteWrap" style="grid-column:1/-1;display:none;">
-                <span class="ua-od-info-lbl">Ghi chú</span>
-                <span class="ua-od-info-val" id="uaOdNote">—</span>
-            </div>
+            <div class="ua-od-info-item"><span class="ua-od-info-lbl">Người đặt</span><span class="ua-od-info-val" id="uaOdCustomerName">—</span></div>
+            <div class="ua-od-info-item"><span class="ua-od-info-lbl">Số điện thoại</span><span class="ua-od-info-val" id="uaOdCustomerPhone">—</span></div>
+            <div class="ua-od-info-item"><span class="ua-od-info-lbl">Địa chỉ giao hàng</span><span class="ua-od-info-val" id="uaOdShipping">—</span></div>
+            <div class="ua-od-info-item"><span class="ua-od-info-lbl">Phương thức</span><span class="ua-od-info-val" id="uaOdPayment">—</span></div>
+            <div class="ua-od-info-item" id="uaOdNoteWrap" style="grid-column:1/-1;display:none;"><span class="ua-od-info-lbl">Ghi chú</span><span class="ua-od-info-val" id="uaOdNote">—</span></div>
         </div>
         <div class="ua-od-section">Sản Phẩm</div>
         <div class="ua-od-products" id="uaOdProducts"></div>
@@ -1325,6 +809,7 @@
     </div>
 </div>
 
+@* Cancel confirm *@
 <div class="ua-cc-overlay" id="uaCcOverlay">
     <div class="ua-cc-box">
         <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
@@ -1354,146 +839,196 @@
     </div>
 </div>
 
+@* Delete order confirm *@
+<div class="ua-cc-overlay" id="uaDelOrderOverlay">
+    <div class="ua-cc-box">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+            <div style="width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="color:#dc2626;font-size:22px;">delete_forever</span>
+            </div>
+            <div>
+                <div style="font-size:1rem;font-weight:800;color:#2C3639;">Xóa khỏi lịch sử?</div>
+                <div id="uaDelOrderLabel" style="font-size:.78rem;color:rgba(63,78,79,.5);margin-top:2px;"></div>
+            </div>
+        </div>
+        <p style="font-size:.875rem;color:#3F4E4F;line-height:1.7;margin-bottom:1.5rem;">Đơn hàng sẽ bị xóa vĩnh viễn. Thao tác không thể hoàn tác.</p>
+        <div style="display:flex;gap:.75rem;">
+            <button onclick="document.getElementById('uaDelOrderOverlay').classList.remove('open')"
+                    style="flex:1;padding:.65rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;background:transparent;color:#3F4E4F;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;">
+                Không, giữ lại
+            </button>
+            <span id="uaDelOrderBtnSlot" style="flex:1;"></span>
+        </div>
+    </div>
+</div>
+
+@* Delete booking confirm *@
+<div class="ua-cc-overlay" id="uaDelBkOverlay">
+    <div class="ua-cc-box">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+            <div style="width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="color:#dc2626;font-size:22px;">delete_forever</span>
+            </div>
+            <div>
+                <div style="font-size:1rem;font-weight:800;color:#2C3639;">Xóa lịch đặt chỗ?</div>
+                <div id="uaDelBkLabel" style="font-size:.78rem;color:rgba(63,78,79,.5);margin-top:2px;"></div>
+            </div>
+        </div>
+        <p style="font-size:.875rem;color:#3F4E4F;line-height:1.7;margin-bottom:1.5rem;">Lịch đặt chỗ sẽ bị xóa vĩnh viễn. Thao tác không thể hoàn tác.</p>
+        <div style="display:flex;gap:.75rem;">
+            <button onclick="document.getElementById('uaDelBkOverlay').classList.remove('open')"
+                    style="flex:1;padding:.65rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;background:transparent;color:#3F4E4F;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;">
+                Không, giữ lại
+            </button>
+            <span id="uaDelBkBtnSlot" style="flex:1;"></span>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
-    <script>
-        /* ── Tab switching ───────────────────────────────────── */
-        function uaTab(name, btn) {
-            document.querySelectorAll('.ua-panel').forEach(function(p) {
-                p.classList.remove('active');
-            });
-            document.querySelectorAll('.ua-nav-item').forEach(function(b) {
-                b.classList.remove('active');
-            });
-            var panel = document.getElementById('panel-' + name);
-            if (panel) panel.classList.add('active');
-            if (btn) btn.classList.add('active');
-        }
+<script>
+/* ── Tab switching ── */
+function uaTab(name, btn) {
+    document.querySelectorAll('.ua-panel').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.ua-nav-item').forEach(function(b){ b.classList.remove('active'); });
+    var panel = document.getElementById('panel-' + name);
+    if(panel) panel.classList.add('active');
+    if(btn) btn.classList.add('active');
+}
+function uaTogglePwd(inputId, iconId) {
+    var inp = document.getElementById(inputId), ico = document.getElementById(iconId);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    ico.textContent = inp.type === 'password' ? 'visibility' : 'visibility_off';
+}
+document.addEventListener('DOMContentLoaded', function() {
+    var bridge = document.getElementById('ua-bridge');
+    var tab = bridge ? bridge.getAttribute('data-active-tab') : 'profile';
+    if(!tab) tab = 'profile';
+    uaTab(tab, document.getElementById('nav-' + tab));
+    var toast = document.getElementById('uaToast');
+    if(toast) {
+        setTimeout(function() {
+            toast.style.transition = 'opacity .4s'; toast.style.opacity = '0';
+            setTimeout(function(){ toast && toast.remove(); }, 400);
+        }, 4000);
+    }
+});
 
-        /* ── Toggle password visibility ─────────────────────── */
-        function uaTogglePwd(inputId, iconId) {
-            var inp = document.getElementById(inputId);
-            var ico = document.getElementById(iconId);
-            inp.type = inp.type === 'password' ? 'text' : 'password';
-            ico.textContent = inp.type === 'password' ? 'visibility' : 'visibility_off';
-        }
+/* ── Order Detail Drawer ── */
+var UA_ORDERS = [];
+var _uaActiveId = null;
+(function(){
+    var el = document.getElementById('ua-orders-data');
+    if(el){ try{ UA_ORDERS = JSON.parse(el.textContent); }catch(e){} }
+})();
+var UA_STEPS = [
+    {val:0,label:'Chờ xác nhận'},{val:1,label:'Đã xác nhận'},
+    {val:2,label:'Đang pha chế'},{val:3,label:'Sẵn sàng'},{val:4,label:'Hoàn thành'}
+];
+function vnFmt(n){ return Number(n).toLocaleString('vi-VN')+'đ'; }
+function uaEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-        /* ── Init: read active tab from data bridge ──────────── */
-        document.addEventListener('DOMContentLoaded', function() {
-            var bridge = document.getElementById('ua-bridge');
-            var tab = bridge ? bridge.getAttribute('data-active-tab') : 'profile';
-            if (!tab) tab = 'profile';
-            var navBtn = document.getElementById('nav-' + tab);
-            uaTab(tab, navBtn);
+function uaOpenOrder(id){
+    var o = UA_ORDERS.find(function(x){ return x.id===id; });
+    if(!o) return;
+    _uaActiveId = id;
+    document.getElementById('uaOdNum').textContent = 'Đơn #'+o.id;
+    document.getElementById('uaOdDate').textContent = o.date;
+    var sb = document.getElementById('uaOdStatus');
+    sb.style.background = o.statusBg; sb.style.color = o.statusClr;
+    document.getElementById('uaOdStatusIcon').textContent = o.statusIcon;
+    document.getElementById('uaOdStatusLabel').textContent = o.statusLabel;
+    document.getElementById('uaOdCustomerName').textContent  = o.customerName  || '—';
+    document.getElementById('uaOdCustomerPhone').textContent = o.customerPhone || '—';
+    document.getElementById('uaOdShipping').textContent = o.shipping || 'Chưa có địa chỉ';
+    document.getElementById('uaOdPayment').textContent = o.payment;
+    var nw = document.getElementById('uaOdNoteWrap');
+    if(o.note){ document.getElementById('uaOdNote').textContent=o.note; nw.style.display=''; } else{ nw.style.display='none'; }
+    document.getElementById('uaOdProducts').innerHTML = (o.items||[]).map(function(item){
+        var imgH = item.img
+            ?'<img class="ua-od-pimg" src="'+uaEsc(item.img)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>'
+              +'<div class="ua-od-pph" style="display:none;"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>'
+            :'<div class="ua-od-pph"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>';
+        var noteH = item.itemNote?'<div class="ua-od-pnote">'+uaEsc(item.itemNote)+'</div>':'';
+        return '<div class="ua-od-prow">'+imgH+'<div class="ua-od-pinfo"><div class="ua-od-pname">'+uaEsc(item.name)+'</div><div class="ua-od-pqty">SL: '+item.qty+'</div>'+noteH+'</div><div class="ua-od-pprice">'+vnFmt(item.price*item.qty)+'</div></div>';
+    }).join('');
+    document.getElementById('uaOdSub').textContent = vnFmt(o.total);
+    document.getElementById('uaOdTotal').textContent = vnFmt(o.total);
+    var tl = document.getElementById('uaOdTimeline');
+    if(o.status===5){
+        tl.innerHTML='<div class="ua-od-step"><div class="ua-od-dot done"></div><div class="ua-od-slbl done">Đã đặt hàng</div></div>'
+            +'<div class="ua-od-sline"></div>'
+            +'<div class="ua-od-step"><div class="ua-od-dot" style="background:#ef4444;border-color:#ef4444;"></div>'
+            +'<div class="ua-od-slbl current" style="color:#b91c1c;">Đơn hàng đã hủy</div></div>';
+    } else {
+        tl.innerHTML = UA_STEPS.map(function(s,i){
+            var d=o.status>s.val,c=o.status===s.val;
+            return '<div class="ua-od-step"><div class="ua-od-dot '+(d?'done':c?'current':'')+'"></div>'
+                +'<div class="ua-od-slbl '+(d?'done':c?'current':'')+'">'+ s.label+'</div></div>'
+                +(i<UA_STEPS.length-1?'<div class="ua-od-sline" style="margin-left:4px;"></div>':'');
+        }).join('');
+    }
+    document.getElementById('uaOdCancelWrap').style.display = o.canCancel ? '' : 'none';
+    document.getElementById('uaOdOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function uaCloseOrder(){
+    document.getElementById('uaOdOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function uaAskCancel(){
+    var o = UA_ORDERS.find(function(x){ return x.id===_uaActiveId; });
+    if(!o) return;
+    document.getElementById('uaCcLabel').textContent = 'Đơn #'+o.id+' · '+vnFmt(o.total);
+    document.getElementById('uaCcOrderId').value = o.id;
+    document.getElementById('uaCcOverlay').classList.add('open');
+}
 
-            /* Auto-dismiss toast */
-            var toast = document.getElementById('uaToast');
-            if (toast) {
-                setTimeout(function() {
-                    toast.style.transition = 'opacity .4s';
-                    toast.style.opacity = '0';
-                    setTimeout(function() { toast && toast.remove(); }, 400);
-                }, 4000);
-            }
-        });
+/* ── Delete order confirm ── */
+var _uaDelOrderForm = null;
+function uaConfirmDeleteOrder(form, orderId){
+    _uaDelOrderForm = form;
+    var o = UA_ORDERS.find(function(x){ return x.id===orderId; });
+    document.getElementById('uaDelOrderLabel').textContent = o ? 'Đơn #'+o.id+' · '+vnFmt(o.total) : 'Đơn #'+orderId;
+    var slot = document.getElementById('uaDelOrderBtnSlot');
+    slot.innerHTML = '';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'width:100%;padding:.65rem;border:none;border-radius:10px;background:#dc2626;color:#fff;font-family:\'Work Sans\',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;';
+    btn.textContent = 'Xóa khỏi lịch sử';
+    btn.onclick = function(){ document.getElementById('uaDelOrderOverlay').classList.remove('open'); _uaDelOrderForm.submit(); };
+    slot.appendChild(btn);
+    document.getElementById('uaDelOrderOverlay').classList.add('open');
+}
 
-        /* ── Order Detail Drawer ─────────────────────────────── */
-        var UA_ORDERS = [];
-        var _uaActiveId = null;
+/* ── Delete booking confirm ── */
+var _uaDelBkForm = null;
+function uaBkConfirmDelete(form, date, time){
+    _uaDelBkForm = form;
+    document.getElementById('uaDelBkLabel').textContent = date + ' lúc ' + time;
+    var slot = document.getElementById('uaDelBkBtnSlot');
+    slot.innerHTML = '';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'width:100%;padding:.65rem;border:none;border-radius:10px;background:#dc2626;color:#fff;font-family:\'Work Sans\',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;';
+    btn.textContent = 'Xóa lịch đặt chỗ';
+    btn.onclick = function(){ document.getElementById('uaDelBkOverlay').classList.remove('open'); _uaDelBkForm.submit(); };
+    slot.appendChild(btn);
+    document.getElementById('uaDelBkOverlay').classList.add('open');
+}
 
-        (function(){
-            var el = document.getElementById('ua-orders-data');
-            if (el) { try { UA_ORDERS = JSON.parse(el.textContent); } catch(e){} }
-        })();
-
-        var UA_STEPS = [
-            {val:0,label:'Chờ xác nhận'},{val:1,label:'Đã xác nhận'},
-            {val:2,label:'Đang pha chế'},{val:3,label:'Sẵn sàng'},{val:4,label:'Hoàn thành'}
-        ];
-
-        function vnFmt(n){ return Number(n).toLocaleString('vi-VN')+'đ'; }
-        function uaEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-        function uaOpenOrder(id){
-            var o = UA_ORDERS.find(function(x){ return x.id===id; });
-            if (!o) return;
-            _uaActiveId = id;
-
-            document.getElementById('uaOdNum').textContent = 'Đơn #'+o.id;
-            document.getElementById('uaOdDate').textContent = o.date;
-
-            var sb = document.getElementById('uaOdStatus');
-            sb.style.background = o.statusBg; sb.style.color = o.statusClr;
-            document.getElementById('uaOdStatusIcon').textContent = o.statusIcon;
-            document.getElementById('uaOdStatusLabel').textContent = o.statusLabel;
-
-            document.getElementById('uaOdCustomerName').textContent  = o.customerName  || '—';
-            document.getElementById('uaOdCustomerPhone').textContent = o.customerPhone || '—';
-            document.getElementById('uaOdShipping').textContent = o.shipping || 'Chưa có địa chỉ';
-            document.getElementById('uaOdPayment').textContent = o.payment;
-            var nw = document.getElementById('uaOdNoteWrap');
-            if (o.note) { document.getElementById('uaOdNote').textContent=o.note; nw.style.display=''; }
-            else { nw.style.display='none'; }
-
-            document.getElementById('uaOdProducts').innerHTML = (o.items||[]).map(function(item){
-                var imgH = item.img
-                    ? '<img class="ua-od-pimg" src="'+uaEsc(item.img)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>'
-                      +'<div class="ua-od-pph" style="display:none;"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>'
-                    : '<div class="ua-od-pph"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>';
-                var noteH = item.itemNote ? '<div class="ua-od-pnote">'+uaEsc(item.itemNote)+'</div>' : '';
-                return '<div class="ua-od-prow">'+imgH
-                    +'<div class="ua-od-pinfo"><div class="ua-od-pname">'+uaEsc(item.name)+'</div>'
-                    +'<div class="ua-od-pqty">Số lượng: '+item.qty+'</div>'+noteH+'</div>'
-                    +'<div class="ua-od-pprice">'+vnFmt(item.price*item.qty)+'</div></div>';
-            }).join('');
-
-            document.getElementById('uaOdSub').textContent = vnFmt(o.total);
-            document.getElementById('uaOdTotal').textContent = vnFmt(o.total);
-
-            var tl = document.getElementById('uaOdTimeline');
-            if (o.status===5) {
-                tl.innerHTML='<div class="ua-od-step"><div class="ua-od-dot done"></div><div class="ua-od-slbl done">Đã đặt hàng</div></div>'
-                    +'<div class="ua-od-sline"></div>'
-                    +'<div class="ua-od-step"><div class="ua-od-dot" style="background:#ef4444;border-color:#ef4444;"></div>'
-                    +'<div class="ua-od-slbl current" style="color:#b91c1c;">Đơn hàng đã hủy</div></div>';
-            } else {
-                tl.innerHTML = UA_STEPS.map(function(s,i){
-                    var d=o.status>s.val, c=o.status===s.val;
-                    return '<div class="ua-od-step"><div class="ua-od-dot '+(d?'done':c?'current':'')+'"></div>'
-                        +'<div class="ua-od-slbl '+(d?'done':c?'current':'')+'">'+ s.label+'</div></div>'
-                        +(i<UA_STEPS.length-1?'<div class="ua-od-sline" style="margin-left:4px;"></div>':'');
-                }).join('');
-            }
-
-            document.getElementById('uaOdCancelWrap').style.display = o.canCancel ? '' : 'none';
-            document.getElementById('uaOdOverlay').classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function uaCloseOrder(){
-            document.getElementById('uaOdOverlay').classList.remove('open');
-            document.body.style.overflow = '';
-        }
-
-        function uaAskCancel(){
-            var o = UA_ORDERS.find(function(x){ return x.id===_uaActiveId; });
-            if (!o) return;
-            document.getElementById('uaCcLabel').textContent = 'Đơn #'+o.id+' · '+vnFmt(o.total);
-            document.getElementById('uaCcOrderId').value = o.id;
-            document.getElementById('uaCcOverlay').classList.add('open');
-        }
-
-        // Swipe down to close
-        (function(){
-            var el=document.getElementById('uaOdDrawer'), sy=0;
-            el.addEventListener('touchstart',function(e){sy=e.touches[0].clientY;},{passive:true});
-            el.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-sy>80)uaCloseOrder();},{passive:true});
-        })();
-
-        document.addEventListener('keydown',function(e){
-            if(e.key!=='Escape') return;
-            if(document.getElementById('uaCcOverlay').classList.contains('open'))
-                document.getElementById('uaCcOverlay').classList.remove('open');
-            else uaCloseOrder();
-        });
-    </script>
+/* ── Swipe + Keyboard ── */
+(function(){
+    var el=document.getElementById('uaOdDrawer'), sy=0;
+    el.addEventListener('touchstart',function(e){sy=e.touches[0].clientY;},{passive:true});
+    el.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-sy>80)uaCloseOrder();},{passive:true});
+})();
+document.addEventListener('keydown',function(e){
+    if(e.key!=='Escape') return;
+    ['uaDelBkOverlay','uaDelOrderOverlay','uaCcOverlay'].forEach(function(id){
+        document.getElementById(id).classList.remove('open');
+    });
+    uaCloseOrder();
+});
+</script>
 }

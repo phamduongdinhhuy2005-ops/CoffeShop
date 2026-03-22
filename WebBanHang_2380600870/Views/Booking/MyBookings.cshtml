@@ -1,115 +1,302 @@
 ﻿@* Views/Booking/MyBookings.cshtml *@
-@* SOURCE: Lấy chính xác từ dump mới nhất *@
-@* BUG FIX: File cũ có regex pattern trong Razor bị lỗi RZ1005. File này đã sửa. *@
+@* REDESIGN: Unified shared card design — border-left accent, icon-only delete, ghost pill button *@
 @model IEnumerable<WebBanHang_2380600870.Models.Booking>
 @{
     ViewData["Title"] = "Lịch Sử Đặt Chỗ | Góc Lặng";
     Layout = "_Layout";
 }
 
-<section class="min-h-screen pt-28 pb-20" style="background: #F7F7F6;">
+<style>
+/* ── Shared card (đồng nhất với UserAccount & OrderHistory) ── */
+.sh-card {
+    border:1px solid rgba(162,123,92,.14);
+    border-radius:16px; background:#fff;
+    position:relative; overflow:hidden;
+    transition:border-color .2s, box-shadow .2s;
+}
+.sh-card:hover { border-color:rgba(162,123,92,.32); box-shadow:0 4px 18px rgba(44,54,57,.08); }
+.sh-card::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    border-radius:16px 0 0 16px;
+}
+.sh-card-pending::before   { background:#f59e0b; }
+.sh-card-confirmed::before { background:#10b981; }
+.sh-card-cancelled::before { background:#ef4444; }
+
+/* ── Card body ── */
+.bk-body { padding:1.1rem 1.4rem 1.1rem 1.75rem; }
+
+/* ── Top row ── */
+.bk-top { display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap; margin-bottom:.65rem; }
+.bk-datetime { display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; }
+.bk-date { font-family:'Playfair Display',serif; font-size:.95rem; font-weight:700; color:#2C3639; }
+.bk-time { font-size:.68rem; font-weight:700; background:rgba(162,123,92,.1); color:#A27B5C; padding:.15rem .55rem; border-radius:99px; white-space:nowrap; }
+.bk-top-right { display:flex; align-items:center; gap:.5rem; }
+
+/* ── Status badge ── */
+.bk-badge { font-size:.62rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; padding:.22rem .7rem; border-radius:99px; white-space:nowrap; }
+.bk-badge-pending   { background:rgba(234,179,8,.12);  color:#b45309;  border:1px solid rgba(234,179,8,.28); }
+.bk-badge-confirmed { background:rgba(16,185,129,.12); color:#065f46;  border:1px solid rgba(16,185,129,.28); }
+.bk-badge-cancelled { background:rgba(239,68,68,.10);  color:#b91c1c;  border:1px solid rgba(239,68,68,.22); }
+
+/* ── Icon-only delete btn ── */
+.bk-del-btn {
+    width:30px; height:30px; border-radius:50%;
+    border:1.5px solid rgba(239,68,68,.22);
+    background:rgba(239,68,68,.05); color:#dc2626;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:all .15s;
+}
+.bk-del-btn:hover { background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.5); }
+.bk-del-btn .material-symbols-outlined { font-size:14px; }
+
+/* ── Info grid ── */
+.bk-info { display:grid; grid-template-columns:1fr 1fr; gap:.28rem .75rem; font-size:.8rem; margin-bottom:.5rem; }
+.bk-info-item { display:flex; align-items:center; gap:.3rem; }
+.bk-info-label { color:rgba(63,78,79,.45); white-space:nowrap; }
+.bk-info-val { color:#2C3639; font-weight:600; }
+
+/* ── Note ── */
+.bk-note {
+    display:flex; align-items:flex-start; gap:.35rem;
+    background:rgba(162,123,92,.06); border-radius:8px;
+    padding:.45rem .7rem; font-size:.83rem; font-style:italic;
+    color:#3F4E4F; opacity:.85; margin-top:.45rem;
+}
+.bk-created { margin-top:.4rem; font-size:.68rem; color:rgba(63,78,79,.35); }
+
+/* ── Pagination ── */
+#mb-pager { display:flex; align-items:center; justify-content:center; gap:.375rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid rgba(162,123,92,.1); }
+.mb-dot { width:6px; height:6px; border-radius:50%; background:rgba(162,123,92,.25); cursor:pointer; transition:background .2s,transform .2s; border:none; padding:0; }
+.mb-dot.active { background:#A27B5C; transform:scale(1.3); }
+.mb-pg-arrow { width:28px; height:28px; border-radius:50%; border:1.5px solid rgba(162,123,92,.3); background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#A27B5C; transition:background .15s,border-color .15s; }
+.mb-pg-arrow:hover:not(:disabled){ background:rgba(162,123,92,.08); border-color:#A27B5C; }
+.mb-pg-arrow:disabled { opacity:.3; cursor:default; }
+.mb-page-label { font-family:'Playfair Display',serif; font-style:italic; font-size:.78rem; color:rgba(162,123,92,.6); margin:0 .3rem; white-space:nowrap; }
+
+/* ── Confirm overlay ── */
+.bk-overlay { position:fixed; inset:0; z-index:10000; background:rgba(28,22,16,.45); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s; }
+.bk-overlay.open { opacity:1; pointer-events:all; }
+.bk-confirm-box { background:#fff; border-radius:18px; padding:1.75rem 2rem; max-width:380px; width:90%; box-shadow:0 20px 60px rgba(44,54,57,.22); transform:scale(.94) translateY(8px); transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
+.bk-overlay.open .bk-confirm-box { transform:scale(1) translateY(0); }
+
+/* ── Ghost pill ── */
+.bk-pill-btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    font-size:.8rem; font-weight:700; letter-spacing:.04em;
+    color:#fff; padding:.55rem 1.25rem; border-radius:99px;
+    background:#3F4E4F; text-decoration:none;
+    transition:background .18s, transform .18s; border:none; cursor:pointer;
+}
+.bk-pill-btn:hover { background:#2C3639; transform:translateY(-1px); text-decoration:none; color:#DCD7C9; }
+.bk-pill-btn .material-symbols-outlined { font-size:16px; }
+</style>
+
+<section class="min-h-screen pt-28 pb-20" style="background:#F7F7F6;">
     <div class="max-w-3xl mx-auto px-4">
 
         <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
             <div>
-                <p class="text-sm tracking-[0.2em] uppercase mb-1" style="color: #A27B5C;">Tài Khoản</p>
-                <h1 class="text-3xl font-bold" style="font-family: 'Playfair Display', serif; color: #2C3639;">Lịch Sử Đặt Chỗ</h1>
+                <p class="text-sm tracking-[0.2em] uppercase mb-1" style="color:#A27B5C;">Tài Khoản</p>
+                <h1 style="font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;color:#2C3639;">Lịch Sử Đặt Chỗ</h1>
             </div>
-            <a asp-controller="Booking" asp-action="Index"
-                   class="flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-85"
-                   style="background: #A27B5C;">
-                <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
-                Đặt Chỗ Mới
+            <a asp-controller="Booking" asp-action="Index" class="bk-pill-btn">
+                <span class="material-symbols-outlined">add</span>Đặt Chỗ Mới
             </a>
         </div>
 
         @if (TempData["Success"] != null)
         {
             <div class="mb-6 px-5 py-4 rounded-xl flex items-center gap-3 text-sm font-medium"
-                 style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); color: #065f46;">
-                <span class="material-symbols-outlined" style="font-size: 20px; color: #10b981;">check_circle</span>
+                 style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);color:#065f46;">
+                <span class="material-symbols-outlined" style="font-size:20px;color:#10b981;">check_circle</span>
                 @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-6 px-5 py-4 rounded-xl flex items-center gap-3 text-sm font-medium"
+                 style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#b91c1c;">
+                <span class="material-symbols-outlined" style="font-size:20px;">error</span>
+                @TempData["Error"]
             </div>
         }
 
         @if (!Model.Any())
         {
-            <div class="text-center py-24 bg-white rounded-2xl" style="border: 1px solid rgba(162,123,92,0.12);">
-                <span class="material-symbols-outlined" style="font-size: 64px; color: rgba(162,123,92,0.3);">event_seat</span>
-                <h2 class="text-xl font-bold mt-4 mb-3" style="font-family: 'Playfair Display', serif; color: #2C3639;">Chưa có lịch đặt chỗ nào</h2>
-                <p class="text-sm mb-8" style="color: rgba(63,78,79,0.55);">Hãy đặt chỗ trước để có trải nghiệm tốt nhất tại Góc Lặng.</p>
-                <a asp-controller="Booking" asp-action="Index"
-                       class="inline-block px-8 py-3 rounded-full text-white font-semibold transition-opacity hover:opacity-85"
-                       style="background: #A27B5C;">
-                    Đặt Chỗ Ngay
-                </a>
+            <div class="text-center py-24 bg-white rounded-2xl" style="border:1px solid rgba(162,123,92,.12);">
+                <span class="material-symbols-outlined" style="font-size:64px;color:rgba(162,123,92,.3);">event_seat</span>
+                <h2 style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:#2C3639;margin:1rem 0 .75rem;">Chưa có lịch đặt chỗ nào</h2>
+                <p class="text-sm mb-8" style="color:rgba(63,78,79,.55);">Hãy đặt chỗ trước để có trải nghiệm tốt nhất tại Góc Lặng.</p>
+                <a asp-controller="Booking" asp-action="Index" class="bk-pill-btn" style="margin:0 auto;">Đặt Chỗ Ngay</a>
             </div>
         }
         else
         {
-            <div class="space-y-4">
+            <div id="mb-list" class="space-y-3">
                 @foreach (var booking in Model)
                 {
-                    var (statusLabel, statusBg, statusClr) = booking.Status switch
-                    {
-                        WebBanHang_2380600870.Models.BookingStatus.Pending => ("Chờ xác nhận", "rgba(234,179,8,0.12)", "#b45309"),
-                        WebBanHang_2380600870.Models.BookingStatus.Confirmed => ("Đã xác nhận", "rgba(16,185,129,0.12)", "#065f46"),
-                        WebBanHang_2380600870.Models.BookingStatus.Cancelled => ("Đã hủy", "rgba(239,68,68,0.1)", "#b91c1c"),
-                        _ => ("Không xác định", "rgba(100,116,139,0.1)", "#64748b")
+                    var statusKey = booking.Status switch {
+                        WebBanHang_2380600870.Models.BookingStatus.Confirmed => "confirmed",
+                        WebBanHang_2380600870.Models.BookingStatus.Cancelled => "cancelled",
+                        _ => "pending"
                     };
-                    <div class="bg-white rounded-2xl border p-5 transition-colors" style="border-color: rgba(162,123,92,0.15);">
-                        <div class="flex items-start justify-between mb-4 flex-wrap gap-2">
-                            <div>
-                                <span class="font-bold text-base" style="color: #2C3639;">
-                                    @booking.BookingDate.ToString("dd/MM/yyyy") lúc @booking.BookingTime
-                                </span>
-                                <span class="text-xs ml-2" style="color: rgba(63,78,79,0.45);">
-                                    (đặt lúc @booking.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"))
-                                </span>
-                            </div>
-                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
-                                  style="background: @statusBg; color: @statusClr;">@statusLabel</span>
-                        </div>
+                    var (statusLabel, statusCssClass) = booking.Status switch {
+                        WebBanHang_2380600870.Models.BookingStatus.Pending   => ("Chờ xác nhận", "bk-badge-pending"),
+                        WebBanHang_2380600870.Models.BookingStatus.Confirmed => ("Đã xác nhận",  "bk-badge-confirmed"),
+                        WebBanHang_2380600870.Models.BookingStatus.Cancelled => ("Đã hủy",       "bk-badge-cancelled"),
+                        _ => ("Không rõ", "bk-badge-pending")
+                    };
+                    bool canDelete = booking.Status != WebBanHang_2380600870.Models.BookingStatus.Confirmed;
 
-                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm mb-3">
-                            <div>
-                                <span style="color: rgba(63,78,79,0.5);">Họ tên:</span>
-                                <span class="ml-1 font-medium" style="color: #2C3639;">@booking.FullName</span>
+                    <div class="sh-card sh-card-@statusKey" data-booking-id="@booking.Id">
+                        <div class="bk-body">
+                            <div class="bk-top">
+                                <div class="bk-datetime">
+                                    <span class="material-symbols-outlined" style="font-size:14px;color:#A27B5C;flex-shrink:0;">calendar_today</span>
+                                    <span class="bk-date">@booking.BookingDate.ToString("dd/MM/yyyy")</span>
+                                    <span class="bk-time">@booking.BookingTime</span>
+                                </div>
+                                <div class="bk-top-right">
+                                    <span class="bk-badge @statusCssClass">@statusLabel</span>
+                                    @if (canDelete)
+                                    {
+                                        <form asp-controller="Booking" asp-action="DeleteBooking" method="post" style="line-height:0;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="bookingId" value="@booking.Id" />
+                                            <button type="button" class="bk-del-btn"
+                                                    onclick="bkConfirmDelete(this.closest('form'),'@booking.BookingDate.ToString("dd/MM/yyyy")','@booking.BookingTime')"
+                                                    title="Xóa lịch đặt chỗ này">
+                                                <span class="material-symbols-outlined">delete</span>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
                             </div>
-                            <div>
-                                <span style="color: rgba(63,78,79,0.5);">Số khách:</span>
-                                <span class="ml-1 font-medium" style="color: #2C3639;">@booking.GuestCount người</span>
+
+                            <div class="bk-info">
+                                <div class="bk-info-item">
+                                    <span class="material-symbols-outlined" style="font-size:12px;color:rgba(162,123,92,.55);">person</span>
+                                    <span class="bk-info-label">Họ tên:</span>
+                                    <span class="bk-info-val">@booking.FullName</span>
+                                </div>
+                                <div class="bk-info-item">
+                                    <span class="material-symbols-outlined" style="font-size:12px;color:rgba(162,123,92,.55);">groups</span>
+                                    <span class="bk-info-label">Số khách:</span>
+                                    <span class="bk-info-val">@booking.GuestCount người</span>
+                                </div>
+                                <div class="bk-info-item">
+                                    <span class="material-symbols-outlined" style="font-size:12px;color:rgba(162,123,92,.55);">call</span>
+                                    <span class="bk-info-label">SĐT:</span>
+                                    <span class="bk-info-val">@booking.Phone</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(booking.Occasion))
+                                {
+                                    <div class="bk-info-item">
+                                        <span class="material-symbols-outlined" style="font-size:12px;color:rgba(162,123,92,.55);">celebration</span>
+                                        <span class="bk-info-label">Dịp:</span>
+                                        <span class="bk-info-val">@booking.Occasion</span>
+                                    </div>
+                                }
                             </div>
-                            <div>
-                                <span style="color: rgba(63,78,79,0.5);">SĐT:</span>
-                                <span class="ml-1 font-medium" style="color: #2C3639;">@booking.Phone</span>
-                            </div>
-                            @if (!string.IsNullOrEmpty(booking.Occasion))
+
+                            @if (!string.IsNullOrEmpty(booking.SpecialRequest))
                             {
-                                <div>
-                                    <span style="color: rgba(63,78,79,0.5);">Dịp:</span>
-                                    <span class="ml-1 font-medium" style="color: #2C3639;">@booking.Occasion</span>
+                                <div class="bk-note">
+                                    <span class="material-symbols-outlined" style="font-size:13px;color:#A27B5C;flex-shrink:0;">chat_bubble</span>
+                                    @booking.SpecialRequest
                                 </div>
                             }
-                        </div>
-
-                        @if (!string.IsNullOrEmpty(booking.SpecialRequest))
-                        {
-                            <div class="mt-2 px-3 py-2 rounded-lg text-xs" style="background: rgba(162,123,92,0.06); color: rgba(63,78,79,0.7);">
-                                💬 @booking.SpecialRequest
+                            <div class="bk-created">
+                                Đặt lúc @booking.CreatedAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")
+                                @if (booking.Status == WebBanHang_2380600870.Models.BookingStatus.Confirmed)
+                                {
+                                    <span style="margin-left:.5rem;color:#10b981;font-weight:600;">· Đã xác nhận — liên hệ quán để hủy</span>
+                                }
                             </div>
-                        }
+                        </div>
                     </div>
                 }
             </div>
+
+            <div id="mb-pager"></div>
         }
 
         <div class="mt-8 text-center">
             <a asp-controller="Account" asp-action="UserAccount"
-                   class="text-sm font-semibold transition-colors hover:opacity-70"
-                   style="color: #A27B5C;">
+               class="text-sm font-semibold hover:opacity-70" style="color:#A27B5C;">
                 ← Quay lại Cài Đặt Tài Khoản
             </a>
         </div>
     </div>
 </section>
+
+@* Delete Confirm Overlay *@
+<div class="bk-overlay" id="bkDeleteOverlay">
+    <div class="bk-confirm-box">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+            <div style="width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="color:#dc2626;font-size:22px;">delete_forever</span>
+            </div>
+            <div>
+                <div style="font-size:1rem;font-weight:800;color:#2C3639;">Xóa lịch đặt chỗ?</div>
+                <div id="bkDeleteLabel" style="font-size:.78rem;color:rgba(63,78,79,.5);margin-top:2px;"></div>
+            </div>
+        </div>
+        <p style="font-size:.875rem;color:#3F4E4F;line-height:1.7;margin-bottom:1.5rem;">
+            Lịch đặt chỗ sẽ bị xóa vĩnh viễn. Thao tác không thể hoàn tác.
+        </p>
+        <div style="display:flex;gap:.75rem;">
+            <button onclick="document.getElementById('bkDeleteOverlay').classList.remove('open')"
+                    style="flex:1;padding:.65rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;background:transparent;color:#3F4E4F;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;">
+                Không, giữ lại
+            </button>
+            <span id="bkDeleteBtnSlot" style="flex:1;"></span>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+/* ── Pagination — 5/trang ── */
+var MB_PAGE_SIZE = 5;
+var _mbPage = 0, _mbRows = [];
+(function(){
+    _mbRows = Array.from(document.querySelectorAll('#mb-list .sh-card'));
+    if(_mbRows.length <= MB_PAGE_SIZE){ var p=document.getElementById('mb-pager'); if(p)p.style.display='none'; return; }
+    renderMbPage(0);
+})();
+function renderMbPage(page){
+    var total=_mbRows.length, pages=Math.ceil(total/MB_PAGE_SIZE);
+    if(page<0||page>=pages) return;
+    _mbPage = page;
+    _mbRows.forEach(function(card,i){ card.style.display=(i>=page*MB_PAGE_SIZE&&i<(page+1)*MB_PAGE_SIZE)?'':'none'; });
+    var pager=document.getElementById('mb-pager');
+    pager.style.display='flex';
+    var html='<button class="mb-pg-arrow" onclick="renderMbPage('+(_mbPage-1)+')"'+(_mbPage===0?' disabled':'')+'>'
+        +'<span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span></button>';
+    for(var i=0;i<pages;i++) html+='<button class="mb-dot'+(i===_mbPage?' active':'')+'\" onclick="renderMbPage('+i+')" title="'+(i+1)+'"></button>';
+    html+='<span class="mb-page-label">'+(_mbPage+1)+'/'+pages+'</span>';
+    html+='<button class="mb-pg-arrow" onclick="renderMbPage('+(_mbPage+1)+')"'+(_mbPage>=pages-1?' disabled':'')+'>'
+        +'<span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span></button>';
+    pager.innerHTML=html;
+}
+
+/* ── Delete confirm ── */
+var _bkDeleteForm = null;
+function bkConfirmDelete(form, date, time){
+    _bkDeleteForm = form;
+    document.getElementById('bkDeleteLabel').textContent = date + ' lúc ' + time;
+    var slot = document.getElementById('bkDeleteBtnSlot');
+    slot.innerHTML = '';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'width:100%;padding:.65rem;border:none;border-radius:10px;background:#dc2626;color:#fff;font-family:\'Work Sans\',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;';
+    btn.textContent = 'Xóa lịch đặt chỗ';
+    btn.onclick = function(){ document.getElementById('bkDeleteOverlay').classList.remove('open'); _bkDeleteForm.submit(); };
+    slot.appendChild(btn);
+    document.getElementById('bkDeleteOverlay').classList.add('open');
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') document.getElementById('bkDeleteOverlay').classList.remove('open'); });
+</script>
+}

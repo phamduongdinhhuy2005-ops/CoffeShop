@@ -1,274 +1,732 @@
 ﻿@* Views/Cart/Checkout.cshtml *@
-@* NEW: Modal xác nhận đơn trước khi submit *@
 @model WebBanHang_2380600870.Models.CheckoutViewModel
 @{
     ViewData["Title"] = "Thanh Toán";
 }
 
 <style>
-    /* ── Review Modal ── */
-    .rv-overlay { position:fixed;inset:0;z-index:9000;background:rgba(28,22,16,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s; }
-    .rv-overlay.open { opacity:1;pointer-events:all; }
-    .rv-modal { background:#fff;border-radius:24px;padding:0;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(44,54,57,.22);transform:scale(.94) translateY(12px);transition:transform .3s cubic-bezier(.34,1.56,.64,1); }
-    .rv-overlay.open .rv-modal { transform:scale(1) translateY(0); }
-    .rv-header { background:linear-gradient(135deg,#2C3639,#3F4E4F); border-radius:24px 24px 0 0; padding:1.75rem 2rem 1.5rem; }
-    .rv-header-title { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:800; color:#F2EFE9; margin-bottom:.3rem; }
-    .rv-header-sub { font-size:.8rem; color:rgba(220,215,201,.6); }
-    .rv-body { padding:1.5rem 2rem; }
-    .rv-section-label { font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:rgba(63,78,79,.4); margin-bottom:.6rem; margin-top:1.1rem; }
-    .rv-section-label:first-child { margin-top:0; }
-    .rv-info-row { display:flex; align-items:flex-start; gap:.5rem; margin-bottom:.4rem; font-size:.875rem; color:#3F4E4F; }
-    .rv-info-row .material-symbols-outlined { font-size:16px; color:#A27B5C; flex-shrink:0; margin-top:1px; }
-    .rv-item-row { display:flex; align-items:center; gap:.75rem; padding:.65rem 0; border-bottom:1px solid rgba(162,123,92,.08); }
-    .rv-item-row:last-child { border-bottom:none; }
-    .rv-item-img { width:44px; height:44px; border-radius:9px; object-fit:cover; flex-shrink:0; border:1px solid rgba(162,123,92,.12); background:rgba(162,123,92,.06); }
-    .rv-item-name { flex:1; font-size:.875rem; font-weight:600; color:#2C3639; }
-    .rv-item-sub { font-size:.72rem; color:rgba(63,78,79,.5); margin-top:2px; }
-    .rv-item-price { font-size:.875rem; font-weight:800; color:#A27B5C; white-space:nowrap; }
-    .rv-total { background:rgba(162,123,92,.06); border-radius:12px; padding:1rem; margin-top:1rem; display:flex; justify-content:space-between; align-items:center; }
-    .rv-total-label { font-size:.875rem; font-weight:600; color:#3F4E4F; }
-    .rv-total-amount { font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:800; color:#A27B5C; }
-    .rv-footer { padding:1.25rem 2rem 1.75rem; display:flex; gap:.75rem; }
-    .rv-btn-back { flex:1; padding:.75rem; border:1.5px solid rgba(162,123,92,.3); border-radius:12px; background:transparent; color:#3F4E4F; font-family:'Work Sans',sans-serif; font-size:.875rem; font-weight:600; cursor:pointer; }
-    .rv-btn-confirm { flex:2; padding:.75rem; border:none; border-radius:12px; background:#A27B5C; color:#fff; font-family:'Work Sans',sans-serif; font-size:.875rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.5rem; box-shadow:0 4px 16px rgba(162,123,92,.35); }
-    .rv-btn-confirm:hover { background:#8d6a4d; }
+/* ══ REVIEW MODAL ══ */
+.rv-overlay{position:fixed;inset:0;z-index:9000;background:rgba(28,22,16,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .25s}
+.rv-overlay.open{opacity:1;pointer-events:all}
+.rv-modal{background:#fff;border-radius:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(44,54,57,.22);transform:scale(.94) translateY(12px);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.rv-overlay.open .rv-modal{transform:scale(1) translateY(0)}
+.rv-header{background:linear-gradient(135deg,#2C3639,#3F4E4F);border-radius:24px 24px 0 0;padding:1.5rem 2rem 1.25rem;display:flex;justify-content:space-between;align-items:flex-start}
+.rv-header-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:800;color:#F2EFE9}
+.rv-header-sub{font-size:.78rem;color:rgba(220,215,201,.6);margin-top:.2rem}
+.rv-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);border:none;cursor:pointer;color:#DCD7C9;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.rv-close:hover{background:rgba(255,255,255,.25)}
+.rv-close .material-symbols-outlined{font-size:17px}
+.rv-body{padding:1.25rem 1.75rem}
+.rv-section-label{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(63,78,79,.4);margin-bottom:.5rem;margin-top:1rem}
+.rv-section-label:first-child{margin-top:0}
+.rv-info-row{display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.35rem;font-size:.85rem;color:#3F4E4F}
+.rv-info-row .material-symbols-outlined{font-size:15px;color:#A27B5C;flex-shrink:0;margin-top:2px}
+.rv-item-row{display:flex;align-items:center;gap:.75rem;padding:.55rem 0;border-bottom:1px solid rgba(162,123,92,.08)}
+.rv-item-row:last-child{border-bottom:none}
+.rv-item-img{width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid rgba(162,123,92,.12)}
+.rv-item-name{flex:1;font-size:.85rem;font-weight:600;color:#2C3639}
+.rv-item-sub{font-size:.7rem;color:rgba(63,78,79,.5);margin-top:1px}
+.rv-item-price{font-size:.85rem;font-weight:800;color:#A27B5C;white-space:nowrap}
+.rv-total{background:rgba(162,123,92,.06);border-radius:10px;padding:.875rem 1rem;margin-top:.875rem;display:flex;justify-content:space-between;align-items:center}
+.rv-total-label{font-size:.875rem;font-weight:600;color:#3F4E4F}
+.rv-total-amount{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:800;color:#A27B5C}
+.rv-footer{padding:1rem 1.75rem 1.5rem;display:flex;gap:.75rem;position:sticky;bottom:0;background:#fff;border-top:1px solid rgba(162,123,92,.1)}
+.rv-btn-back{flex:1;padding:.7rem;border:1.5px solid rgba(162,123,92,.3);border-radius:12px;background:transparent;color:#3F4E4F;font-family:'Work Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer}
+.rv-btn-confirm{flex:2;padding:.7rem;border:none;border-radius:12px;background:#A27B5C;color:#fff;font-family:'Work Sans',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;box-shadow:0 4px 14px rgba(162,123,92,.3)}
+.rv-btn-confirm:hover{background:#8d6a4d}
+
+/* ══ BANK PICKER ══ */
+.vq-overlay{position:fixed;inset:0;z-index:9500;background:rgba(28,22,16,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .25s}
+.vq-overlay.open{opacity:1;pointer-events:all}
+.vq-modal{background:#fff;border-radius:24px;width:100%;max-width:600px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 28px 72px rgba(44,54,57,.24);transform:translateY(20px) scale(.96);transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.vq-overlay.open .vq-modal{transform:translateY(0) scale(1)}
+.vq-modal-header{background:linear-gradient(135deg,#2C3639,#3F4E4F);padding:1.25rem 1.75rem;border-radius:24px 24px 0 0;flex-shrink:0;display:flex;justify-content:space-between;align-items:flex-start}
+.vq-modal-header-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:800;color:#F2EFE9;display:flex;align-items:center;gap:.5rem}
+.vq-modal-header-sub{font-size:.75rem;color:rgba(220,215,201,.6);margin-top:.2rem}
+.vq-modal-body{flex:1;overflow:hidden;padding:1.25rem 1.75rem 0;display:flex;flex-direction:column;min-height:0;}
+.vq-modal-body::-webkit-scrollbar{display:none}.vq-search-wrap{position:relative;margin-bottom:1rem;flex-shrink:0;}
+.vq-search-wrap .material-symbols-outlined{position:absolute;left:.875rem;top:50%;transform:translateY(-50%);font-size:17px;color:rgba(162,123,92,.6);pointer-events:none}
+.vq-search-wrap input{width:100%;padding:.7rem 1rem .7rem 2.6rem;border:1.5px solid rgba(162,123,92,.25);border-radius:12px;font-family:'Work Sans',sans-serif;font-size:.875rem;color:#2C3639;outline:none;background:#FAFAF9;box-sizing:border-box;transition:border-color .15s}
+.vq-search-wrap input:focus{border-color:#A27B5C;background:#fff}
+.vq-bank-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;}
+.vq-bank-btn{display:flex;align-items:center;gap:.6rem;padding:.7rem .875rem;border:1.5px solid rgba(162,123,92,.15);border-radius:12px;background:#FAFAF9;cursor:pointer;transition:all .15s;text-align:left;width:100%}
+.vq-bank-btn:hover{border-color:#A27B5C;background:rgba(162,123,92,.05)}
+.vq-bank-btn.selected{border-color:#A27B5C;background:rgba(162,123,92,.1);box-shadow:0 0 0 3px rgba(162,123,92,.12)}
+.vq-bank-logo-wrap{width:38px;height:38px;border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,.07);padding:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.vq-bank-logo-wrap img{width:100%;height:100%;object-fit:contain}
+.vq-bank-logo-fallback{font-size:.62rem;font-weight:800;color:#A27B5C;text-align:center;line-height:1.1;word-break:break-all}
+.vq-bank-name{font-size:.78rem;font-weight:700;color:#2C3639;line-height:1.25}
+.vq-bank-shortname{font-size:.62rem;color:rgba(63,78,79,.5);margin-top:1px}
+.vq-pager{display:flex;align-items:center;justify-content:center;gap:.375rem;padding:.875rem 0 .5rem;flex-shrink:0;}
+.vq-dot{width:6px;height:6px;border-radius:50%;background:rgba(162,123,92,.25);cursor:pointer;transition:background .2s,transform .2s;border:none;padding:0;flex-shrink:0;}
+.vq-dot.active{background:#A27B5C;transform:scale(1.3);}
+.vq-arrow{width:28px;height:28px;border-radius:50%;border:1.5px solid rgba(162,123,92,.3);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#A27B5C;transition:background .15s,border-color .15s;font-size:16px;flex-shrink:0;}
+.vq-arrow:hover:not(:disabled){background:rgba(162,123,92,.08);border-color:#A27B5C;}
+.vq-arrow:disabled{opacity:.3;cursor:default;}
+.vq-page-label{font-family:'Playfair Display',serif;font-style:italic;font-size:.78rem;color:rgba(162,123,92,.6);margin:0 .3rem;white-space:nowrap;}
+.vq-modal-footer{padding:1rem 1.75rem 1.25rem;border-top:1px solid rgba(162,123,92,.1);flex-shrink:0}
+.vq-btn-select{width:100%;padding:.8rem;border:none;border-radius:12px;background:#A27B5C;color:#fff;font-family:'Work Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;box-shadow:0 4px 14px rgba(162,123,92,.28)}
+.vq-btn-select:hover{background:#8d6a4d}
+.vq-btn-select:disabled{opacity:.4;cursor:not-allowed}
+
+/* ══ QR MODAL ══ */
+.qr-overlay{position:fixed;inset:0;z-index:10000;background:rgba(22,17,12,.78);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .3s}
+.qr-overlay.open{opacity:1;pointer-events:all}
+.qr-modal{background:#fff;border-radius:24px;width:100%;max-width:390px;max-height:92vh;overflow-y:auto;overflow-x:hidden;box-shadow:0 32px 80px rgba(44,54,57,.32);transform:scale(.9) translateY(24px);transition:transform .4s cubic-bezier(.34,1.56,.64,1);scrollbar-width:none}
+.qr-modal::-webkit-scrollbar{display:none}
+.qr-overlay.open .qr-modal{transform:scale(1) translateY(0)}
+.qr-top-bar{position:sticky;top:0;z-index:2;padding:1.25rem 1.5rem 1rem;border-radius:24px 24px 0 0;text-align:center;overflow:hidden;position:relative;}
+.qr-top-bar::before{content:'';position:absolute;inset:0;background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuCPbbxfASi-rYqxHYCVtSGTQZ--TMdNj0FDJXsoBmVNsIrwIgCkDv76iaZtRyoSzvUU7ec7JZaEksl2kYREjaoay-G9FrYRwkszVe_Ey30DncbScTSARonXPv-ngaFaREZRO4F3fVb0UA2PWvnzQrsUPppz5XyGqLDfGEqwSrFSrVZlL5ox9Cl-10U2epsiMo819tJ9LIE6TLVxFhPg0YudTrnNV1qTPu5GDjny5_-oJA3qbLwu9X5Eg18Eb2939imxAWVNPu9DfREz');background-size:cover;background-position:center;border-radius:24px 24px 0 0;z-index:0;}
+.qr-top-bar::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(22,18,14,.72) 0%,rgba(28,22,16,.82) 100%);z-index:1;}
+.qr-top-bar>*{position:relative;z-index:2;}
+.qr-top-badge{display:inline-flex;align-items:center;gap:.35rem;background:rgba(162,123,92,.28);border:1px solid rgba(162,123,92,.5);border-radius:99px;padding:.2rem .7rem;font-size:.62rem;font-weight:700;letter-spacing:.1em;color:#DCD7C9;text-transform:uppercase;margin-bottom:.6rem}
+.qr-top-amount{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:#A27B5C;line-height:1}
+.qr-top-label{font-size:.7rem;color:rgba(220,215,201,.5);margin-top:.25rem;letter-spacing:.06em}
+.qr-x-btn{position:absolute;top:1rem;right:1rem;z-index:10;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.14);border:none;cursor:pointer;color:#DCD7C9;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.qr-x-btn:hover{background:rgba(255,255,255,.28)}
+.qr-x-btn .material-symbols-outlined{font-size:17px}
+.qr-img-section{padding:1.5rem 1.5rem .875rem;display:flex;flex-direction:column;align-items:center;gap:.75rem}
+.qr-img-frame{width:265px;height:265px;border-radius:18px;overflow:hidden;border:3px solid rgba(162,123,92,.2);box-shadow:0 8px 32px rgba(44,54,57,.12),0 0 0 6px rgba(162,123,92,.05);background:#f5f0ea;display:flex;align-items:center;justify-content:center}
+.qr-img-frame img{width:100%;height:100%;object-fit:contain;display:block}
+.qr-skeleton-inner{width:100%;height:100%;background:linear-gradient(90deg,#f0ece6 25%,#e4ded6 50%,#f0ece6 75%);background-size:200% 100%}
+.qr-bank-chip{display:inline-flex;align-items:center;gap:.5rem;background:rgba(162,123,92,.07);border:1px solid rgba(162,123,92,.18);border-radius:99px;padding:.35rem .875rem}
+.qr-bank-chip-logo{width:24px;height:24px;border-radius:5px;object-fit:contain;background:#fff;border:1px solid rgba(0,0,0,.06)}
+.qr-bank-chip span{font-size:.78rem;font-weight:700;color:#2C3639}
+.qr-info-section{padding:0 1.25rem .875rem}
+.qr-info-card{background:#FAFAF9;border:1px solid rgba(162,123,92,.14);border-radius:14px;overflow:hidden;margin-bottom:.75rem}
+.qr-info-row{display:flex;justify-content:space-between;align-items:center;padding:.6rem 1rem;border-bottom:1px solid rgba(162,123,92,.08);gap:.5rem}
+.qr-info-row:last-child{border-bottom:none}
+.qr-info-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(63,78,79,.45);flex-shrink:0}
+.qr-info-val{font-size:.85rem;font-weight:700;color:#2C3639;text-align:right;word-break:break-all;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.qr-info-val.accent{color:#A27B5C}
+.qr-copy-btn{display:flex;align-items:center;gap:.35rem;cursor:pointer;color:#A27B5C;font-size:.85rem;font-weight:700;background:none;border:none;padding:0;font-family:'Work Sans',sans-serif;text-align:right;flex-shrink:1;min-width:0;max-width:200px;word-break:break-all}
+.qr-copy-btn:hover{opacity:.75}
+.qr-copy-btn .material-symbols-outlined{font-size:14px;flex-shrink:0}
+.qr-status-row{display:flex;align-items:center;gap:1rem;background:#FAFAF9;border:1px solid rgba(162,123,92,.12);border-radius:14px;padding:.875rem 1.1rem}
+.qr-countdown-ring{position:relative;width:56px;height:56px;flex-shrink:0}
+.qr-countdown-ring svg{transform:rotate(-90deg)}
+.qr-countdown-ring circle.track{fill:none;stroke:rgba(162,123,92,.15);stroke-width:4}
+.qr-countdown-ring circle.prog{fill:none;stroke:#A27B5C;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+.qr-countdown-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1rem;font-weight:800;color:#2C3639}
+.qr-status-info{flex:1;min-width:0}
+.qr-status-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .75rem;border-radius:99px;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem}
+.qr-status-badge.pending{background:rgba(234,179,8,.12);color:#b45309;border:1px solid rgba(234,179,8,.28)}
+.qr-status-badge.success{background:rgba(16,185,129,.12);color:#065f46;border:1px solid rgba(16,185,129,.28)}
+.qr-status-badge.expired{background:rgba(239,68,68,.1);color:#b91c1c;border:1px solid rgba(239,68,68,.22)}
+.qr-status-sub{font-size:.7rem;color:rgba(63,78,79,.45);line-height:1.5}
+.qr-autoclose-bar{height:3px;background:rgba(162,123,92,.12);display:none}
+.qr-autoclose-bar.show{display:block}
+.qr-autoclose-progress{height:100%;background:linear-gradient(90deg,#059669,#34d399);width:100%;transition:width 5s linear}
+.qr-footer{padding:.875rem 1.25rem 1.25rem;display:flex;gap:.75rem;position:sticky;bottom:0;background:#fff;border-top:1px solid rgba(162,123,92,.08)}
+.qr-btn-cancel{flex:1;padding:.65rem;border:1.5px solid rgba(162,123,92,.22);border-radius:12px;background:transparent;color:#3F4E4F;font-family:'Work Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer}
+.qr-btn-done{flex:2;padding:.65rem;border:none;border-radius:12px;background:#059669;color:#fff;font-family:'Work Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;gap:.4rem}
+.qr-unsupported{margin:0 1.25rem .875rem;background:rgba(234,179,8,.07);border:1px solid rgba(234,179,8,.3);border-radius:14px;padding:1rem 1.1rem;display:flex;align-items:flex-start;gap:.75rem}
+.qr-unsupported .material-symbols-outlined{font-size:20px;color:#d97706;flex-shrink:0;margin-top:1px}
+.qr-unsupported-text{font-size:.8rem;color:#92400e;line-height:1.65}
+.qr-unsupported-text strong{display:block;font-weight:800;margin-bottom:.15rem;font-size:.82rem}
+.spin-anim{animation:spinAnim 1.5s linear infinite}
+.shimmer-anim{animation:shimmerAnim 1.4s infinite}
 </style>
 
-<section class="min-h-screen pt-28 pb-20" style="background-color:#F7F7F6;">
-    <div class="max-w-6xl mx-auto px-4">
-
-        <div class="mb-10 text-center">
-            <p class="text-sm tracking-[0.2em] uppercase mb-2" style="color:#A27B5C;font-family:'Work Sans',sans-serif;">Bước Cuối Cùng</p>
-            <h1 class="text-4xl font-bold" style="font-family:'Playfair Display',serif;color:#2C3639;">Thông Tin Thanh Toán</h1>
-        </div>
-
-        @* Form thật — bị ẩn, submit bởi JS sau khi user confirm *@
-        <form method="post" action="/Cart/Checkout" id="checkoutForm">
-            @Html.AntiForgeryToken()
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                <!-- Form thông tin -->
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-white rounded-2xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold mb-5" style="font-family:'Playfair Display',serif;color:#2C3639;">Thông Tin Giao Hàng</h2>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Họ và tên *</label>
-                                <input type="text" id="fieldFullName" name="FullName" value="@Model.FullName" required
-                                       class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
-                                       style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
-                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
-                                       placeholder="Nguyễn Văn A" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Số điện thoại *</label>
-                                <input type="tel" id="fieldPhone" name="PhoneNumber" value="@Model.PhoneNumber" required
-                                       class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
-                                       style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
-                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
-                                       placeholder="0901 234 567" />
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Địa chỉ giao hàng *</label>
-                            <input type="text" id="fieldAddress" name="ShippingAddress" required
-                                   class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
-                                   style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
-                                   onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
-                                   placeholder="Số nhà, đường, phường, quận, thành phố" />
-                        </div>
-
-                        <div class="mt-4">
-                            <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Ghi chú (tuỳ chọn)</label>
-                            <textarea id="fieldNote" name="Note" rows="3"
-                                      class="w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none"
-                                      style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
-                                      onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
-                                      placeholder="Ghi chú cho đơn hàng, ví dụ: ít đá, thêm siro..."></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Phương thức thanh toán -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm">
-                        <h2 class="text-xl font-bold mb-5" style="font-family:'Playfair Display',serif;color:#2C3639;">Phương Thức Thanh Toán</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <label id="pmCOD" class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all"
-                                   style="border-color:#A27B5C;background-color:#FDF9F5;">
-                                <input type="radio" name="PaymentMethod" value="COD" checked class="accent-amber-700 w-4 h-4" onchange="updatePMStyle()" />
-                                <div>
-                                    <p class="font-semibold" style="color:#2C3639;font-family:'Work Sans',sans-serif;">Tiền mặt (COD)</p>
-                                    <p class="text-xs" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Thanh toán khi nhận hàng</p>
-                                </div>
-                            </label>
-                            <label id="pmTransfer" class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all"
-                                   style="border-color:#DCD7C9;">
-                                <input type="radio" name="PaymentMethod" value="Transfer" class="accent-amber-700 w-4 h-4" onchange="updatePMStyle()" />
-                                <div>
-                                    <p class="font-semibold" style="color:#2C3639;font-family:'Work Sans',sans-serif;">Chuyển khoản</p>
-                                    <p class="text-xs" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">Thông tin CK sau khi đặt</p>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tóm tắt + nút xem lại -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white rounded-2xl p-6 shadow-sm sticky top-28">
-                        <h2 class="text-xl font-bold mb-5" style="font-family:'Playfair Display',serif;color:#2C3639;">Đơn Hàng</h2>
-                        <div class="space-y-3 mb-5 max-h-64 overflow-y-auto">
-                            @foreach (var item in Model.Cart.Items)
-                            {
-                                <div class="flex gap-3">
-                                    <img src="@item.ImageUrl" class="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                                         onerror="this.src='/images/placeholder.jpg'" />
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-medium truncate" style="color:#2C3639;font-family:'Work Sans',sans-serif;">@item.ProductName</p>
-                                        <p class="text-xs" style="color:#3F4E4F;font-family:'Work Sans',sans-serif;">
-                                            Size @item.Size · ×@item.Quantity
-                                            @if (!string.IsNullOrEmpty(item.Toppings)) { <text> · @item.Toppings</text> }
-                                        </p>
-                                    </div>
-                                    <span class="text-sm font-semibold flex-shrink-0" style="color:#A27B5C;font-family:'Work Sans',sans-serif;">
-                                        @item.LineTotal.ToString("N0")đ
-                                    </span>
-                                </div>
-                            }
-                        </div>
-
-                        <div class="border-t pt-4 mb-6" style="border-color:#DCD7C9;">
-                            <div class="flex justify-between font-bold text-xl" style="color:#2C3639;font-family:'Playfair Display',serif;">
-                                <span>Tổng cộng</span>
-                                <span style="color:#A27B5C;">@Model.Cart.TotalAmount.ToString("N0")đ</span>
-                            </div>
-                        </div>
-
-                        @* NEW: Nút mở modal review thay vì submit trực tiếp *@
-                        <button type="button" onclick="openReviewModal()"
-                                class="w-full py-4 rounded-full text-white font-semibold transition-all hover:opacity-90 hover:shadow-lg"
-                                style="background-color:#A27B5C;font-family:'Work Sans',sans-serif;">
-                            Kiểm Tra & Xác Nhận Đặt Hàng →
-                        </button>
-
-                        <a href="/Cart" class="block text-center mt-3 text-sm hover:opacity-70"
-                           style="color:#A27B5C;font-family:'Work Sans',sans-serif;">
-                            ← Quay lại giỏ hàng
-                        </a>
-                    </div>
-                </div>
+    <!-- ══ HERO — cinematic (CSS-only, không cần ảnh ngoài) ══ -->
+    <div style="
+        position:relative;
+        overflow:hidden;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        min-height:520px;
+        background:#1C1916;
+        width:100%;
+    ">
+        <!-- Layered gradient background -->
+        <div style="
+            position:absolute;inset:0;
+            background:
+                radial-gradient(ellipse 75% 65% at 15% 45%, rgba(162,123,92,.32) 0%, transparent 58%),
+                radial-gradient(ellipse 55% 75% at 85% 25%, rgba(162,123,92,.18) 0%, transparent 55%),
+                radial-gradient(ellipse 40% 50% at 50% 90%, rgba(63,78,79,.4) 0%, transparent 60%),
+                linear-gradient(135deg, #1C1916 0%, #2C3639 40%, #3F4E4F 68%, #2C3639 100%);
+        "></div>
+        <!-- Subtle crosshatch pattern -->
+        <div style="
+            position:absolute;inset:0;
+            opacity:.055;pointer-events:none;
+            background-image:
+                repeating-linear-gradient(0deg, rgba(162,123,92,1) 0, rgba(162,123,92,1) 1px, transparent 1px, transparent 52px),
+                repeating-linear-gradient(90deg, rgba(162,123,92,1) 0, rgba(162,123,92,1) 1px, transparent 1px, transparent 52px);
+        "></div>
+        <!-- Grain texture -->
+        <div style="
+            position:absolute;inset:0;pointer-events:none;opacity:.55;
+            background-image:url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.75%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%220.045%22/%3E%3C/svg%3E');
+        "></div>
+        <!-- Content -->
+        <div style="position:relative;z-index:1;text-align:center;max-width:672px;padding:6rem 1.5rem;">
+            <span style="
+                display:inline-flex;align-items:center;gap:.5rem;
+                font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:700;
+                letter-spacing:.28em;text-transform:uppercase;
+                color:#A27B5C;background:rgba(162,123,92,.18);
+                border:1px solid rgba(162,123,92,.4);
+                padding:.35rem 1rem;border-radius:9999px;
+                margin-bottom:1.5rem;
+            ">Bước Cuối Cùng</span>
+            <h1 style="
+                font-family:'Playfair Display',serif;
+                font-size:clamp(2.8rem,6vw,4.5rem);
+                font-weight:700;color:#F2EDE4;
+                line-height:1.1;margin-bottom:.75rem;
+            ">
+                Thông Tin
+                <em style="display:block;color:#C69B7B;font-style:italic;font-weight:600;font-size:clamp(2.2rem,5vw,3.8rem);">Thanh Toán</em>
+            </h1>
+            <!-- Ornament -->
+            <div style="display:flex;align-items:center;justify-content:center;gap:.85rem;margin:1.75rem auto 1.5rem;max-width:200px;">
+                <div style="flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(162,123,92,.55));"></div>
+                <div style="width:5px;height:5px;background:#A27B5C;transform:rotate(45deg);flex-shrink:0;box-shadow:0 0 8px rgba(162,123,92,.6);"></div>
+                <div style="flex:1;height:1px;background:linear-gradient(to left,transparent,rgba(162,123,92,.55));"></div>
             </div>
-        </form>
+            <p style="color:rgba(242,237,228,.65);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;line-height:1.8;">
+                Kiểm tra đơn hàng và chọn phương thức thanh toán phù hợp
+            </p>
+        </div>
+        <!-- Scroll indicator -->
+        <div style="position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.4rem;z-index:1;">
+            <div style="width:1px;height:36px;background:linear-gradient(to bottom,#A27B5C,transparent);"></div>
+            <span style="font-family:'Work Sans',sans-serif;font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;color:rgba(162,123,92,.55);">Khám phá</span>
+        </div>
     </div>
-</section>
 
-@* ── Review Modal ── *@
+    <section style="background:#F7F7F6;padding:2.5rem 1rem 4rem;">
+        <div class="max-w-6xl mx-auto">
+            <form method="post" action="/Cart/Checkout" id="checkoutForm">
+                @Html.AntiForgeryToken()
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm">
+                            <h2 class="text-xl font-bold mb-5" style="font-family:'Playfair Display',serif;color:#2C3639;">Thông Tin Giao Hàng</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;">Họ và tên *</label>
+                                    <input type="text" id="fieldFullName" name="FullName" value="@Model.FullName" required
+                                           class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
+                                           style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
+                                           onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
+                                           placeholder="Nguyễn Văn A" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;">Số điện thoại *</label>
+                                    <input type="tel" id="fieldPhone" name="PhoneNumber" value="@Model.PhoneNumber" required
+                                           class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
+                                           style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
+                                           onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
+                                           placeholder="0901 234 567" />
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;">Địa chỉ giao hàng *</label>
+                                <input type="text" id="fieldAddress" name="ShippingAddress" required
+                                       class="w-full px-4 py-3 rounded-xl border outline-none transition-all"
+                                       style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
+                                       onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
+                                       placeholder="Số nhà, đường, phường, quận, thành phố" />
+                            </div>
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium mb-2" style="color:#3F4E4F;">Ghi chú (tuỳ chọn)</label>
+                                <textarea id="fieldNote" name="Note" rows="3"
+                                          class="w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none"
+                                          style="border-color:#DCD7C9;font-family:'Work Sans',sans-serif;color:#2C3639;"
+                                          onfocus="this.style.borderColor='#A27B5C'" onblur="this.style.borderColor='#DCD7C9'"
+                                          placeholder="Ghi chú cho đơn hàng..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-6 shadow-sm">
+                            <h2 class="text-xl font-bold mb-5" style="font-family:'Playfair Display',serif;color:#2C3639;">Phương Thức Thanh Toán</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <label id="pmCOD" class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all"
+                                       style="border-color:#A27B5C;background-color:#FDF9F5;">
+                                    <input type="radio" name="PaymentMethod" value="COD" checked class="w-4 h-4" style="accent-color:#A27B5C;" onchange="updatePMStyle()" />
+                                    <div>
+                                        <p class="font-semibold" style="color:#2C3639;">Tiền mặt (COD)</p>
+                                        <p class="text-xs" style="color:#3F4E4F;">Thanh toán khi nhận hàng</p>
+                                    </div>
+                                </label>
+                                <label id="pmTransfer" class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all"
+                                       style="border-color:#DCD7C9;">
+                                    <input type="radio" name="PaymentMethod" value="Transfer" class="w-4 h-4" style="accent-color:#A27B5C;" onchange="updatePMStyle()" />
+                                    <div>
+                                        <p class="font-semibold" style="color:#2C3639;">Chuyển khoản (VietQR)</p>
+                                        <p class="text-xs" style="color:#3F4E4F;">Quét QR — xác nhận tức thì</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm sticky top-28">
+                            <h2 class="text-xl font-bold mb-5" style="font-family:'Playfair Display',serif;color:#2C3639;">Đơn Hàng</h2>
+                            <div class="space-y-3 mb-5 max-h-64 overflow-y-auto">
+                                @foreach (var item in Model.Cart.Items)
+                                {
+                                    <div class="flex gap-3">
+                                        <img src="@item.ImageUrl" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" onerror="this.src='/images/placeholder.jpg'" />
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium truncate" style="color:#2C3639;">@item.ProductName</p>
+                                            <p class="text-xs" style="color:#3F4E4F;">Size @item.Size · ×@item.Quantity@(!string.IsNullOrEmpty(item.Toppings) ? " · " + item.Toppings : "")</p>
+                                        </div>
+                                        <span class="text-sm font-semibold flex-shrink-0" style="color:#A27B5C;">@item.LineTotal.ToString("N0")đ</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="border-t pt-4 mb-6" style="border-color:#DCD7C9;">
+                                <div class="flex justify-between font-bold text-xl" style="color:#2C3639;font-family:'Playfair Display',serif;">
+                                    <span>Tổng cộng</span>
+                                    <span style="color:#A27B5C;">@Model.Cart.TotalAmount.ToString("N0")đ</span>
+                                </div>
+                            </div>
+                            <button type="button" onclick="openReviewModal()"
+                                    class="w-full py-4 rounded-full text-white font-semibold transition-all hover:opacity-90 hover:shadow-lg"
+                                    style="background-color:#A27B5C;">
+                                Kiểm Tra &amp; Xác Nhận →
+                            </button>
+                            <a href="/Cart" class="block text-center mt-3 text-sm hover:opacity-70" style="color:#A27B5C;">← Quay lại giỏ hàng</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+@* ══ REVIEW MODAL ══ *@
 <div class="rv-overlay" id="rvOverlay" onclick="if(event.target===this)closeReviewModal()">
     <div class="rv-modal">
         <div class="rv-header">
-            <div class="rv-header-title">Kiểm Tra Đơn Hàng</div>
-            <div class="rv-header-sub">Vui lòng xem lại trước khi xác nhận đặt hàng</div>
+            <div><div class="rv-header-title">Kiểm Tra Đơn Hàng</div><div class="rv-header-sub">Xem lại trước khi xác nhận</div></div>
+            <button class="rv-close" onclick="closeReviewModal()"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="rv-body">
             <div class="rv-section-label">Thông tin giao hàng</div>
             <div class="rv-info-row"><span class="material-symbols-outlined">person</span><span id="rvName">—</span></div>
             <div class="rv-info-row"><span class="material-symbols-outlined">call</span><span id="rvPhone">—</span></div>
             <div class="rv-info-row"><span class="material-symbols-outlined">location_on</span><span id="rvAddress">—</span></div>
-            <div class="rv-info-row" id="rvNoteRow" style="display:none;">
-                <span class="material-symbols-outlined">chat_bubble</span><span id="rvNote">—</span>
-            </div>
+            <div class="rv-info-row" id="rvNoteRow" style="display:none;"><span class="material-symbols-outlined">chat_bubble</span><span id="rvNote">—</span></div>
             <div class="rv-info-row"><span class="material-symbols-outlined">payments</span><span id="rvPayment">—</span></div>
-
             <div class="rv-section-label">Sản phẩm</div>
-            <div id="rvItemsList">
-                @foreach (var item in Model.Cart.Items)
-                {
-                    <div class="rv-item-row"
-                         data-name="@item.ProductName"
-                         data-img="@item.ImageUrl"
-                         data-sub="Size @item.Size · ×@item.Quantity@(!string.IsNullOrEmpty(item.Toppings) ? " · " + item.Toppings : "")"
-                         data-price="@item.LineTotal.ToString("N0")đ">
-                        <img class="rv-item-img" src="@item.ImageUrl" onerror="this.src='/images/placeholder.jpg'" />
-                        <div class="rv-item-name">
-                            @item.ProductName
-                            <div class="rv-item-sub">Size @item.Size · ×@item.Quantity @(!string.IsNullOrEmpty(item.Toppings) ? "· " + item.Toppings : "")</div>
-                        </div>
-                        <div class="rv-item-price">@item.LineTotal.ToString("N0")đ</div>
-                    </div>
-                }
-            </div>
-
-            <div class="rv-total">
-                <span class="rv-total-label">Tổng cộng</span>
-                <span class="rv-total-amount">@Model.Cart.TotalAmount.ToString("N0")đ</span>
-            </div>
+            @foreach (var item in Model.Cart.Items)
+            {
+                <div class="rv-item-row">
+                    <img class="rv-item-img" src="@item.ImageUrl" onerror="this.src='/images/placeholder.jpg'" />
+                    <div class="rv-item-name">@item.ProductName<div class="rv-item-sub">Size @item.Size · ×@item.Quantity @(!string.IsNullOrEmpty(item.Toppings) ? "· " + item.Toppings : "")</div></div>
+                    <div class="rv-item-price">@item.LineTotal.ToString("N0")đ</div>
+                </div>
+            }
+            <div class="rv-total"><span class="rv-total-label">Tổng cộng</span><span class="rv-total-amount">@Model.Cart.TotalAmount.ToString("N0")đ</span></div>
         </div>
         <div class="rv-footer">
-            <button type="button" class="rv-btn-back" onclick="closeReviewModal()">
-                ← Chỉnh sửa
-            </button>
-            <button type="button" class="rv-btn-confirm" onclick="submitOrder()">
-                <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
-                Xác Nhận Đặt Hàng
+            <button type="button" class="rv-btn-back" onclick="closeReviewModal()">← Chỉnh sửa</button>
+            <button type="button" class="rv-btn-confirm" id="rvConfirmBtn" onclick="handleConfirm()">
+                <span class="material-symbols-outlined" style="font-size:17px;">check_circle</span> Xác Nhận
             </button>
         </div>
     </div>
 </div>
 
+@* ══ BANK PICKER ══ *@
+<div class="vq-overlay" id="vqOverlay" onclick="if(event.target===this)closeVqModal()">
+    <div class="vq-modal">
+        <div class="vq-modal-header">
+            <div>
+                <div class="vq-modal-header-title">
+                    <span class="material-symbols-outlined" style="font-size:20px;color:#A27B5C;">account_balance</span>
+                    Chọn Ngân Hàng
+                </div>
+                <div class="vq-modal-header-sub">Chọn ngân hàng bạn muốn chuyển khoản</div>
+            </div>
+            <button class="rv-close" onclick="closeVqModal()"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="vq-modal-body">
+            <div class="vq-search-wrap">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" id="bankSearch" placeholder="Tìm ngân hàng..." oninput="filterBanks()" />
+            </div>
+            <div class="vq-bank-grid" id="bankGrid"></div>
+            <div class="vq-pager" id="bankPager" style="display:none;"></div>
+        </div>
+        <div class="vq-modal-footer">
+            <button class="vq-btn-select" id="vqSelectBtn" disabled onclick="confirmBankSelection()">
+                <span class="material-symbols-outlined" style="font-size:17px;">qr_code_2</span>
+                Tạo Mã QR Thanh Toán
+            </button>
+        </div>
+    </div>
+</div>
+
+@* ══ QR MODAL ══ *@
+<div class="qr-overlay" id="qrOverlay">
+    <div class="qr-modal" id="qrModalBox">
+        <div class="qr-top-bar">
+            <button class="qr-x-btn" onclick="closeQrModal()"><span class="material-symbols-outlined">close</span></button>
+            <div class="qr-top-badge"><span class="material-symbols-outlined" style="font-size:11px;">verified</span>VietQR</div>
+            <div class="qr-top-amount" id="qrTopAmount">—</div>
+            <div class="qr-top-label">Quét QR để thanh toán</div>
+        </div>
+        <div class="qr-unsupported" id="qrUnsupported" style="display:none;margin-top:1rem;">
+            <span class="material-symbols-outlined">warning</span>
+            <div class="qr-unsupported-text">
+                <strong>Hiện tại chưa hỗ trợ phương thức này</strong>
+                Chúng mình xin lỗi vì sự bất tiện. Vui lòng chọn ngân hàng khác hoặc thanh toán COD khi nhận hàng.
+            </div>
+        </div>
+        <div id="qrNormalContent">
+            <div class="qr-img-section">
+                <div class="qr-img-frame">
+                    <div class="qr-skeleton-inner shimmer-anim" id="qrSkeleton" style="width:100%;height:100%;"></div>
+                    <img id="qrImage" src="" alt="QR" style="display:none;width:100%;height:100%;object-fit:contain;" />
+                </div>
+                <div class="qr-bank-chip">
+                    <img id="qrBankChipLogo" src="" alt="" class="qr-bank-chip-logo" onerror="this.style.display='none'" />
+                    <span id="qrBankChipName">—</span>
+                </div>
+            </div>
+            <div class="qr-info-section">
+                <div class="qr-info-card">
+                    <div class="qr-info-row">
+                        <span class="qr-info-lbl">Chủ TK</span>
+                        <span class="qr-info-val" id="qrAccName">—</span>
+                    </div>
+                    <div class="qr-info-row">
+                        <span class="qr-info-lbl">Số TK</span>
+                        <span class="qr-info-val" id="qrAccNo">—</span>
+                    </div>
+                    <div class="qr-info-row">
+                        <span class="qr-info-lbl">Nội dung CK</span>
+                        <button class="qr-copy-btn" id="qrCopyBtn" onclick="copyContent()">
+                            <span id="qrContentText">—</span>
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </button>
+                    </div>
+                    <div class="qr-info-row">
+                        <span class="qr-info-lbl">Số tiền</span>
+                        <span class="qr-info-val accent" id="qrAmountVal">—</span>
+                    </div>
+                </div>
+                <div class="qr-status-row">
+                    <div class="qr-countdown-ring">
+                        <svg width="56" height="56" viewBox="0 0 56 56">
+                            <circle class="track" cx="28" cy="28" r="24"/>
+                            <circle class="prog" id="qrCountdownCircle" cx="28" cy="28" r="24" stroke-dasharray="150.8" stroke-dashoffset="0"/>
+                        </svg>
+                        <div class="qr-countdown-num" id="qrCountdownNum">5:00</div>
+                    </div>
+                    <div class="qr-status-info">
+                        <div id="qrStatusBadge" class="qr-status-badge pending">
+                            <span class="material-symbols-outlined spin-anim" style="font-size:13px;">sync</span>
+                            Chờ thanh toán
+                        </div>
+                        <div class="qr-status-sub" id="qrStatusSub">Tự động xác nhận sau khi chuyển khoản</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="qr-autoclose-bar" id="qrAutoCloseBar">
+            <div class="qr-autoclose-progress" id="qrAutoCloseProgress"></div>
+        </div>
+        <div class="qr-footer">
+            <button class="qr-btn-cancel" id="qrBtnCancel" onclick="closeQrModal()">Hủy</button>
+            <button class="qr-btn-done" id="qrBtnDone" onclick="completeOrder()">
+                <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span>
+                Hoàn Thành Đặt Hàng
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="copyToast" style="position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:#2C3639;color:#DCD7C9;padding:.6rem 1.2rem;border-radius:99px;font-size:.78rem;font-weight:600;opacity:0;pointer-events:none;transition:all .3s;z-index:99999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2);">
+    ✓ Đã copy nội dung chuyển khoản
+</div>
+
 @section Scripts {
 <script>
+(function(){
+    var s=document.createElement('style');
+    s.textContent='@@keyframes shimmerAnim{0%{background-position:200% 0}100%{background-position:-200% 0}}@@keyframes spinAnim{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+    document.head.appendChild(s);
+}());
+
+var SHOP_CONFIG={
+    accountNo:   '1234567890',
+    accountName: 'GOC LANG CAFE',
+    template:    'compact2',
+    QR_TIMEOUT:  300,
+    POLL_INTERVAL:5000
+};
+
+var BANKS=[
+    {id:'MB',   bin:'970422', name:'MB Bank',       short:'MB',   logo:'https://api.vietqr.io/img/MB.png'},
+    {id:'VCB',  bin:'970436', name:'Vietcombank',    short:'VCB',  logo:'https://api.vietqr.io/img/VCB.png'},
+    {id:'TCB',  bin:'970407', name:'Techcombank',    short:'TCB',  logo:'https://api.vietqr.io/img/TCB.png'},
+    {id:'CTG',  bin:'970415', name:'VietinBank',     short:'VTB',  logo:'https://inkythuatso.com/uploads/images/2021/09/logo-vietinbank-inkythuatso-10-13-22-06.jpg'},
+    {id:'BIDV', bin:'970418', name:'BIDV',            short:'BIDV', logo:'https://api.vietqr.io/img/BIDV.png'},
+    {id:'ACB',  bin:'970416', name:'ACB',             short:'ACB',  logo:'https://api.vietqr.io/img/ACB.png'},
+    {id:'TPB',  bin:'970423', name:'TPBank',          short:'TPB',  logo:'https://api.vietqr.io/img/TPB.png'},
+    {id:'STB',  bin:'970403', name:'Sacombank',       short:'STB',  logo:'https://api.vietqr.io/img/STB.png'},
+    {id:'VPB',  bin:'970432', name:'VPBank',          short:'VPB',  logo:'https://api.vietqr.io/img/VPB.png'},
+    {id:'HDB',  bin:'970437', name:'HDBank',          short:'HDB',  logo:'https://api.vietqr.io/img/HDB.png'},
+    {id:'OCB',  bin:'970448', name:'OCB',             short:'OCB',  logo:'https://api.vietqr.io/img/OCB.png'},
+    {id:'SHB',  bin:'970443', name:'SHB',             short:'SHB',  logo:'https://api.vietqr.io/img/SHB.png'},
+    {id:'MSB',  bin:'970426', name:'MSB',             short:'MSB',  logo:'https://api.vietqr.io/img/MSB.png'},
+    {id:'VIB',  bin:'970441', name:'VIB',             short:'VIB',  logo:'https://api.vietqr.io/img/VIB.png'},
+    {id:'AGRI', bin:'970405', name:'Agribank',        short:'AGRI', logo:'https://upload.wikimedia.org/wikipedia/vi/thumb/3/3d/Argibank_logo.svg/3840px-Argibank_logo.svg.png'},
+    {id:'SEAB', bin:'970440', name:'SeABank',         short:'SEAB', logo:'https://api.vietqr.io/img/SEAB.png'},
+    {id:'NAB',  bin:'970428', name:'Nam A Bank',      short:'NAB',  logo:'https://api.vietqr.io/img/NAB.png'},
+    {id:'EIB',  bin:'970431', name:'Eximbank',        short:'EIB',  logo:'https://api.vietqr.io/img/EIB.png'},
+    {id:'KLB',  bin:'970452', name:'Kiên Long Bank', short:'KLB',  logo:'https://api.vietqr.io/img/KLB.png'},
+    {id:'BAB',  bin:'970409', name:'Bắc Á Bank',     short:'BAB',  logo:'https://api.vietqr.io/img/BAB.png'},
+    {id:'NCB',  bin:'970419', name:'NCB',             short:'NCB',  logo:'https://api.vietqr.io/img/NCB.png'},
+    {id:'CAKE', bin:'546034', name:'CAKE by VPBank', short:'CAKE', logo:'https://api.vietqr.io/img/CAKE.png'},
+];
+
+var selectedBank=null, qrCountTimer=null, qrPollTimer=null;
+var qrSecondsLeft=SHOP_CONFIG.QR_TIMEOUT, isPaid=false, _pollCount=0;
+var currentOrderContent='', autoCloseTimer=null;
+
+/* ══ REVIEW ══ */
 function openReviewModal(){
-    var form = document.getElementById('checkoutForm');
-    // Validate required fields first
-    var name = document.getElementById('fieldFullName').value.trim();
-    var phone = document.getElementById('fieldPhone').value.trim();
-    var address = document.getElementById('fieldAddress').value.trim();
-    if(!name||!phone||!address){
-        // Let browser native validation handle it
-        form.reportValidity();
-        return;
-    }
-
-    // Fill review modal
-    document.getElementById('rvName').textContent = name;
-    document.getElementById('rvPhone').textContent = phone;
-    document.getElementById('rvAddress').textContent = address;
-
-    var note = document.getElementById('fieldNote').value.trim();
-    var noteRow = document.getElementById('rvNoteRow');
-    if(note){ document.getElementById('rvNote').textContent = note; noteRow.style.display=''; }
-    else { noteRow.style.display='none'; }
-
-    var pm = form.querySelector('input[name="PaymentMethod"]:checked');
-    document.getElementById('rvPayment').textContent = pm && pm.value==='Transfer'
-        ? 'Chuyển khoản ngân hàng' : 'Tiền mặt khi nhận hàng (COD)';
-
+    var n=document.getElementById('fieldFullName').value.trim(),
+        p=document.getElementById('fieldPhone').value.trim(),
+        a=document.getElementById('fieldAddress').value.trim();
+    if(!n||!p||!a){document.getElementById('checkoutForm').reportValidity();return;}
+    document.getElementById('rvName').textContent=n;
+    document.getElementById('rvPhone').textContent=p;
+    document.getElementById('rvAddress').textContent=a;
+    var note=document.getElementById('fieldNote').value.trim();
+    document.getElementById('rvNoteRow').style.display=note?'':'none';
+    if(note)document.getElementById('rvNote').textContent=note;
+    var isT=document.querySelector('input[name="PaymentMethod"]:checked').value==='Transfer';
+    document.getElementById('rvPayment').textContent=isT?'Chuyển khoản VietQR':'Tiền mặt (COD)';
+    document.getElementById('rvConfirmBtn').innerHTML=isT
+        ?'<span class="material-symbols-outlined" style="font-size:17px;">qr_code_2</span> Chọn ngân hàng & Tạo QR'
+        :'<span class="material-symbols-outlined" style="font-size:17px;">check_circle</span> Xác Nhận Đặt Hàng';
     document.getElementById('rvOverlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow='hidden';
+}
+function closeReviewModal(){document.getElementById('rvOverlay').classList.remove('open');document.body.style.overflow='';}
+function handleConfirm(){
+    var isT=document.querySelector('input[name="PaymentMethod"]:checked').value==='Transfer';
+    closeReviewModal();
+    if(isT)openBankPicker();
+    else{document.body.style.overflow='';document.getElementById('checkoutForm').submit();}
 }
 
-function closeReviewModal(){
-    document.getElementById('rvOverlay').classList.remove('open');
-    document.body.style.overflow = '';
+/* ══ BANK PICKER ══ */
+var _bankPage=0, _bankPageSize=9, _bankFiltered=BANKS.slice();
+
+function openBankPicker(){
+    _bankFiltered=BANKS.slice();
+    _bankPage=0;
+    document.getElementById('bankSearch').value='';
+    renderBankPage();
+    document.getElementById('vqOverlay').classList.add('open');
+    document.body.style.overflow='hidden';
+}
+function closeVqModal(){document.getElementById('vqOverlay').classList.remove('open');document.body.style.overflow='';}
+
+function renderBankPage(){
+    var grid=document.getElementById('bankGrid');
+    var pager=document.getElementById('bankPager');
+    var total=_bankFiltered.length;
+    var pages=Math.max(1,Math.ceil(total/_bankPageSize));
+    if(_bankPage>=pages)_bankPage=pages-1;
+    var start=_bankPage*_bankPageSize;
+    var slice=_bankFiltered.slice(start,start+_bankPageSize);
+    grid.innerHTML=slice.map(function(b){
+        var sel=selectedBank&&selectedBank.id===b.id;
+        var uid='bl_'+b.id;
+        var logoHtml='<div class="vq-bank-logo-wrap">'
+            +'<img src="'+b.logo+'" alt="'+b.short+'" '
+            +'onerror="this.style.display=\'none\';document.getElementById(\''+uid+'\').style.display=\'flex\';" />'
+            +'<div id="'+uid+'" class="vq-bank-logo-fallback" style="display:none;">'+b.short+'</div>'
+            +'</div>';
+        return '<button type="button" class="vq-bank-btn'+(sel?' selected':'')+'"'
+            +' data-id="'+b.id+'" onclick="selectBank(\''+b.id+'\')">'
+            +logoHtml
+            +'<div><div class="vq-bank-name">'+b.name+'</div>'
+            +'<div class="vq-bank-shortname">'+b.short+'</div></div>'
+            +'</button>';
+    }).join('');
+    if(pages<=1){pager.style.display='none';return;}
+    pager.style.display='flex';
+    var html='<button class="vq-arrow" onclick="goBankPage('+(_bankPage-1)+')"'
+        +(_bankPage===0?' disabled':'')+'>'
+        +'<span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span></button>';
+    for(var i=0;i<pages;i++){
+        html+='<button class="vq-dot'+(i===_bankPage?' active':'')+'\" onclick="goBankPage('+i+')" title="Trang '+(i+1)+'"></button>';
+    }
+    html+='<span class="vq-page-label">'+(_bankPage+1)+'/'+pages+'</span>';
+    html+='<button class="vq-arrow" onclick="goBankPage('+(_bankPage+1)+')"'
+        +(_bankPage>=pages-1?' disabled':'')+'>'
+        +'<span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span></button>';
+    pager.innerHTML=html;
 }
 
-function submitOrder(){
-    document.getElementById('rvOverlay').classList.remove('open');
-    document.body.style.overflow = '';
-    document.getElementById('checkoutForm').submit();
+function goBankPage(page){
+    var pages=Math.ceil(_bankFiltered.length/_bankPageSize);
+    if(page<0||page>=pages)return;
+    _bankPage=page;
+    renderBankPage();
 }
 
+function filterBanks(){
+    var q=document.getElementById('bankSearch').value.toLowerCase();
+    _bankFiltered=q?BANKS.filter(function(b){return b.name.toLowerCase().includes(q)||b.short.toLowerCase().includes(q);}):BANKS.slice();
+    _bankPage=0;
+    renderBankPage();
+}
+function selectBank(id){
+    selectedBank=BANKS.find(function(b){return b.id===id;})||null;
+    document.querySelectorAll('.vq-bank-btn').forEach(function(btn){btn.classList.toggle('selected',btn.dataset.id===id);});
+    document.getElementById('vqSelectBtn').disabled=!selectedBank;
+}
+function confirmBankSelection(){if(!selectedBank)return;closeVqModal();openQrModal();}
+
+/* ══ QR MODAL ══ */
+function openQrModal(){
+    var totalNum=@((long)Model.Cart.TotalAmount);
+    currentOrderContent='GOCLANG'+Math.floor(100000+Math.random()*900000);
+    isPaid=false; _pollCount=0;
+    document.getElementById('qrTopAmount').textContent=totalNum.toLocaleString('vi-VN')+'đ';
+    var bankBin=selectedBank.bin;
+    var isUnsupported=!bankBin||bankBin==='';
+    document.getElementById('qrUnsupported').style.display=isUnsupported?'flex':'none';
+    document.getElementById('qrNormalContent').style.display=isUnsupported?'none':'block';
+    document.getElementById('qrBtnDone').style.display='none';
+    document.getElementById('qrBtnCancel').style.display='';
+    document.getElementById('qrBtnCancel').textContent=isUnsupported?'Đóng':'Hủy';
+    document.getElementById('qrAutoCloseBar').classList.remove('show');
+    if(!isUnsupported){
+        var chipLogo=document.getElementById('qrBankChipLogo');
+        chipLogo.src=selectedBank.logo; chipLogo.style.display='';
+        document.getElementById('qrBankChipName').textContent=selectedBank.name;
+        document.getElementById('qrAccName').textContent=SHOP_CONFIG.accountName;
+        document.getElementById('qrAccNo').textContent=SHOP_CONFIG.accountNo;
+        document.getElementById('qrContentText').textContent=currentOrderContent;
+        document.getElementById('qrCopyBtn').dataset.content=currentOrderContent;
+        document.getElementById('qrAmountVal').textContent=totalNum.toLocaleString('vi-VN')+'đ';
+        var qrUrl='https://img.vietqr.io/image/'
+            +bankBin+'-'+SHOP_CONFIG.accountNo+'-'+SHOP_CONFIG.template+'.png'
+            +'?amount='+encodeURIComponent(totalNum)
+            +'&addInfo='+encodeURIComponent(currentOrderContent)
+            +'&accountName='+encodeURIComponent(SHOP_CONFIG.accountName);
+        var sk=document.getElementById('qrSkeleton'), img=document.getElementById('qrImage');
+        sk.style.display='block'; img.style.display='none'; img.src='';
+        img.onload=function(){ sk.style.display='none'; img.style.display='block'; };
+        img.onerror=function(){
+            sk.style.display='none';
+            img.style.display='block';
+            img.src='https://api.qrserver.com/v1/create-qr-code/?size=265x265&data='+encodeURIComponent(
+                'https://vietqr.io/'+bankBin+'/'+SHOP_CONFIG.accountNo+'/'+totalNum+'/'+currentOrderContent
+            );
+        };
+        setTimeout(function(){ if(sk.style.display!=='none'){ img.onerror(); } }, 4000);
+        img.src=qrUrl;
+        setQrStatus('pending');
+        qrSecondsLeft=SHOP_CONFIG.QR_TIMEOUT;
+        updateCountdownUI(qrSecondsLeft);
+        clearInterval(qrCountTimer); clearInterval(qrPollTimer); clearTimeout(autoCloseTimer);
+        qrCountTimer=setInterval(function(){
+            qrSecondsLeft--;
+            updateCountdownUI(qrSecondsLeft);
+            if(qrSecondsLeft<=0){clearInterval(qrCountTimer);clearInterval(qrPollTimer);if(!isPaid)setQrStatus('expired');}
+        },1000);
+        startPolling();
+    }
+    document.getElementById('qrModalBox').scrollTop=0;
+    document.getElementById('qrOverlay').classList.add('open');
+    document.body.style.overflow='hidden';
+}
+
+function closeQrModal(){
+    clearInterval(qrCountTimer); clearInterval(qrPollTimer); clearTimeout(autoCloseTimer);
+    document.getElementById('qrOverlay').classList.remove('open');
+    document.body.style.overflow='';
+}
+
+function updateCountdownUI(sec){
+    if(sec<0)sec=0;
+    var m=Math.floor(sec/60),s=sec%60;
+    document.getElementById('qrCountdownNum').textContent=m+':'+(s<10?'0':'')+s;
+    var total=SHOP_CONFIG.QR_TIMEOUT, circum=150.8;
+    var prog=document.getElementById('qrCountdownCircle');
+    prog.style.strokeDashoffset=circum*(1-sec/total);
+    var color=sec>total*.5?'#A27B5C':sec>total*.2?'#f59e0b':'#ef4444';
+    prog.style.stroke=color;
+    document.getElementById('qrCountdownNum').style.color=color;
+}
+
+function setQrStatus(state){
+    var badge=document.getElementById('qrStatusBadge'), sub=document.getElementById('qrStatusSub');
+    badge.className='qr-status-badge '+state;
+    if(state==='pending'){
+        badge.innerHTML='<span class="material-symbols-outlined spin-anim" style="font-size:13px;">sync</span> Chờ thanh toán';
+        sub.textContent='Tự động xác nhận sau khi chuyển khoản thành công';
+    }else if(state==='success'){
+        badge.innerHTML='<span class="material-symbols-outlined" style="font-size:13px;">check_circle</span> Đã thanh toán!';
+        sub.textContent='Tự động đóng sau 5 giây...';
+        document.getElementById('qrBtnCancel').style.display='none';
+        document.getElementById('qrBtnDone').style.display='flex';
+        clearInterval(qrCountTimer); clearInterval(qrPollTimer);
+        isPaid=true;
+        startAutoClose();
+    }else if(state==='expired'){
+        badge.innerHTML='<span class="material-symbols-outlined" style="font-size:13px;">timer_off</span> Hết thời gian';
+        sub.textContent='QR đã hết hạn. Vui lòng thử lại.';
+        document.getElementById('qrBtnCancel').textContent='Đóng';
+    }
+}
+
+function startAutoClose(){
+    var bar=document.getElementById('qrAutoCloseBar'),prog=document.getElementById('qrAutoCloseProgress');
+    bar.classList.add('show');
+    prog.style.transition='none';prog.style.width='100%';
+    requestAnimationFrame(function(){requestAnimationFrame(function(){prog.style.transition='width 5s linear';prog.style.width='0%';});});
+    autoCloseTimer=setTimeout(completeOrder,5000);
+}
+
+function startPolling(){
+    qrPollTimer=setInterval(function(){
+        if(isPaid||qrSecondsLeft<=0){clearInterval(qrPollTimer);return;}
+        _pollCount++;
+        checkPaymentStatus();
+    },SHOP_CONFIG.POLL_INTERVAL);
+}
+function checkPaymentStatus(){
+    /* == DEMO: xóa khi có API thật == */
+    if(_pollCount>=3){setQrStatus('success');return;}
+}
+
+function completeOrder(){clearTimeout(autoCloseTimer);closeQrModal();document.body.style.overflow='';document.getElementById('checkoutForm').submit();}
+
+function copyContent(){
+    var txt=document.getElementById('qrCopyBtn').dataset.content;
+    if(navigator.clipboard){navigator.clipboard.writeText(txt).then(showCopyToast);}
+    else{var el=document.createElement('textarea');el.value=txt;document.body.appendChild(el);el.select();document.execCommand('copy');el.remove();showCopyToast();}
+}
+function showCopyToast(){
+    var t=document.getElementById('copyToast');
+    t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
+    setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},2000);
+}
 function updatePMStyle(){
-    var cod = document.querySelector('input[value="COD"]').checked;
-    document.getElementById('pmCOD').style.borderColor = cod ? '#A27B5C' : '#DCD7C9';
-    document.getElementById('pmCOD').style.backgroundColor = cod ? '#FDF9F5' : 'transparent';
-    document.getElementById('pmTransfer').style.borderColor = !cod ? '#A27B5C' : '#DCD7C9';
-    document.getElementById('pmTransfer').style.backgroundColor = !cod ? '#FDF9F5' : 'transparent';
+    var cod=document.querySelector('input[value="COD"]').checked;
+    document.getElementById('pmCOD').style.borderColor=cod?'#A27B5C':'#DCD7C9';
+    document.getElementById('pmCOD').style.backgroundColor=cod?'#FDF9F5':'transparent';
+    document.getElementById('pmTransfer').style.borderColor=!cod?'#A27B5C':'#DCD7C9';
+    document.getElementById('pmTransfer').style.backgroundColor=!cod?'#FDF9F5':'transparent';
 }
-
-document.addEventListener('keydown',function(e){
-    if(e.key==='Escape') closeReviewModal();
-});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeReviewModal();closeVqModal();}});
 </script>
 }

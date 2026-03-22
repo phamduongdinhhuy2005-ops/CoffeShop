@@ -229,5 +229,37 @@ namespace WebBanHang_2380600870.Controllers
             TempData["Success"] = $"Đã hủy đơn hàng #{order.Id} thành công.";
             return RedirectToAction(nameof(OrderHistory));
         }
+
+        // DELETE: User xóa đơn hàng khỏi lịch sử
+        // Điều kiện: chỉ xóa được đơn đã Hoàn thành (Completed) hoặc đã Hủy (Cancelled)
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteOrder(int orderId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
+
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == user.Id);
+
+            if (order == null)
+            {
+                TempData["Error"] = "Không tìm thấy đơn hàng.";
+                return RedirectToAction(nameof(OrderHistory));
+            }
+
+            if (order.Status != OrderStatus.Cancelled && order.Status != OrderStatus.Completed)
+            {
+                TempData["Error"] = "Chỉ có thể xóa đơn hàng đã hoàn thành hoặc đã hủy.";
+                return RedirectToAction(nameof(OrderHistory));
+            }
+
+            _context.Orders.Remove(order);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Đã xóa đơn hàng #{orderId} khỏi lịch sử.";
+            return RedirectToAction(nameof(OrderHistory));
+        }
     }
 }

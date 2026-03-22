@@ -1,6 +1,5 @@
 ﻿@* Views/Cart/OrderHistory.cshtml *@
-@* FIX RZ1010: ordersJson computed in top-level @{} block, NOT inside @else{} *@
-@* NEW: Order detail drawer + Cancel order *@
+@* UPDATED: + DeleteOrder button + pagination 5/trang (client-side) *@
 @model IEnumerable<WebBanHang_2380600870.Models.Order>
 @{
     ViewData["Title"] = "Lịch Sử Đặt Hàng | Góc Lặng";
@@ -46,8 +45,10 @@
         WebBanHang_2380600870.Models.OrderStatus.Cancelled  => "cancel",
         _ => "help"
     };
+    bool CanDelete(WebBanHang_2380600870.Models.OrderStatus s) =>
+        s == WebBanHang_2380600870.Models.OrderStatus.Cancelled ||
+        s == WebBanHang_2380600870.Models.OrderStatus.Completed;
 
-    // FIX RZ1010: serialize ở đây (top-level @{}), không dùng @{} lồng bên trong @else{}
     var customerName  = ViewBag.CustomerName  as string ?? "";
     var customerPhone = ViewBag.CustomerPhone as string ?? "";
     var ordersJson = System.Text.Json.JsonSerializer.Serialize(
@@ -64,83 +65,97 @@
             payment        = o.PaymentMethod == "COD" ? "Thanh toán khi nhận (COD)" : "Chuyển khoản",
             note           = o.Note ?? "",
             canCancel      = o.Status == WebBanHang_2380600870.Models.OrderStatus.Pending,
+            canDelete      = CanDelete(o.Status),
             customerName   = customerName,
             customerPhone  = customerPhone,
-            items       = (o.OrderDetails ?? new List<WebBanHang_2380600870.Models.OrderDetail>())
-                            .Select(d => new {
-                                name     = d.Product != null ? d.Product.Name : "Sản phẩm",
-                                img      = d.Product != null ? (d.Product.ImageUrl ?? "") : "",
-                                qty      = d.Quantity,
-                                price    = d.UnitPrice,
-                                itemNote = d.ItemNote ?? ""
-                            })
+            items          = (o.OrderDetails ?? new List<WebBanHang_2380600870.Models.OrderDetail>())
+                                .Select(d => new {
+                                    name     = d.Product != null ? d.Product.Name : "Sản phẩm",
+                                    img      = d.Product != null ? (d.Product.ImageUrl ?? "") : "",
+                                    qty      = d.Quantity,
+                                    price    = d.UnitPrice,
+                                    itemNote = d.ItemNote ?? ""
+                                })
         })
     );
 }
 
 <style>
-    .oh-row { background:#fff; border-radius:16px; border:1px solid rgba(162,123,92,.15); padding:1.1rem 1.25rem; cursor:pointer; transition:border-color .2s,box-shadow .2s,transform .15s; display:flex; align-items:center; gap:1rem; }
-    .oh-row:hover { border-color:rgba(162,123,92,.4); box-shadow:0 4px 20px rgba(44,54,57,.08); transform:translateY(-1px); }
-    .oh-icon { width:44px; height:44px; border-radius:50%; background:rgba(162,123,92,.09); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#A27B5C; }
-    .oh-icon .material-symbols-outlined { font-size:20px; }
-    .oh-info { flex:1; min-width:0; }
-    .oh-title { font-size:.95rem; font-weight:700; color:#2C3639; }
-    .oh-sub { font-size:.78rem; color:rgba(63,78,79,.5); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .oh-right { text-align:right; flex-shrink:0; }
-    .oh-amount { font-size:.95rem; font-weight:800; color:#A27B5C; }
-    .oh-date { font-size:.72rem; color:rgba(63,78,79,.45); margin-top:2px; }
-    .oh-arrow { color:rgba(162,123,92,.4); font-size:16px; flex-shrink:0; transition:transform .2s; }
-    .oh-row:hover .oh-arrow { transform:translateX(3px); color:#A27B5C; }
+/* ── Row ── */
+.oh-row{background:#fff;border-radius:16px;border:1px solid rgba(162,123,92,.15);padding:1.1rem 1.25rem;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .15s;display:flex;align-items:center;gap:1rem;}
+.oh-row:hover{border-color:rgba(162,123,92,.4);box-shadow:0 4px 20px rgba(44,54,57,.08);transform:translateY(-1px);}
+.oh-icon{width:44px;height:44px;border-radius:50%;background:rgba(162,123,92,.09);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#A27B5C;}
+.oh-icon .material-symbols-outlined{font-size:20px;}
+.oh-info{flex:1;min-width:0;}
+.oh-title{font-size:.95rem;font-weight:700;color:#2C3639;}
+.oh-sub{font-size:.78rem;color:rgba(63,78,79,.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.oh-right{text-align:right;flex-shrink:0;}
+.oh-amount{font-size:.95rem;font-weight:800;color:#A27B5C;}
+.oh-date{font-size:.72rem;color:rgba(63,78,79,.45);margin-top:2px;}
+.oh-arrow{color:rgba(162,123,92,.4);font-size:16px;flex-shrink:0;transition:transform .2s;}
+.oh-row:hover .oh-arrow{transform:translateX(3px);color:#A27B5C;}
 
-    /* Drawer */
-    .od-overlay { position:fixed; inset:0; z-index:9000; background:rgba(28,22,16,.55); backdrop-filter:blur(4px); display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s; }
-    .od-overlay.open { opacity:1; pointer-events:all; }
-    .od-drawer { width:100%; max-width:560px; background:#fff; border-radius:24px 24px 0 0; max-height:92vh; overflow-y:auto; transform:translateY(100%); transition:transform .35s cubic-bezier(.22,1,.36,1); box-shadow:0 -8px 48px rgba(44,54,57,.22); }
-    .od-overlay.open .od-drawer { transform:translateY(0); }
-    .od-handle { width:40px; height:4px; background:rgba(162,123,92,.25); border-radius:99px; margin:14px auto 0; }
-    .od-header { display:flex; align-items:flex-start; justify-content:space-between; padding:1.25rem 1.5rem 0; gap:1rem; }
-    .od-order-num { font-family:'Playfair Display',serif; font-size:1.35rem; font-weight:800; color:#2C3639; margin-bottom:.3rem; }
-    .od-close { width:34px; height:34px; border-radius:50%; background:rgba(162,123,92,.08); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#3F4E4F; transition:background .15s; }
-    .od-close:hover { background:rgba(162,123,92,.18); }
-    .od-close .material-symbols-outlined { font-size:18px; }
-    .od-status-banner { margin:1rem 1.5rem 0; border-radius:12px; padding:.75rem 1rem; display:flex; align-items:center; gap:.6rem; font-size:.85rem; font-weight:700; }
-    .od-section-title { font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:rgba(63,78,79,.45); padding:1.1rem 1.5rem .5rem; border-top:1px solid rgba(162,123,92,.08); margin-top:.5rem; }
-    .od-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:.5rem .75rem; padding:0 1.5rem; }
-    .od-info-item { display:flex; flex-direction:column; gap:.15rem; }
-    .od-info-label { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:rgba(63,78,79,.4); }
-    .od-info-val { font-size:.875rem; font-weight:600; color:#2C3639; }
-    .od-product-list { padding:.25rem 1.5rem 0; display:flex; flex-direction:column; gap:.6rem; }
-    .od-product-row { display:flex; gap:.875rem; align-items:flex-start; background:#F7F7F6; border-radius:12px; padding:.75rem; }
-    .od-product-img { width:52px; height:52px; border-radius:9px; object-fit:cover; flex-shrink:0; border:1px solid rgba(162,123,92,.12); }
-    .od-product-img-ph { width:52px; height:52px; border-radius:9px; flex-shrink:0; background:rgba(162,123,92,.1); display:flex; align-items:center; justify-content:center; color:rgba(162,123,92,.5); }
-    .od-product-info { flex:1; min-width:0; }
-    .od-product-name { font-size:.875rem; font-weight:700; color:#2C3639; }
-    .od-product-note { font-size:.72rem; color:rgba(63,78,79,.5); margin-top:2px; line-height:1.5; }
-    .od-product-qty { font-size:.72rem; color:rgba(63,78,79,.45); margin-top:2px; }
-    .od-product-price { font-size:.875rem; font-weight:800; color:#A27B5C; white-space:nowrap; }
-    .od-total { margin:.75rem 1.5rem; border-radius:12px; background:rgba(162,123,92,.05); border:1px solid rgba(162,123,92,.12); padding:1rem; }
-    .od-total-row { display:flex; justify-content:space-between; align-items:center; font-size:.875rem; color:#3F4E4F; margin-bottom:.5rem; }
-    .od-total-row:last-child { margin-bottom:0; }
-    .od-total-final { font-size:1.1rem; font-weight:800; color:#2C3639; border-top:1px solid rgba(162,123,92,.12); padding-top:.6rem; margin-top:.5rem; }
-    .od-total-final span:last-child { color:#A27B5C; }
-    .od-timeline { padding:0 1.5rem .5rem; }
-    .od-step { display:flex; align-items:center; gap:.75rem; padding:.5rem 0; }
-    .od-step-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; background:rgba(162,123,92,.2); border:2px solid rgba(162,123,92,.2); }
-    .od-step-dot.done { background:#A27B5C; border-color:#A27B5C; }
-    .od-step-dot.current { background:#fff; border-color:#A27B5C; box-shadow:0 0 0 3px rgba(162,123,92,.2); }
-    .od-step-line { width:1px; height:18px; background:rgba(162,123,92,.15); margin-left:4px; }
-    .od-step-label { font-size:.8rem; color:rgba(63,78,79,.5); }
-    .od-step-label.done { color:#2C3639; font-weight:600; }
-    .od-step-label.current { color:#A27B5C; font-weight:700; }
-    .od-cancel-btn { margin:.75rem 1.5rem 0; display:flex; align-items:center; justify-content:center; gap:.5rem; width:calc(100% - 3rem); padding:.75rem; border-radius:12px; border:1.5px solid rgba(239,68,68,.3); background:rgba(239,68,68,.05); color:#b91c1c; font-family:'Work Sans',sans-serif; font-size:.875rem; font-weight:700; cursor:pointer; transition:background .15s; }
-    .od-cancel-btn:hover { background:rgba(239,68,68,.1); border-color:rgba(239,68,68,.5); }
-    .od-bottom { height:28px; }
+/* ── Delete button ── */
+.oh-del-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(239,68,68,.25);background:rgba(239,68,68,.05);color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.oh-del-btn:hover{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.5);}
+.oh-del-btn .material-symbols-outlined{font-size:15px;}
 
-    /* Cancel confirm */
-    .cc-overlay { position:fixed; inset:0; z-index:10000; background:rgba(28,22,16,.45); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s; }
-    .cc-overlay.open { opacity:1; pointer-events:all; }
-    .cc-box { background:#fff; border-radius:18px; padding:1.75rem 2rem; max-width:380px; width:90%; box-shadow:0 20px 60px rgba(44,54,57,.22); transform:scale(.94) translateY(8px); transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
-    .cc-overlay.open .cc-box { transform:scale(1) translateY(0); }
+/* ── Pagination (tp-dot / tp-arrow pattern) ── */
+#oh-pager{display:flex;align-items:center;justify-content:center;gap:.375rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid rgba(162,123,92,.1);}
+.oh-dot{width:6px;height:6px;border-radius:50%;background:rgba(162,123,92,.25);cursor:pointer;transition:background .2s,transform .2s;border:none;padding:0;}
+.oh-dot.active{background:#A27B5C;transform:scale(1.3);}
+.oh-arrow{width:28px;height:28px;border-radius:50%;border:1.5px solid rgba(162,123,92,.3);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#A27B5C;transition:background .15s,border-color .15s;}
+.oh-arrow:hover:not(:disabled){background:rgba(162,123,92,.08);border-color:#A27B5C;}
+.oh-arrow:disabled{opacity:.3;cursor:default;}
+.oh-page-label{font-family:'Playfair Display',serif;font-style:italic;font-size:.78rem;color:rgba(162,123,92,.6);margin:0 .3rem;white-space:nowrap;}
+
+/* ── Drawer (reuse from v5 pattern) ── */
+.od-overlay{position:fixed;inset:0;z-index:9000;background:rgba(28,22,16,.55);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.od-overlay.open{opacity:1;pointer-events:all;}
+.od-drawer{width:100%;max-width:560px;background:#fff;border-radius:24px 24px 0 0;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .35s cubic-bezier(.22,1,.36,1);box-shadow:0 -8px 48px rgba(44,54,57,.22);}
+.od-overlay.open .od-drawer{transform:translateY(0);}
+.od-handle{width:40px;height:4px;background:rgba(162,123,92,.25);border-radius:99px;margin:14px auto 0;}
+.od-header{display:flex;align-items:flex-start;justify-content:space-between;padding:1.25rem 1.5rem 0;gap:1rem;}
+.od-order-num{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:800;color:#2C3639;margin-bottom:.3rem;}
+.od-close{width:34px;height:34px;border-radius:50%;background:rgba(162,123,92,.08);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3F4E4F;transition:background .15s;}
+.od-close:hover{background:rgba(162,123,92,.18);}
+.od-close .material-symbols-outlined{font-size:18px;}
+.od-status-banner{margin:1rem 1.5rem 0;border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-weight:700;}
+.od-section-title{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(63,78,79,.45);padding:1.1rem 1.5rem .5rem;border-top:1px solid rgba(162,123,92,.08);margin-top:.5rem;}
+.od-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;padding:0 1.5rem;}
+.od-info-item{display:flex;flex-direction:column;gap:.15rem;}
+.od-info-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(63,78,79,.4);}
+.od-info-val{font-size:.875rem;font-weight:600;color:#2C3639;}
+.od-product-list{padding:.25rem 1.5rem 0;display:flex;flex-direction:column;gap:.6rem;}
+.od-product-row{display:flex;gap:.875rem;align-items:flex-start;background:#F7F7F6;border-radius:12px;padding:.75rem;}
+.od-product-img{width:52px;height:52px;border-radius:9px;object-fit:cover;flex-shrink:0;border:1px solid rgba(162,123,92,.12);}
+.od-product-img-ph{width:52px;height:52px;border-radius:9px;flex-shrink:0;background:rgba(162,123,92,.1);display:flex;align-items:center;justify-content:center;color:rgba(162,123,92,.5);}
+.od-product-info{flex:1;min-width:0;}
+.od-product-name{font-size:.875rem;font-weight:700;color:#2C3639;}
+.od-product-note{font-size:.72rem;color:rgba(63,78,79,.5);margin-top:2px;line-height:1.5;}
+.od-product-qty{font-size:.72rem;color:rgba(63,78,79,.45);margin-top:2px;}
+.od-product-price{font-size:.875rem;font-weight:800;color:#A27B5C;white-space:nowrap;}
+.od-total{margin:.75rem 1.5rem;border-radius:12px;background:rgba(162,123,92,.05);border:1px solid rgba(162,123,92,.12);padding:1rem;}
+.od-total-row{display:flex;justify-content:space-between;align-items:center;font-size:.875rem;color:#3F4E4F;margin-bottom:.5rem;}
+.od-total-row:last-child{margin-bottom:0;}
+.od-total-final{font-size:1.1rem;font-weight:800;color:#2C3639;border-top:1px solid rgba(162,123,92,.12);padding-top:.6rem;margin-top:.5rem;}
+.od-total-final span:last-child{color:#A27B5C;}
+.od-timeline{padding:0 1.5rem .5rem;}
+.od-step{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;}
+.od-step-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:rgba(162,123,92,.2);border:2px solid rgba(162,123,92,.2);}
+.od-step-dot.done{background:#A27B5C;border-color:#A27B5C;}
+.od-step-dot.current{background:#fff;border-color:#A27B5C;box-shadow:0 0 0 3px rgba(162,123,92,.2);}
+.od-step-line{width:1px;height:18px;background:rgba(162,123,92,.15);margin-left:4px;}
+.od-step-label{font-size:.8rem;color:rgba(63,78,79,.5);}
+.od-step-label.done{color:#2C3639;font-weight:600;}
+.od-step-label.current{color:#A27B5C;font-weight:700;}
+.od-cancel-btn{margin:.75rem 1.5rem 0;display:flex;align-items:center;justify-content:center;gap:.5rem;width:calc(100% - 3rem);padding:.75rem;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.05);color:#b91c1c;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;transition:background .15s;}
+.od-cancel-btn:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.5);}
+.od-bottom{height:28px;}
+.cc-overlay{position:fixed;inset:0;z-index:10000;background:rgba(28,22,16,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.cc-overlay.open{opacity:1;pointer-events:all;}
+.cc-box{background:#fff;border-radius:18px;padding:1.75rem 2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(44,54,57,.22);transform:scale(.94) translateY(8px);transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
+.cc-overlay.open .cc-box{transform:scale(1) translateY(0);}
 </style>
 
 <section class="min-h-screen pt-28 pb-20" style="background:#F7F7F6;">
@@ -188,7 +203,8 @@
         }
         else
         {
-            <div class="space-y-3">
+            <!-- Order list (all rendered, JS handles pagination) -->
+            <div id="oh-list" class="space-y-3">
                 @foreach (var order in Model)
                 {
                     var firstItem = order.OrderDetails?.FirstOrDefault();
@@ -197,8 +213,9 @@
                     var subText = itemCount > 1
                         ? $"{firstName} +{itemCount - 1} món khác"
                         : firstName + (firstItem != null ? $" ×{firstItem.Quantity}" : "");
+                    bool canDel = CanDelete(order.Status);
 
-                    <div class="oh-row" onclick="openOrderDetail(@order.Id)">
+                    <div class="oh-row" data-order-id="@order.Id" onclick="openOrderDetail(@order.Id)">
                         <div class="oh-icon">
                             <span class="material-symbols-outlined">@OStatusIcon(order.Status)</span>
                         </div>
@@ -216,10 +233,30 @@
                             <div class="oh-amount">@order.TotalAmount.ToString("N0")đ</div>
                             <div class="oh-date">@order.OrderDate.ToLocalTime().ToString("dd/MM/yyyy")</div>
                         </div>
-                        <span class="material-symbols-outlined oh-arrow">chevron_right</span>
+                        @if (canDel)
+                        {
+                            <form asp-controller="Cart" asp-action="DeleteOrder" method="post"
+                                  onclick="event.stopPropagation()" style="flex-shrink:0;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="orderId" value="@order.Id" />
+                                <button type="button" class="oh-del-btn"
+                                        onclick="event.stopPropagation();confirmDeleteOrder(this.closest('form'),@order.Id)"
+                                        title="Xóa đơn hàng này">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined oh-arrow">chevron_right</span>
+                        }
                     </div>
                 }
             </div>
+
+            <!-- Pager -->
+            <div id="oh-pager"></div>
+
             <script id="oh-data" type="application/json">@Html.Raw(ordersJson)</script>
         }
 
@@ -245,58 +282,33 @@
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-
         <div class="od-status-banner" id="odStatusBanner">
             <span class="material-symbols-outlined" id="odStatusIcon">hourglass_empty</span>
             <span id="odStatusLabel">—</span>
         </div>
-
         <div class="od-section-title">Thông Tin Đơn Hàng</div>
         <div class="od-info-grid">
-            <div class="od-info-item">
-                <span class="od-info-label">Người đặt</span>
-                <span class="od-info-val" id="odCustomerName">—</span>
-            </div>
-            <div class="od-info-item">
-                <span class="od-info-label">Số điện thoại</span>
-                <span class="od-info-val" id="odCustomerPhone">—</span>
-            </div>
-            <div class="od-info-item">
-                <span class="od-info-label">Địa chỉ giao hàng</span>
-                <span class="od-info-val" id="odShipping">—</span>
-            </div>
-            <div class="od-info-item">
-                <span class="od-info-label">Phương thức</span>
-                <span class="od-info-val" id="odPayment">—</span>
-            </div>
-            <div class="od-info-item" id="odNoteWrap" style="grid-column:1/-1;display:none;">
-                <span class="od-info-label">Ghi chú</span>
-                <span class="od-info-val" id="odNote">—</span>
-            </div>
+            <div class="od-info-item"><span class="od-info-label">Người đặt</span><span class="od-info-val" id="odCustomerName">—</span></div>
+            <div class="od-info-item"><span class="od-info-label">Số điện thoại</span><span class="od-info-val" id="odCustomerPhone">—</span></div>
+            <div class="od-info-item"><span class="od-info-label">Địa chỉ giao hàng</span><span class="od-info-val" id="odShipping">—</span></div>
+            <div class="od-info-item"><span class="od-info-label">Phương thức</span><span class="od-info-val" id="odPayment">—</span></div>
+            <div class="od-info-item" id="odNoteWrap" style="grid-column:1/-1;display:none;"><span class="od-info-label">Ghi chú</span><span class="od-info-val" id="odNote">—</span></div>
         </div>
-
         <div class="od-section-title">Sản Phẩm</div>
         <div class="od-product-list" id="odProductList"></div>
-
         <div class="od-total">
             <div class="od-total-row"><span>Tạm tính</span><span id="odSubtotal">—</span></div>
             <div class="od-total-row"><span>Phí giao hàng</span><span style="color:#059669;font-weight:600;">Miễn phí</span></div>
             <div class="od-total-row od-total-final"><span>Tổng cộng</span><span id="odTotal">—</span></div>
         </div>
-
         <div class="od-section-title">Trạng Thái Đơn Hàng</div>
         <div class="od-timeline" id="odTimeline"></div>
-
         <div id="odCancelWrap" style="display:none;">
             <button class="od-cancel-btn" onclick="askCancelOrder()">
-                <span class="material-symbols-outlined">cancel</span>
-                Hủy Đơn Hàng
+                <span class="material-symbols-outlined">cancel</span>Hủy Đơn Hàng
             </button>
-            <p style="text-align:center;font-size:.7rem;color:rgba(63,78,79,.4);margin:.4rem 1.5rem 0;">
-                Chỉ có thể hủy khi đơn đang "Chờ xác nhận"
-            </p>
+            <p style="text-align:center;font-size:.7rem;color:rgba(63,78,79,.4);margin:.4rem 1.5rem 0;">Chỉ có thể hủy khi đơn đang "Chờ xác nhận"</p>
         </div>
-
         <div class="od-bottom"></div>
     </div>
 </div>
@@ -333,107 +345,169 @@
     </div>
 </div>
 
+@* ── Delete Confirm ── *@
+<div class="cc-overlay" id="deleteOrderOverlay">
+    <div class="cc-box">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+            <div style="width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="color:#dc2626;font-size:22px;">delete_forever</span>
+            </div>
+            <div>
+                <div style="font-size:1rem;font-weight:800;color:#2C3639;">Xóa khỏi lịch sử?</div>
+                <div id="deleteOrderLabel" style="font-size:.78rem;color:rgba(63,78,79,.5);margin-top:2px;"></div>
+            </div>
+        </div>
+        <p style="font-size:.875rem;color:#3F4E4F;line-height:1.7;margin-bottom:1.5rem;">
+            Đơn hàng sẽ bị xóa vĩnh viễn khỏi lịch sử. Thao tác này không thể hoàn tác.
+        </p>
+        <div style="display:flex;gap:.75rem;">
+            <button onclick="document.getElementById('deleteOrderOverlay').classList.remove('open')"
+                    style="flex:1;padding:.65rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;background:transparent;color:#3F4E4F;font-family:'Work Sans',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;">
+                Không, giữ lại
+            </button>
+            <span id="deleteOrderFormSlot" style="flex:1;"></span>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
+/* ── Data ── */
 var OH_ORDERS = [];
 var _activeId = null;
-
 (function(){
     var el = document.getElementById('oh-data');
-    if (el) { try { OH_ORDERS = JSON.parse(el.textContent); } catch(e){} }
+    if(el){ try{ OH_ORDERS = JSON.parse(el.textContent); }catch(e){} }
 })();
 
-var STEPS = [
-    {val:0,label:'Chờ xác nhận'},{val:1,label:'Đã xác nhận'},
-    {val:2,label:'Đang pha chế'},{val:3,label:'Sẵn sàng'},{val:4,label:'Hoàn thành'}
-];
+/* ── Pagination — 5/trang ── */
+var OH_PAGE_SIZE = 5;
+var _ohPage = 0;
+var _allRows = [];
 
-function vn(n){ return Number(n).toLocaleString('vi-VN')+'đ'; }
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+(function initPager(){
+    _allRows = Array.from(document.querySelectorAll('#oh-list .oh-row'));
+    if(_allRows.length <= OH_PAGE_SIZE){
+        document.getElementById('oh-pager').style.display = 'none';
+        return;
+    }
+    renderOhPage(0);
+})();
+
+function renderOhPage(page){
+    var total = _allRows.length;
+    var pages = Math.ceil(total / OH_PAGE_SIZE);
+    if(page < 0 || page >= pages) return;
+    _ohPage = page;
+
+    _allRows.forEach(function(row, i){
+        var inPage = i >= page * OH_PAGE_SIZE && i < (page + 1) * OH_PAGE_SIZE;
+        row.style.display = inPage ? '' : 'none';
+    });
+
+    var pager = document.getElementById('oh-pager');
+    pager.style.display = 'flex';
+
+    var html = '<button class="oh-arrow" onclick="renderOhPage('+(_ohPage-1)+')"'
+        +(_ohPage===0?' disabled':'')+'>'
+        +'<span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span></button>';
+
+    for(var i=0;i<pages;i++){
+        html += '<button class="oh-dot'+(i===_ohPage?' active':'')+'" onclick="renderOhPage('+i+')" title="Trang '+(i+1)+'"></button>';
+    }
+    html += '<span class="oh-page-label">'+(_ohPage+1)+'/'+pages+'</span>';
+    html += '<button class="oh-arrow" onclick="renderOhPage('+(_ohPage+1)+')"'
+        +(_ohPage>=pages-1?' disabled':'')+'>'
+        +'<span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span></button>';
+    pager.innerHTML = html;
+}
+
+/* ── Delete confirm ── */
+var _deleteForm = null;
+function confirmDeleteOrder(form, orderId){
+    _deleteForm = form;
+    var o = OH_ORDERS.find(function(x){ return x.id === orderId; });
+    document.getElementById('deleteOrderLabel').textContent = o ? 'Đơn #'+o.id+' · '+Number(o.total).toLocaleString('vi-VN')+'đ' : 'Đơn #'+orderId;
+    var slot = document.getElementById('deleteOrderFormSlot');
+    slot.innerHTML = '';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'width:100%;padding:.65rem;border:none;border-radius:10px;background:#dc2626;color:#fff;font-family:\'Work Sans\',sans-serif;font-size:.875rem;font-weight:700;cursor:pointer;';
+    btn.textContent = 'Xóa khỏi lịch sử';
+    btn.onclick = function(){
+        document.getElementById('deleteOrderOverlay').classList.remove('open');
+        _deleteForm.submit();
+    };
+    slot.appendChild(btn);
+    document.getElementById('deleteOrderOverlay').classList.add('open');
+}
+
+/* ── Drawer ── */
+var STEPS=[{val:0,label:'Chờ xác nhận'},{val:1,label:'Đã xác nhận'},{val:2,label:'Đang pha chế'},{val:3,label:'Sẵn sàng'},{val:4,label:'Hoàn thành'}];
+function vn(n){return Number(n).toLocaleString('vi-VN')+'đ';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function openOrderDetail(id){
-    var o = OH_ORDERS.find(function(x){return x.id===id;});
-    if(!o) return;
-    _activeId = id;
-
-    document.getElementById('odOrderNum').textContent = 'Đơn #'+o.id;
-    document.getElementById('odOrderDate').textContent = o.date;
-
-    var b = document.getElementById('odStatusBanner');
-    b.style.background = o.statusBg; b.style.color = o.statusClr;
-    document.getElementById('odStatusIcon').textContent = o.statusIcon;
-    document.getElementById('odStatusLabel').textContent = o.statusLabel;
-
-    document.getElementById('odCustomerName').textContent  = o.customerName  || '—';
-    document.getElementById('odCustomerPhone').textContent = o.customerPhone || '—';
-    document.getElementById('odShipping').textContent = o.shipping || 'Chưa có địa chỉ';
-    document.getElementById('odPayment').textContent = o.payment;
-    var nw = document.getElementById('odNoteWrap');
-    if(o.note){ document.getElementById('odNote').textContent=o.note; nw.style.display=''; }
-    else { nw.style.display='none'; }
-
-    document.getElementById('odProductList').innerHTML = (o.items||[]).map(function(item){
-        var imgH = item.img
-            ? '<img class="od-product-img" src="'+esc(item.img)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>'
-              +'<div class="od-product-img-ph" style="display:none;"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>'
-            : '<div class="od-product-img-ph"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>';
-        var noteH = item.itemNote ? '<div class="od-product-note">'+esc(item.itemNote)+'</div>' : '';
-        return '<div class="od-product-row">'+imgH
-            +'<div class="od-product-info">'
-            +'<div class="od-product-name">'+esc(item.name)+'</div>'
-            +'<div class="od-product-qty">Số lượng: '+item.qty+'</div>'+noteH
-            +'</div>'
-            +'<div class="od-product-price">'+vn(item.price*item.qty)+'</div>'
-            +'</div>';
+    var o=OH_ORDERS.find(function(x){return x.id===id;});
+    if(!o)return;
+    _activeId=id;
+    document.getElementById('odOrderNum').textContent='Đơn #'+o.id;
+    document.getElementById('odOrderDate').textContent=o.date;
+    var b=document.getElementById('odStatusBanner');
+    b.style.background=o.statusBg;b.style.color=o.statusClr;
+    document.getElementById('odStatusIcon').textContent=o.statusIcon;
+    document.getElementById('odStatusLabel').textContent=o.statusLabel;
+    document.getElementById('odCustomerName').textContent=o.customerName||'—';
+    document.getElementById('odCustomerPhone').textContent=o.customerPhone||'—';
+    document.getElementById('odShipping').textContent=o.shipping||'Chưa có địa chỉ';
+    document.getElementById('odPayment').textContent=o.payment;
+    var nw=document.getElementById('odNoteWrap');
+    if(o.note){document.getElementById('odNote').textContent=o.note;nw.style.display='';}
+    else{nw.style.display='none';}
+    document.getElementById('odProductList').innerHTML=(o.items||[]).map(function(item){
+        var imgH=item.img
+            ?'<img class="od-product-img" src="'+esc(item.img)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>'
+             +'<div class="od-product-img-ph" style="display:none;"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>'
+            :'<div class="od-product-img-ph"><span class="material-symbols-outlined" style="font-size:20px;">coffee</span></div>';
+        var noteH=item.itemNote?'<div class="od-product-note">'+esc(item.itemNote)+'</div>':'';
+        return '<div class="od-product-row">'+imgH+'<div class="od-product-info"><div class="od-product-name">'+esc(item.name)+'</div><div class="od-product-qty">Số lượng: '+item.qty+'</div>'+noteH+'</div><div class="od-product-price">'+vn(item.price*item.qty)+'</div></div>';
     }).join('');
-
-    document.getElementById('odSubtotal').textContent = vn(o.total);
-    document.getElementById('odTotal').textContent = vn(o.total);
-
-    var tl = document.getElementById('odTimeline');
+    document.getElementById('odSubtotal').textContent=vn(o.total);
+    document.getElementById('odTotal').textContent=vn(o.total);
+    var tl=document.getElementById('odTimeline');
     if(o.status===5){
         tl.innerHTML='<div class="od-step"><div class="od-step-dot done"></div><div class="od-step-label done">Đã đặt hàng</div></div>'
             +'<div class="od-step-line"></div>'
             +'<div class="od-step"><div class="od-step-dot" style="background:#ef4444;border-color:#ef4444;"></div>'
             +'<div class="od-step-label current" style="color:#b91c1c;">Đơn hàng đã hủy</div></div>';
-    } else {
-        tl.innerHTML = STEPS.map(function(s,i){
-            var d=o.status>s.val, c=o.status===s.val;
-            return '<div class="od-step"><div class="od-step-dot '+(d?'done':c?'current':'')+'"></div>'
-                +'<div class="od-step-label '+(d?'done':c?'current':'')+'">'+ s.label+'</div></div>'
+    }else{
+        tl.innerHTML=STEPS.map(function(s,i){
+            var d=o.status>s.val,c=o.status===s.val;
+            return '<div class="od-step"><div class="od-step-dot '+(d?'done':c?'current':'')+'"></div><div class="od-step-label '+(d?'done':c?'current':'')+'">'+ s.label+'</div></div>'
                 +(i<STEPS.length-1?'<div class="od-step-line" style="margin-left:4px;"></div>':'');
         }).join('');
     }
-
-    document.getElementById('odCancelWrap').style.display = o.canCancel ? '' : 'none';
+    document.getElementById('odCancelWrap').style.display=o.canCancel?'':'none';
     document.getElementById('odOverlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow='hidden';
 }
-
-function closeOrderDetail(){
-    document.getElementById('odOverlay').classList.remove('open');
-    document.body.style.overflow = '';
-}
-
+function closeOrderDetail(){document.getElementById('odOverlay').classList.remove('open');document.body.style.overflow='';}
 function askCancelOrder(){
-    var o = OH_ORDERS.find(function(x){return x.id===_activeId;});
-    if(!o) return;
-    document.getElementById('cancelOrderLabel').textContent = 'Đơn #'+o.id+' · '+vn(o.total);
-    document.getElementById('cancelOrderId').value = o.id;
+    var o=OH_ORDERS.find(function(x){return x.id===_activeId;});
+    if(!o)return;
+    document.getElementById('cancelOrderLabel').textContent='Đơn #'+o.id+' · '+vn(o.total);
+    document.getElementById('cancelOrderId').value=o.id;
     document.getElementById('cancelOverlay').classList.add('open');
 }
-
-// Swipe down
 (function(){
-    var el=document.getElementById('odDrawer'), sy=0;
+    var el=document.getElementById('odDrawer'),sy=0;
     el.addEventListener('touchstart',function(e){sy=e.touches[0].clientY;},{passive:true});
     el.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-sy>80)closeOrderDetail();},{passive:true});
 })();
-
 document.addEventListener('keydown',function(e){
-    if(e.key!=='Escape') return;
-    if(document.getElementById('cancelOverlay').classList.contains('open'))
-        document.getElementById('cancelOverlay').classList.remove('open');
+    if(e.key!=='Escape')return;
+    if(document.getElementById('deleteOrderOverlay').classList.contains('open'))document.getElementById('deleteOrderOverlay').classList.remove('open');
+    else if(document.getElementById('cancelOverlay').classList.contains('open'))document.getElementById('cancelOverlay').classList.remove('open');
     else closeOrderDetail();
 });
 </script>

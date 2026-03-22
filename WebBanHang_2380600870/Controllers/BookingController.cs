@@ -123,5 +123,40 @@ namespace WebBanHang_2380600870.Controllers
 
             return View(bookings);
         }
+
+        // DELETE: User xóa lịch đặt chỗ khỏi lịch sử
+        // Điều kiện: không thể xóa khi status = Confirmed (đã xác nhận bởi quán)
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteBooking(int bookingId)
+        {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Bookings", "Admin");
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
+
+            var booking = await _context.Bookings
+                .FirstOrDefaultAsync(b => b.Id == bookingId &&
+                    (b.UserId == user.Id || b.Email == user.Email));
+
+            if (booking == null)
+            {
+                TempData["Error"] = "Không tìm thấy lịch đặt chỗ.";
+                return RedirectToAction(nameof(MyBookings));
+            }
+
+            if (booking.Status == BookingStatus.Confirmed)
+            {
+                TempData["Error"] = "Không thể xóa lịch đặt chỗ đã được xác nhận. Vui lòng liên hệ quán để hủy trước.";
+                return RedirectToAction(nameof(MyBookings));
+            }
+
+            _context.Bookings.Remove(booking);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Đã xóa lịch đặt chỗ ngày {booking.BookingDate:dd/MM/yyyy} lúc {booking.BookingTime}.";
+            return RedirectToAction(nameof(MyBookings));
+        }
     }
 }
