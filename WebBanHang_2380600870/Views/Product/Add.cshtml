@@ -8,98 +8,19 @@
 }
 
 <style>
-    .hc-form-label {
-        display: block;
-        font-size: .78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-        color: #2c3639;
-        margin-bottom: .5rem;
-    }
-
-    .hc-input {
-        width: 100%;
-        padding: .7rem 1rem;
-        border: 1.5px solid rgba(162,123,92,.35);
-        border-radius: 10px;
-        font-family: 'Work Sans', sans-serif;
-        font-size: .9rem;
-        color: #2c3639;
-        background: #fafaf9;
-        outline: none;
-        transition: border-color .15s;
-        box-sizing: border-box;
-    }
-
-        .hc-input:focus {
-            border-color: #a27b5c;
-        }
-
-    .hc-card {
-        background: #fff;
-        border-radius: 16px;
-        padding: 1.75rem;
-        box-shadow: 0 1px 4px rgba(44,54,57,.06);
-        border: 1px solid rgba(162,123,92,.15);
-    }
-
-    .hc-toast {
-        position: fixed;
-        top: 1.5rem;
-        right: 1.5rem;
-        z-index: 9999;
-        background: #fff;
-        border: 1px solid rgba(162,123,92,.3);
-        border-left: 4px solid #a27b5c;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-        box-shadow: 0 8px 24px rgba(44,54,57,.12);
-        transform: translateX(110%);
-        opacity: 0;
-        transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s ease;
-        max-width: 360px;
-    }
-
-        .hc-toast.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .hc-toast.error {
-            border-left-color: #ef4444;
-        }
-
-            .hc-toast.error .hc-toast-icon {
-                color: #ef4444;
-            }
-
-    .hc-toast-icon {
-        color: #a27b5c;
-        font-size: 22px;
-        flex-shrink: 0;
-    }
-
-    .hc-toast-msg {
-        font-size: .875rem;
-        font-weight: 500;
-        color: #2c3639;
-    }
-
-    .hc-toast-close {
-        margin-left: auto;
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: #94a3b8;
-        flex-shrink: 0;
-    }
+    .hc-form-label { display:block; font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#2c3639; margin-bottom:.5rem; }
+    .hc-input { width:100%; padding:.7rem 1rem; border:1.5px solid rgba(162,123,92,.35); border-radius:10px; font-family:'Work Sans',sans-serif; font-size:.9rem; color:#2c3639; background:#fafaf9; outline:none; transition:border-color .15s; box-sizing:border-box; }
+    .hc-input:focus { border-color:#a27b5c; }
+    .hc-card { background:#fff; border-radius:16px; padding:1.75rem; box-shadow:0 1px 4px rgba(44,54,57,.06); border:1px solid rgba(162,123,92,.15); }
+    .hc-toast { position:fixed; top:1.5rem; right:1.5rem; z-index:9999; background:#fff; border:1px solid rgba(162,123,92,.3); border-left:4px solid #a27b5c; border-radius:12px; padding:1rem 1.25rem; display:flex; align-items:center; gap:.75rem; box-shadow:0 8px 24px rgba(44,54,57,.12); transform:translateX(110%); opacity:0; transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .35s ease; max-width:360px; }
+    .hc-toast.show { transform:translateX(0); opacity:1; }
+    .hc-toast.error { border-left-color:#ef4444; }
+    .hc-toast.error .hc-toast-icon { color:#ef4444; }
+    .hc-toast-icon { color:#a27b5c; font-size:22px; flex-shrink:0; }
+    .hc-toast-msg { font-size:.875rem; font-weight:500; color:#2c3639; }
+    .hc-toast-close { margin-left:auto; background:none; border:none; cursor:pointer; color:#94a3b8; flex-shrink:0; }
 </style>
 
-@* Toast container *@
 <div class="hc-toast" id="hcToast">
     <span class="material-symbols-outlined hc-toast-icon" id="hcToastIcon">check_circle</span>
     <span class="hc-toast-msg" id="hcToastMsg">Thành công!</span>
@@ -119,7 +40,6 @@
                     Thông tin cơ bản
                 </div>
 
-                @* Validation summary *@
                 @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
                 {
                     <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;color:#b91c1c;font-size:.85rem;">
@@ -150,13 +70,12 @@
 
                 <div>
                     <label asp-for="Description" class="hc-form-label">Mô tả</label>
-                    <textarea asp-for="Description" class="hc-input" rows="4"
-                              placeholder="Mô tả ngắn về sản phẩm..."></textarea>
+                    <textarea asp-for="Description" class="hc-input" rows="4" placeholder="Mô tả ngắn về sản phẩm..."></textarea>
                 </div>
             </div>
         </div>
 
-        @* Cột phải *@
+        @* Cột phải - Hình ảnh *@
         <div style="display:flex;flex-direction:column;gap:1.25rem;">
             <div class="hc-card">
                 <div style="font-size:.9rem;font-weight:700;color:#2c3639;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem;">
@@ -167,26 +86,30 @@
                 @* Preview *@
                 <div id="imgPreviewWrap"
                      style="width:100%;aspect-ratio:1;border-radius:12px;border:2px dashed rgba(162,123,92,.3);background:#fafaf9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;margin-bottom:1rem;overflow:hidden;cursor:pointer;"
-                     onclick="document.getElementById('imageFileInput').click()">
+                     onclick="document.getElementById('imgFileInput').click()">
                     <img id="imgPreview" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:10px;" />
                     <span id="imgPlaceholder" class="material-symbols-outlined" style="font-size:40px;color:rgba(162,123,92,.4);">add_photo_alternate</span>
                     <span id="imgPlaceholderTxt" style="font-size:.78rem;color:#94a3b8;">Nhấn để chọn ảnh</span>
                 </div>
 
-                <input type="file" id="imageFileInput" name="ImageFile" accept="image/*" style="display:none;"
-                       onchange="previewImg(this)" />
-                <button type="button" onclick="document.getElementById('imageFileInput').click()"
+                @* File input - khi chọn file thì clear URL input *@
+                <input type="file" id="imgFileInput" name="ImageFile" accept="image/*" style="display:none;"
+                       onchange="onFileSelected(this)" />
+
+                <button type="button" onclick="document.getElementById('imgFileInput').click()"
                         style="width:100%;padding:.65rem;border:1.5px solid rgba(162,123,92,.35);border-radius:10px;background:transparent;color:#a27b5c;font-family:'Work Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s;margin-bottom:.75rem;"
                         onmouseover="this.style.background='rgba(162,123,92,.06)'" onmouseout="this.style.background='transparent'">
                     <span class="material-symbols-outlined" style="font-size:18px;">upload</span> Chọn ảnh từ máy
                 </button>
 
-                @* URL input *@
+                @* URL input - có name="ImageUrl" để submit khi không có file *@
                 <div>
                     <label class="hc-form-label" style="margin-bottom:.4rem;">Hoặc dán URL ảnh</label>
                     <input type="text" id="urlInput" name="ImageUrl" class="hc-input"
-                           placeholder="https://..." oninput="previewFromUrl(this.value)" />
+                           placeholder="https://..." oninput="onUrlInput(this.value)" />
                 </div>
+
+                <p style="font-size:.72rem;color:#94a3b8;margin-top:.5rem;">Nếu chọn file, file sẽ được dùng thay URL.</p>
             </div>
 
             @* Actions *@
@@ -207,78 +130,59 @@
     </div>
 </form>
 
-@{
-    var hcToastMsg = TempData["Success"]?.ToString() ?? "";
-    var hcToastErr = TempData["Error"]?.ToString() ?? "";
-    var hcToastIsErr = !string.IsNullOrEmpty(hcToastErr);
-    var hcFinalMsg = hcToastIsErr ? hcToastErr : hcToastMsg;
-}
-<div id="hc-toast-bridge"
-     data-msg="@hcFinalMsg"
-     data-error="@(hcToastIsErr ? 1 : 0)"
-     style="display:none;"></div>
+<div id="hc-toast-bridge" data-msg="@(TempData["Error"]?.ToString() ?? "")" data-error="1" style="display:none;"></div>
+<div id="hc-success-bridge" data-msg="@(TempData["Success"]?.ToString() ?? "")" style="display:none;"></div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
-        // ── Xem trước ảnh từ file ────────────────────────────
-        function previewImg(input) {
-            const file = input.files[0];
+        // Khi chọn FILE: clear URL input để không conflict, hiển thị preview
+        function onFileSelected(input) {
+            var file = input.files[0];
             if (!file) return;
-            // Khi chọn file, xóa URL input
+            // Clear URL input - file wins over URL
             document.getElementById('urlInput').value = '';
-            const reader = new FileReader();
-            reader.onload = e => showPreview(e.target.result);
+            // Show preview
+            var reader = new FileReader();
+            reader.onload = function(e) { showPreview(e.target.result); };
             reader.readAsDataURL(file);
         }
 
-        // ── Xem trước ảnh từ URL ─────────────────────────────
-        function previewFromUrl(url) {
+        // Khi nhập URL: clear file input, hiển thị preview
+        function onUrlInput(url) {
             if (url.trim()) {
-                // Khi nhập URL, xóa file input
-                document.getElementById('imageFileInput').value = '';
+                document.getElementById('imgFileInput').value = '';
                 showPreview(url.trim());
             }
         }
 
         function showPreview(src) {
-            const img = document.getElementById('imgPreview');
+            var img = document.getElementById('imgPreview');
             img.src = src;
             img.style.display = 'block';
             document.getElementById('imgPlaceholder').style.display = 'none';
             document.getElementById('imgPlaceholderTxt').style.display = 'none';
         }
 
-        // ── Toast ────────────────────────────────────────────
-        function showToast(msg, isError = false) {
-            const t    = document.getElementById('hcToast');
-            const icon = document.getElementById('hcToastIcon');
+        function showToast(msg, isError) {
+            var t = document.getElementById('hcToast');
+            var icon = document.getElementById('hcToastIcon');
             document.getElementById('hcToastMsg').textContent = msg;
-            t.classList.toggle('error', isError);
+            t.classList.toggle('error', !!isError);
             icon.textContent = isError ? 'error' : 'check_circle';
             t.classList.add('show');
             setTimeout(hideToast, 4000);
         }
-        function hideToast() {
-            document.getElementById('hcToast').classList.remove('show');
-        }
+        function hideToast() { document.getElementById('hcToast').classList.remove('show'); }
 
-        // ── Hiển thị TempData — FIX TS1382/TS1109: dùng data-bridge thay vi if trong script
         (function() {
-                var bridge = document.getElementById('hc-toast-bridge');
-                if (!bridge) return;
-                var msg = bridge.getAttribute('data-msg');
-                var isErr = bridge.getAttribute('data-error') === '1';
-                if (msg) setTimeout(function() { showToast(msg, isErr); }, 200);
+            var errBridge = document.getElementById('hc-toast-bridge');
+            var sucBridge = document.getElementById('hc-success-bridge');
+            if (errBridge && errBridge.getAttribute('data-msg')) {
+                setTimeout(function() { showToast(errBridge.getAttribute('data-msg'), true); }, 200);
+            } else if (sucBridge && sucBridge.getAttribute('data-msg')) {
+                setTimeout(function() { showToast(sucBridge.getAttribute('data-msg'), false); }, 200);
+            }
         })();
-
-        // ── Hiện validation summary nếu có lỗi ───────────────
-        var vs = document.querySelector('[data-valmsg-summary]');
-        if (vs && vs.querySelector('li')) {
-            var vsWrap = vs.closest('div');
-            if (vsWrap) vsWrap.style.display = 'block';
-        }
     </script>
 }

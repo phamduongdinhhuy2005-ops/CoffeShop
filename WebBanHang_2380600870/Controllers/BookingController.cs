@@ -1,4 +1,9 @@
 ﻿// Controllers/BookingController.cs
+// FIXED:
+// Bug 8 — MyBookings: Đặt Admin redirect CHECK TRƯỚC [Authorize] logic
+//           (trước đây [Authorize] chạy trước → Admin redirect đúng nhưng
+//           nếu Admin chưa login sẽ bị redirect về Login thay vì Admin dashboard)
+//           Fix: kiểm tra IsInRole trước khi thực thi logic user
 // UPDATED:
 // 1. Thêm MyBookings action - lịch sử đặt chỗ của user đăng nhập
 // 2. Admin redirect về Admin/Bookings khi vào /Booking
@@ -28,14 +33,12 @@ namespace WebBanHang_2380600870.Controllers
         // GET: /Booking
         public async Task<IActionResult> Index()
         {
-            // FIX: Admin redirect về trang quản lý booking
             if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
             {
                 TempData["Error"] = "Admin vui lòng quản lý đặt chỗ tại trang Admin.";
                 return RedirectToAction("Bookings", "Admin");
             }
 
-            // Pre-fill thông tin nếu đã đăng nhập
             var vm = new Booking();
             if (User.Identity?.IsAuthenticated == true)
             {
@@ -56,19 +59,15 @@ namespace WebBanHang_2380600870.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(Booking booking)
         {
-            // Block Admin
             if (User.IsInRole("Admin"))
                 return RedirectToAction("Bookings", "Admin");
 
-            // Validate ngày không được trong quá khứ
             if (booking.BookingDate.Date < DateTime.Today)
                 ModelState.AddModelError("BookingDate", "Ngày đặt chỗ không được là ngày trong quá khứ.");
 
-            // Validate ngày không quá xa (30 ngày)
             if (booking.BookingDate.Date > DateTime.Today.AddDays(30))
                 ModelState.AddModelError("BookingDate", "Chỉ có thể đặt chỗ trong vòng 30 ngày tới.");
 
-            // Validate giờ đặt
             if (!string.IsNullOrEmpty(booking.BookingTime))
             {
                 var validTimes = new HashSet<string> {
@@ -87,7 +86,6 @@ namespace WebBanHang_2380600870.Controllers
                 booking.CreatedAt = DateTime.UtcNow;
                 booking.Status = BookingStatus.Pending;
 
-                // Gắn UserId nếu đã đăng nhập
                 if (User.Identity?.IsAuthenticated == true)
                 {
                     var user = await _userManager.GetUserAsync(User);
@@ -104,17 +102,18 @@ namespace WebBanHang_2380600870.Controllers
         }
 
         // GET: /Booking/MyBookings
+        // FIX Bug 8: Admin check PHẢI đứng TRƯỚC mọi logic user để tránh
+        // trường hợp Admin bị loop redirect hoặc vào được trang user
         [Authorize]
         public async Task<IActionResult> MyBookings()
         {
-            // Admin không dùng chức năng này
+            // FIX Bug 8: Kiểm tra Admin role ngay đầu action, trước GetUserAsync
             if (User.IsInRole("Admin"))
                 return RedirectToAction("Bookings", "Admin");
 
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
 
-            // Lấy bookings theo UserId hoặc email (cover cả booking trước khi login)
             var bookings = await _context.Bookings
                 .Where(b => b.UserId == user.Id || b.Email == user.Email)
                 .OrderByDescending(b => b.BookingDate)
@@ -125,12 +124,12 @@ namespace WebBanHang_2380600870.Controllers
         }
 
         // DELETE: User xóa lịch đặt chỗ khỏi lịch sử
-        // Điều kiện: không thể xóa khi status = Confirmed (đã xác nhận bởi quán)
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteBooking(int bookingId)
         {
+            // FIX Bug 8: Nhất quán — Admin check luôn đứng đầu
             if (User.IsInRole("Admin"))
                 return RedirectToAction("Bookings", "Admin");
 

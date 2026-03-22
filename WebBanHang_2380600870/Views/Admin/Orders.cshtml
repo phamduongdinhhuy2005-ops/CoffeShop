@@ -1,7 +1,14 @@
-﻿@model IEnumerable<WebBanHang_2380600870.Models.Order>
+﻿@* Views/Admin/Orders.cshtml *@
+@* FIXED:
+   Bug 14 — Dropdown status vẫn có option "Cancelled" dù controller đã block server-side
+             → Confusing UX: Admin thấy option "Cancelled" nhưng bấm Lưu sẽ báo lỗi
+             Fix: loại Cancelled khỏi dropdown; thêm label tiếng Việt; disable dropdown
+             cho đơn đã Completed hoặc Cancelled (đơn cuối cùng, không cho sửa)
+*@
+@model IEnumerable<WebBanHang_2380600870.Models.Order>
 @{
-    ViewData["Title"] = "Quản Lý Đơn Hàng";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"]      = "Quản Lý Đơn Hàng";
+    Layout                 = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["ActivePage"] = "Order";
     ViewData["Breadcrumb"] = "Đơn hàng";
     string cur = ViewBag.CurrentStatus ?? "";
@@ -13,6 +20,14 @@
         <span class="material-symbols-outlined" style="color:#a27b5c;font-size:22px;">check_circle</span>
         <span style="font-size:.875rem;font-weight:500;color:#2c3639;">@TempData["Success"]</span>
         <button onclick="document.getElementById('hcToast').remove()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#94a3b8;" class="material-symbols-outlined">close</button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div id="hcToastErr" style="position:fixed;top:1.5rem;right:1.5rem;z-index:9999;background:#fff;border:1px solid rgba(239,68,68,.3);border-left:4px solid #ef4444;border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 8px 24px rgba(44,54,57,.12);animation:toastIn .3s ease;">
+        <span class="material-symbols-outlined" style="color:#ef4444;font-size:22px;">error</span>
+        <span style="font-size:.875rem;font-weight:500;color:#2c3639;">@TempData["Error"]</span>
+        <button onclick="document.getElementById('hcToastErr').remove()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#94a3b8;" class="material-symbols-outlined">close</button>
     </div>
 }
 <style>
@@ -29,18 +44,18 @@
 
 @* Stat cards *@
 @{
-    var total = Model.Count();
-    var pending = Model.Count(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Pending);
-    var processing = Model.Count(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Processing || o.Status == WebBanHang_2380600870.Models.OrderStatus.Confirmed);
-    var completed = Model.Count(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Completed);
-    var revenue = Model.Where(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Completed).Sum(o => o.TotalAmount);
+    var total      = Model.Count();
+    var pending    = Model.Count(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Pending);
+    var processing = Model.Count(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Processing
+                                   || o.Status == WebBanHang_2380600870.Models.OrderStatus.Confirmed);
+    var completed  = Model.Count(o => o.Status == WebBanHang_2380600870.Models.OrderStatus.Completed);
 }
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
     @foreach (var (label, val, icon) in new[]{
-        ("Tổng đơn", total.ToString(), "receipt_long"),
-        ("Chờ xử lý", pending.ToString(), "pending"),
-        ("Đang xử lý", processing.ToString(), "local_cafe"),
-        ("Hoàn thành", completed.ToString(), "task_alt")
+        ("Tổng đơn",    total.ToString(),      "receipt_long"),
+        ("Chờ xử lý",   pending.ToString(),    "pending"),
+        ("Đang xử lý",  processing.ToString(), "local_cafe"),
+        ("Hoàn thành",  completed.ToString(),  "task_alt")
         })
     {
         <div style="background:#fff;border-radius:14px;padding:1.1rem 1.25rem;border:1px solid rgba(162,123,92,.15);display:flex;align-items:center;gap:.85rem;">
@@ -59,12 +74,13 @@
 <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem;">
     @foreach (var (label, status) in new[]{
         ("Tất cả", ""), ("Chờ XN", "Pending"), ("Đã XN", "Confirmed"),
-        ("Đang pha", "Processing"), ("Hoàn thành", "Completed"), ("Đã hủy", "Cancelled")
+        ("Đang pha", "Processing"), ("Sẵn sàng", "Ready"),
+        ("Hoàn thành", "Completed"), ("Đã hủy", "Cancelled")
         })
     {
         bool active = cur == status;
         <a asp-action="Orders" asp-route-status="@(status == "" ? null : status)"
-               style="padding:.45rem 1rem;border-radius:99px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-decoration:none;border:1.5px solid @(active ? "#a27b5c" : "rgba(162,123,92,.25)");background:@(active ? "#a27b5c" : "transparent");color:@(active ? "#fff" : "#a27b5c");transition:all .15s;">
+           style="padding:.45rem 1rem;border-radius:99px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-decoration:none;border:1.5px solid @(active ? "#a27b5c" : "rgba(162,123,92,.25)");background:@(active ? "#a27b5c" : "transparent");color:@(active ? "#fff" : "#a27b5c");transition:all .15s;">
             @label
         </a>
     }
@@ -98,15 +114,22 @@
                     {
                         var (statusClr, statusBg, statusLabel) = o.Status switch
                         {
-                            WebBanHang_2380600870.Models.OrderStatus.Pending => ("#92400e", "rgba(251,191,36,.15)", "Chờ XN"),
-                            WebBanHang_2380600870.Models.OrderStatus.Confirmed => ("#1e40af", "rgba(59,130,246,.12)", "Đã XN"),
-                            WebBanHang_2380600870.Models.OrderStatus.Processing => ("#7c3aed", "rgba(139,92,246,.12)", "Đang pha"),
-                            WebBanHang_2380600870.Models.OrderStatus.Ready => ("#065f46", "rgba(16,185,129,.12)", "Sẵn sàng"),
-                            WebBanHang_2380600870.Models.OrderStatus.Completed => ("#166534", "rgba(34,197,94,.12)", "Hoàn thành"),
-                            WebBanHang_2380600870.Models.OrderStatus.Cancelled => ("#991b1b", "rgba(239,68,68,.1)", "Đã hủy"),
+                            WebBanHang_2380600870.Models.OrderStatus.Pending    => ("#92400e", "rgba(251,191,36,.15)", "Chờ XN"),
+                            WebBanHang_2380600870.Models.OrderStatus.Confirmed  => ("#1e40af", "rgba(59,130,246,.12)",  "Đã XN"),
+                            WebBanHang_2380600870.Models.OrderStatus.Processing => ("#7c3aed", "rgba(139,92,246,.12)",  "Đang pha"),
+                            WebBanHang_2380600870.Models.OrderStatus.Ready      => ("#065f46", "rgba(16,185,129,.12)",  "Sẵn sàng"),
+                            WebBanHang_2380600870.Models.OrderStatus.Completed  => ("#166534", "rgba(34,197,94,.12)",   "Hoàn thành"),
+                            WebBanHang_2380600870.Models.OrderStatus.Cancelled  => ("#991b1b", "rgba(239,68,68,.1)",    "Đã hủy"),
                             _ => ("#64748b", "rgba(100,116,139,.1)", o.Status.ToString())
                         };
-                        <tr style="border-bottom:1px solid rgba(162,123,92,.09);transition:background .12s;" onmouseover="this.style.background='rgba(162,123,92,.03)'" onmouseout="this.style.background='transparent'">
+
+                        @* FIX Bug 14: Đơn đã Completed hoặc Cancelled — không thể thay đổi *@
+                        bool isFinal = o.Status == WebBanHang_2380600870.Models.OrderStatus.Completed
+                                    || o.Status == WebBanHang_2380600870.Models.OrderStatus.Cancelled;
+
+                        <tr style="border-bottom:1px solid rgba(162,123,92,.09);transition:background .12s;"
+                            onmouseover="this.style.background='rgba(162,123,92,.03)'"
+                            onmouseout="this.style.background='transparent'">
                             <td style="padding:1rem 1.25rem;color:#94a3b8;font-size:.8rem;font-weight:700;">#@o.Id.ToString("D4")</td>
                             <td style="padding:1rem 1.25rem;font-weight:600;color:#2c3639;">@(o.User?.FullName ?? o.User?.Email ?? "—")</td>
                             <td style="padding:1rem 1.25rem;color:#64748b;white-space:nowrap;">@o.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
@@ -117,22 +140,48 @@
                                 </span>
                             </td>
                             <td style="padding:1rem 1.25rem;">
-                                <form asp-action="UpdateOrderStatus" method="post" style="display:flex;gap:.4rem;align-items:center;justify-content:center;">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="orderId" value="@o.Id" />
-                                    <select name="status"
-                                            style="padding:.4rem .65rem;border:1.5px solid rgba(162,123,92,.3);border-radius:8px;font-family:'Work Sans',sans-serif;font-size:.78rem;color:#2c3639;background:#fafaf9;outline:none;cursor:pointer;">
-                                        @foreach (var s in Enum.GetValues<WebBanHang_2380600870.Models.OrderStatus>())
-                                        {
-                                            <option value="@s" selected="@(o.Status == s)">@s</option>
-                                        }
-                                    </select>
-                                    <button type="submit"
-                                            style="padding:.4rem .65rem;background:#a27b5c;color:#fff;border:none;border-radius:8px;font-family:'Work Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:opacity .15s;"
-                                            onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
-                                        Lưu
-                                    </button>
-                                </form>
+                                @if (isFinal)
+                                {
+                                    @* FIX Bug 14: Đơn cuối — hiện nhãn thay vì dropdown để tránh nhầm lẫn *@
+                                    <div style="text-align:center;font-size:.75rem;color:#94a3b8;font-style:italic;padding:.4rem 0;">
+                                        <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:3px;">lock</span>
+                                        Không thể thay đổi
+                                    </div>
+                                }
+                                else
+                                {
+                                    <form asp-action="UpdateOrderStatus" method="post"
+                                          style="display:flex;gap:.4rem;align-items:center;justify-content:center;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="orderId" value="@o.Id" />
+                                        @* FIX Bug 14: Loại bỏ Cancelled khỏi dropdown
+                                           Admin không được hủy đơn — chỉ user mới cancel đơn Pending của mình
+                                           Thêm label tiếng Việt thay vì dùng tên enum tiếng Anh *@
+                                        <select name="status"
+                                                style="padding:.4rem .65rem;border:1.5px solid rgba(162,123,92,.3);border-radius:8px;font-family:'Work Sans',sans-serif;font-size:.78rem;color:#2c3639;background:#fafaf9;outline:none;cursor:pointer;">
+                                            @{
+                                                var statusOptions = new[]
+                                                {
+                                                    (WebBanHang_2380600870.Models.OrderStatus.Pending,    "Chờ xác nhận"),
+                                                    (WebBanHang_2380600870.Models.OrderStatus.Confirmed,  "Đã xác nhận"),
+                                                    (WebBanHang_2380600870.Models.OrderStatus.Processing, "Đang pha chế"),
+                                                    (WebBanHang_2380600870.Models.OrderStatus.Ready,      "Sẵn sàng giao"),
+                                                    (WebBanHang_2380600870.Models.OrderStatus.Completed,  "Hoàn thành"),
+                                                    // Cancelled bị loại bỏ khỏi đây — Admin không được hủy đơn
+                                                };
+                                            }
+                                            @foreach (var (sVal, sLabel) in statusOptions)
+                                            {
+                                                <option value="@sVal" selected="@(o.Status == sVal)">@sLabel</option>
+                                            }
+                                        </select>
+                                        <button type="submit"
+                                                style="padding:.4rem .65rem;background:#a27b5c;color:#fff;border:none;border-radius:8px;font-family:'Work Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:opacity .15s;"
+                                                onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+                                            Lưu
+                                        </button>
+                                    </form>
+                                }
                             </td>
                         </tr>
                     }
@@ -146,8 +195,10 @@
 @section Scripts {
     <script>
         setTimeout(() => {
-            const t = document.getElementById('hcToast');
-            if (t) { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }
+            ['hcToast','hcToastErr'].forEach(id => {
+                const t = document.getElementById(id);
+                if (t) { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }
+            });
         }, 4000);
 
         // ── Pagination ──
@@ -166,7 +217,7 @@
                 var h='<div style="display:flex;align-items:center;justify-content:center;gap:.375rem;padding:1rem 0;">';
                 h+='<button class="pag-arrow" onclick="orderPage('+(page-1)+')" '+(page===0?'disabled':'')+'><span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span></button>';
                 for(var i=0;i<pages;i++){
-                    h+='<button class="pag-dot'+(i===page?' pag-dot-active':'')+'" onclick="orderPage('+i+')" title="Trang '+(i+1)+'"></button>';
+                    h+='<button class="pag-dot'+(i===page?' pag-dot-active':'')+'\" onclick="orderPage('+i+')" title="Trang '+(i+1)+'"></button>';
                 }
                 h+='<span style="font-size:.78rem;font-style:italic;color:rgba(162,123,92,.6);margin:0 .3rem;">'+(page+1)+'/'+pages+'</span>';
                 h+='<button class="pag-arrow" onclick="orderPage('+(page+1)+')" '+(page>=pages-1?'disabled':'')+'><span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span></button>';

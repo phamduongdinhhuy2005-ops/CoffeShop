@@ -1,8 +1,8 @@
 ﻿@* FILE: Views/Shared/_Layout.cshtml *@
-@* UPDATED: 
-   - User menu: thêm Cài Đặt, Lịch Sử Đặt Hàng, Lịch Sử Đặt Chỗ
-   - Admin menu: ẩn "Đặt Chỗ", ẩn icon giỏ hàng
-   - Admin: icon giỏ hàng redirect sang Product/Index thay vì Cart
+@* FIXED:
+   Bug 1 — Admin vẫn thấy link "Tìm Chúng Mình" trong nav — thêm điều kiện ẩn với Admin
+   Bug 2 — CartCount fetch vẫn chạy dù Admin (response trả 0 nhưng vẫn tốn request)
+            → Wrap updateCartBadge trong check User.IsInRole để chỉ fetch khi cần
 *@
 <!DOCTYPE html>
 <html lang="vi">
@@ -96,12 +96,10 @@
         overflow: hidden;
         }
 
-        /* Khi có admin-page class trên body: ẩn scroll ngoài */
         body.admin-page {
         overflow: hidden;
         }
 
-        /* Cart badge */
         .cart-badge {
         position: absolute;
         top: -4px;
@@ -123,14 +121,13 @@
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="bg-background-light font-display text-slate-custom @(IsSectionDefined("AdminPage") ? "admin-page" : "")">
+<body class="bg-background-light font-display text-slate-custom"
+      data-is-admin="@(User.IsInRole("Admin") ? "1" : "0")">
 
-    @* Nếu là admin page: chỉ render header + body, KHÔNG render footer, body = flex column full-height *@
     @if (IsSectionDefined("AdminPage"))
     {
         <div style="display:flex; flex-direction:column; height:100vh; overflow:hidden;">
 
-            <!-- ===== HEADER (ADMIN PAGE) ===== -->
             <header style="flex-shrink:0;" class="flex items-center justify-between whitespace-nowrap border-b border-primary/20 bg-background-light/90 backdrop-blur-md px-6 md:px-20 py-4 sticky top-0 z-50">
                 <a asp-controller="Home" asp-action="Index" class="flex items-center gap-3 text-slate-custom hover:opacity-80 transition-opacity">
                     <span class="material-symbols-outlined text-primary text-3xl" style="line-height:1;display:block;">local_cafe</span>
@@ -145,16 +142,19 @@
                 <nav class="hidden md:flex flex-1 justify-center gap-10">
                     <a asp-controller="Menu" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Thực Đơn</a>
                     <a asp-controller="Story" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Câu Chuyện</a>
-                    @* FIX: Admin không cần link Đặt Chỗ trên header — ẩn đi *@
+                    @* FIX Bug 1: Admin không thấy Đặt Chỗ và Tìm Chúng Mình trên nav *@
                     @if (!User.IsInRole("Admin"))
                     {
                         <a asp-controller="Booking" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Đặt Chỗ</a>
                     }
                     <a asp-controller="Home" asp-action="Privacy" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Chính Sách</a>
-                    <a href="#footer-location" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Tìm Chúng Mình</a>
+                    @* FIX Bug 1: Ẩn "Tìm Chúng Mình" với Admin — Admin không dùng footer location *@
+                    @if (!User.IsInRole("Admin"))
+                    {
+                        <a href="#footer-location" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Tìm Chúng Mình</a>
+                    }
                 </nav>
                 <div class="flex items-center gap-2">
-                    @* FIX: Ẩn icon giỏ hàng với Admin — Admin không dùng cart *@
                     @if (!User.IsInRole("Admin"))
                     {
                         <a asp-controller="Product" asp-action="Index"
@@ -191,7 +191,6 @@
                                     <div class="py-2">
                                         @if (User.IsInRole("Admin"))
                                         {
-                                            @* ADMIN MENU: Chỉ có Dashboard và Quản lý — không có Đặt Chỗ *@
                                             <a asp-controller="Admin" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
                                                 <span class="material-symbols-outlined text-primary" style="font-size:18px;">dashboard</span>
                                                 Dashboard Admin
@@ -203,7 +202,6 @@
                                         }
                                         else
                                         {
-                                            @* USER MENU: Cài Đặt + Lịch Sử Đặt Hàng + Lịch Sử Đặt Chỗ *@
                                             <a asp-controller="Account" asp-action="UserAccount" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
                                                 <span class="material-symbols-outlined text-primary" style="font-size:18px;">manage_accounts</span>
                                                 Cài Đặt Tài Khoản
@@ -257,10 +255,8 @@
     }
     else
     {
-        <!-- ===== NORMAL PAGE LAYOUT ===== -->
         <div class="flex flex-col min-h-screen">
 
-            <!-- ===== HEADER (NORMAL PAGE) ===== -->
             <header class="flex items-center justify-between whitespace-nowrap border-b border-primary/20 bg-background-light/90 backdrop-blur-md px-6 md:px-20 py-4 sticky top-0 z-50">
                 <a asp-controller="Home" asp-action="Index" class="flex items-center gap-3 text-slate-custom hover:opacity-80 transition-opacity">
                     <span class="material-symbols-outlined text-primary text-3xl" style="line-height:1;display:block;">local_cafe</span>
@@ -276,17 +272,20 @@
                 <nav class="hidden md:flex flex-1 justify-center gap-10">
                     <a asp-controller="Menu" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Thực Đơn</a>
                     <a asp-controller="Story" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Câu Chuyện</a>
-                    @* FIX: Ẩn Đặt Chỗ với Admin trên nav bar *@
+                    @* FIX Bug 1: Ẩn Đặt Chỗ với Admin *@
                     @if (!User.IsInRole("Admin"))
                     {
                         <a asp-controller="Booking" asp-action="Index" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Đặt Chỗ</a>
                     }
                     <a asp-controller="Home" asp-action="Privacy" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Chính Sách</a>
-                    <a href="#footer-location" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Tìm Chúng Mình</a>
+                    @* FIX Bug 1: Ẩn "Tìm Chúng Mình" với Admin *@
+                    @if (!User.IsInRole("Admin"))
+                    {
+                        <a href="#footer-location" class="text-teal-custom hover:text-primary transition-colors text-sm font-semibold uppercase tracking-wider">Tìm Chúng Mình</a>
+                    }
                 </nav>
 
                 <div class="flex items-center gap-2">
-                    @* FIX: Ẩn giỏ hàng với Admin; User thấy giỏ hàng + badge số lượng *@
                     @if (!User.IsInRole("Admin"))
                     {
                         <a asp-controller="Cart" asp-action="Index"
@@ -326,7 +325,6 @@
                                     <div class="py-2">
                                         @if (User.IsInRole("Admin"))
                                         {
-                                            @* ADMIN: chỉ hiện Dashboard + Quản lý, KHÔNG có Đặt Chỗ *@
                                             <a asp-controller="Admin" asp-action="Index" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
                                                 <span class="material-symbols-outlined text-primary" style="font-size:18px;">dashboard</span>
                                                 Dashboard Admin
@@ -338,7 +336,6 @@
                                         }
                                         else
                                         {
-                                            @* USER: Cài Đặt, Lịch Sử Đặt Hàng, Lịch Đặt Chỗ, Đặt Chỗ Mới *@
                                             <a asp-controller="Account" asp-action="UserAccount" class="flex items-center gap-3 px-5 py-3 text-sm text-teal-custom hover:text-primary transition-colors hover:bg-primary/5">
                                                 <span class="material-symbols-outlined text-primary" style="font-size:18px;">manage_accounts</span>
                                                 Cài Đặt Tài Khoản
@@ -387,12 +384,10 @@
                 </div>
             </header>
 
-            <!-- ===== BODY ===== -->
             <main class="flex-1">
                 @RenderBody()
             </main>
 
-            <!-- ===== FOOTER ===== -->
             <footer id="footer-location" class="bg-slate-custom text-cream-custom pt-16 pb-8 mt-auto">
                 <div class="max-w-7xl mx-auto px-6 md:px-20">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
@@ -461,13 +456,16 @@
         });
         });
 
-        // FIX: Tự động cập nhật cart badge khi page load
+        // FIX TS1109: Đọc isAdmin từ data-attribute của <body>
+        var _isAdmin = document.body.getAttribute('data-is-admin') === '1';
+
+        if (!_isAdmin) {
         (function updateCartBadge() {
-        const badge = document.getElementById('cartBadge');
+        var badge = document.getElementById('cartBadge');
         if (!badge) return;
         fetch('/Cart/CartCount')
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
         if (data.count > 0) {
         badge.textContent = data.count > 99 ? '99+' : data.count;
         badge.style.display = 'flex';
@@ -475,8 +473,9 @@
         badge.style.display = 'none';
         }
         })
-        .catch(() => {});
+        .catch(function() {});
         })();
+        }
     </script>
 
     @await RenderSectionAsync("AdminPage", required: false)

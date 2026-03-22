@@ -1,8 +1,11 @@
 // Controllers/AccountController.cs
 // FIXED:
-// 1. Login/Register GET: truyền ViewBag.GoogleEnabled / ViewBag.FacebookEnabled
-//    → view ẩn nút OAuth khi chưa cấu hình key, tránh crash InvalidOperationException
-// 2. Tất cả TempData/ModelState string đã sửa encoding UTF-8
+// Bug 10 — TempData["ActiveTab"] set đúng sau UpdateProfile và ChangePassword
+//           → Sau khi save, tab tương ứng mở lại thay vì về mặc định "profile"
+// Bug 13 — UserAccount(): bookings chỉ query theo UserId, nhưng MyBookings dùng UserId OR Email
+//           → Không nhất quán: booking đặt trước khi có tài khoản sẽ không hiện
+//           Fix: dùng (UserId == user.Id || Email == user.Email) giống MyBookings
+// Fix encoding: TempData strings dùng UTF-8 đúng chuẩn (không còn mojibake)
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -31,7 +34,6 @@ namespace WebBanHang_2380600870.Controllers
             _configuration = configuration;
         }
 
-        // Helper: kiểm tra OAuth provider có được cấu hình không
         private void SetOAuthViewBag()
         {
             ViewBag.GoogleEnabled = !string.IsNullOrEmpty(_configuration["Authentication:Google:ClientId"]);
@@ -125,8 +127,6 @@ namespace WebBanHang_2380600870.Controllers
         }
 
         // ======== ĐĂNG NHẬP NGOÀI (Google / Facebook) ========
-
-        /// Bước 1: Redirect sang Google hoặc Facebook
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult ExternalLogin(string provider, string? returnUrl = null)
@@ -136,7 +136,6 @@ namespace WebBanHang_2380600870.Controllers
             return Challenge(properties, provider);
         }
 
-        /// Bước 2: Callback sau khi Google / Facebook xác thực xong
         [HttpGet]
         public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
         {
@@ -150,7 +149,6 @@ namespace WebBanHang_2380600870.Controllers
             if (info == null)
                 return RedirectToAction("Login");
 
-            // Thử đăng nhập bằng external login đã liên kết
             var result = await _signInManager.ExternalLoginSignInAsync(
                 info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
 
@@ -161,7 +159,6 @@ namespace WebBanHang_2380600870.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // Chưa có tài khoản → tự động tạo mới
             var email = info.Principal.FindFirstValue(ClaimTypes.Email);
             if (string.IsNullOrEmpty(email))
             {
@@ -169,7 +166,6 @@ namespace WebBanHang_2380600870.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Nếu email đã tồn tại → liên kết luôn
             var existingUser = await _userManager.FindByEmailAsync(email);
             if (existingUser != null)
             {
@@ -178,7 +174,6 @@ namespace WebBanHang_2380600870.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // Tạo tài khoản mới
             var fullName = info.Principal.FindFirstValue(ClaimTypes.Name) ?? email;
             var newUser = new AppUser
             {
@@ -230,8 +225,10 @@ namespace WebBanHang_2380600870.Controllers
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
 
+            // FIX Bug 13: Dùng (UserId == user.Id OR Email == user.Email) nhất quán với MyBookings
+            // Booking đặt trước khi tạo tài khoản (UserId = null) vẫn hiện trong tab bookings
             var bookings = await _context.Bookings
-                .Where(b => b.UserId == user.Id)
+                .Where(b => b.UserId == user.Id || b.Email == user.Email)
                 .OrderByDescending(b => b.BookingDate)
                 .ThenByDescending(b => b.CreatedAt)
                 .ToListAsync();
@@ -253,6 +250,7 @@ namespace WebBanHang_2380600870.Controllers
             if (string.IsNullOrWhiteSpace(fullName))
             {
                 TempData["Error"] = "Họ tên không được để trống.";
+                TempData["ActiveTab"] = "profile";   // Bug 10: giữ đúng tab
                 return RedirectToAction("UserAccount");
             }
 
@@ -261,6 +259,7 @@ namespace WebBanHang_2380600870.Controllers
             await _userManager.UpdateAsync(user);
 
             TempData["Success"] = "Cập nhật thông tin thành công!";
+            TempData["ActiveTab"] = "profile";   // Bug 10: mở lại đúng tab
             return RedirectToAction("UserAccount");
         }
 
@@ -269,6 +268,9 @@ namespace WebBanHang_2380600870.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
         {
+            // Bug 10: luôn set ActiveTab = "password" cho action này
+            TempData["ActiveTab"] = "password";
+
             if (string.IsNullOrWhiteSpace(currentPassword))
             {
                 TempData["Error"] = "Vui lòng nhập mật khẩu hiện tại.";
@@ -304,9 +306,13 @@ namespace WebBanHang_2380600870.Controllers
 
             var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
             if (result.Succeeded)
+            {
                 TempData["Success"] = "Đổi mật khẩu thành công!";
+            }
             else
+            {
                 TempData["Error"] = string.Join(", ", result.Errors.Select(e => e.Description));
+            }
 
             return RedirectToAction("UserAccount");
         }

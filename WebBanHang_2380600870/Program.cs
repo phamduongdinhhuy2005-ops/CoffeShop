@@ -1,9 +1,11 @@
 // Program.cs
 // FIXED:
-// 1. Google/Facebook OAuth — chỉ đăng ký nếu key tồn tại, không crash khi clone về
-// 2. AddIdentity đã tích hợp Authentication — không gọi AddAuthentication() riêng nữa
-// 3. FullName admin seed đúng encoding UTF-8
-// 4. Middleware order: Session trước Routing
+// Bug 11 — OAuth registration: identityBuilder.Services.AddAuthentication() là sai API
+//           IdentityBuilder không có property .Services để chain thêm provider
+//           Cần dùng builder.Services.AddAuthentication() sau khi AddIdentity đã chạy
+// Bug 12 — Admin seed FullName: "Quản Trị Viên" bị lưu dưới dạng chuỗi mojibake
+//           Sửa thành string literal UTF-8 đúng chuẩn
+// (Giữ nguyên: OAuth optional check, Session trước Routing, cookie config)
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +19,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ===== IDENTITY =====
-var identityBuilder = builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
@@ -37,7 +39,7 @@ var identityBuilder = builder.Services.AddIdentity<AppUser, IdentityRole>(option
 .AddDefaultTokenProviders();
 
 // ===== GOOGLE + FACEBOOK OAUTH =====
-// FIX: Chỉ đăng ký nếu key tồn tại — người clone về chưa có key vẫn chạy được
+// Chỉ đăng ký nếu key tồn tại — người clone về chưa có key vẫn chạy được
 // Để bật: thêm vào appsettings.json hoặc User Secrets:
 //   "Authentication": {
 //     "Google":   { "ClientId": "...", "ClientSecret": "..." },
@@ -48,26 +50,27 @@ var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecr
 var fbAppId = builder.Configuration["Authentication:Facebook:AppId"];
 var fbAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
 
-// FIX: AddIdentity đã gọi AddAuthentication() bên trong — ta chỉ cần chain thêm provider
-// Gọi AddAuthentication() riêng sẽ ghi đè DefaultScheme → lỗi redirect login
+// FIX Bug 11: Dùng builder.Services.AddAuthentication() — KHÔNG phải identityBuilder.Services
+// AddIdentity() đã tự gọi AddAuthentication() bên trong và set DefaultScheme.
+// Ta chỉ cần chain thêm provider qua builder.Services, không tạo builder mới.
+var authBuilder = builder.Services.AddAuthentication();
+
 if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
 {
-    identityBuilder.Services.AddAuthentication()
-        .AddGoogle(options =>
-        {
-            options.ClientId = googleClientId;
-            options.ClientSecret = googleClientSecret;
-        });
+    authBuilder.AddGoogle(options =>
+    {
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+    });
 }
 
 if (!string.IsNullOrEmpty(fbAppId) && !string.IsNullOrEmpty(fbAppSecret))
 {
-    identityBuilder.Services.AddAuthentication()
-        .AddFacebook(options =>
-        {
-            options.AppId = fbAppId;
-            options.AppSecret = fbAppSecret;
-        });
+    authBuilder.AddFacebook(options =>
+    {
+        options.AppId = fbAppId;
+        options.AppSecret = fbAppSecret;
+    });
 }
 
 // ===== COOKIE =====
@@ -121,7 +124,7 @@ using (var scope = app.Services.CreateScope())
         {
             UserName = adminEmail,
             Email = adminEmail,
-            FullName = "Quản Trị Viên",   // FIX: encoding UTF-8 đúng
+            FullName = "Quản Trị Viên",   // FIX Bug 12: chuỗi UTF-8 đúng chuẩn
             EmailConfirmed = true
         };
         var result = await userManager.CreateAsync(admin, "Admin@123");
@@ -137,7 +140,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
-// FIX: Session phải đứng trước Routing để middleware pipeline xử lý đúng
+// Session phải đứng trước Routing để middleware pipeline xử lý đúng
 app.UseSession();
 app.UseRouting();
 app.UseAuthentication();

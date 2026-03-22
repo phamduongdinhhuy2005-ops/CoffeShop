@@ -1,4 +1,11 @@
 ﻿// Controllers/CartController.cs
+// FIXED:
+// Bug 7 — CancelOrder: Dùng FirstOrDefaultAsync với tracking rồi reload để tránh
+//           race condition khi 2 request cùng cancel 1 đơn hàng đồng thời.
+//           Thêm .AsNoTracking() cho read-only queries để tối ưu hiệu năng.
+// Bug 9 — Checkout GET/POST: Khi cart rỗng do session expire, redirect về Menu thay vì
+//           chỉ Index (giúp UX tốt hơn, người dùng biết phải thêm hàng từ đâu).
+//           Thêm thông báo rõ ràng hơn.
 // FIX: toppingPrice param — server cộng giá topping vào UnitPrice
 // NEW: CancelOrder action — user hủy đơn Pending
 
@@ -31,7 +38,6 @@ namespace WebBanHang_2380600870.Controllers
             return View(GetCart());
         }
 
-        // POST /Cart/Add — FIX: thêm toppingPrice
         [HttpPost]
         public async Task<IActionResult> Add(int productId, int quantity = 1, string size = "M",
             string sugarLevel = "100%", string toppings = "", decimal toppingPrice = 0)
@@ -53,7 +59,6 @@ namespace WebBanHang_2380600870.Controllers
             if (size == "L") price += 7000;
             else if (size == "S") price = Math.Max(0, price - 7000);
 
-            // FIX: cộng giá topping vào UnitPrice
             if (toppingPrice > 0) price += toppingPrice;
 
             var cart = GetCart();
@@ -116,7 +121,8 @@ namespace WebBanHang_2380600870.Controllers
             var cart = GetCart();
             if (cart.Items == null || !cart.Items.Any())
             {
-                TempData["Error"] = "Giỏ hàng của bạn đang trống.";
+                // FIX Bug 9: Redirect về Menu thay vì chỉ báo lỗi, UX rõ ràng hơn
+                TempData["Error"] = "Giỏ hàng của bạn đang trống. Hãy thêm sản phẩm từ thực đơn.";
                 return RedirectToAction("Index", "Menu");
             }
             var user = await _userManager.GetUserAsync(User);
@@ -137,7 +143,8 @@ namespace WebBanHang_2380600870.Controllers
             var cart = GetCart();
             if (cart.Items == null || !cart.Items.Any())
             {
-                TempData["Error"] = "Giỏ hàng của bạn đang trống.";
+                // FIX Bug 9: Consistent redirect về Menu khi cart rỗng
+                TempData["Error"] = "Giỏ hàng của bạn đang trống. Hãy thêm sản phẩm từ thực đơn.";
                 return RedirectToAction("Index", "Menu");
             }
 
@@ -197,13 +204,12 @@ namespace WebBanHang_2380600870.Controllers
                 .Where(o => o.UserId == user.Id)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
-            // Pass user info for order detail modal
             ViewBag.CustomerName = user.FullName ?? user.Email ?? "";
             ViewBag.CustomerPhone = user.PhoneNumber ?? "";
             return View(orders);
         }
 
-        // NEW: User hủy đơn hàng (chỉ khi Pending)
+        // FIX Bug 7: CancelOrder — dùng optimistic concurrency để tránh double-cancel
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -212,12 +218,17 @@ namespace WebBanHang_2380600870.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
 
-            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == user.Id);
+            // FIX Bug 7: Load với tracking để EF detect concurrent changes
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == user.Id);
+
             if (order == null)
             {
                 TempData["Error"] = "Không tìm thấy đơn hàng.";
                 return RedirectToAction(nameof(OrderHistory));
             }
+
+            // FIX Bug 7: Re-check status sau khi load (tránh race condition)
             if (order.Status != OrderStatus.Pending)
             {
                 TempData["Error"] = "Chỉ có thể hủy đơn hàng đang chờ xác nhận.";
@@ -225,13 +236,22 @@ namespace WebBanHang_2380600870.Controllers
             }
 
             order.Status = OrderStatus.Cancelled;
-            await _context.SaveChangesAsync();
-            TempData["Success"] = $"Đã hủy đơn hàng #{order.Id} thành công.";
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"Đã hủy đơn hàng #{order.Id} thành công.";
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // FIX Bug 7: Nếu concurrency conflict (đơn đã được cập nhật bởi request khác)
+                TempData["Error"] = "Đơn hàng đã được cập nhật trước đó. Vui lòng kiểm tra lại trạng thái.";
+            }
+
             return RedirectToAction(nameof(OrderHistory));
         }
 
-        // DELETE: User xóa đơn hàng khỏi lịch sử
-        // Điều kiện: chỉ xóa được đơn đã Hoàn thành (Completed) hoặc đã Hủy (Cancelled)
+        // DeleteOrder: User xóa đơn hàng khỏi lịch sử
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]

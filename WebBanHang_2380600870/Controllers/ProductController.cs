@@ -1,6 +1,4 @@
 ﻿// Controllers/ProductController.cs
-// UPDATED: Index() truyền ViewBag.Categories để filter button động trong view
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -16,70 +14,50 @@ namespace WebBanHang_2380600870.Controllers
         private readonly ICategoryRepository _categoryRepository;
         private readonly IWebHostEnvironment _env;
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<ProductController> _logger;
 
-        private static readonly HashSet<string> AllowedMimeTypes = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
-            "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"
+            ".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"
         };
-
         private const long MaxImageSizeBytes = 5 * 1024 * 1024;
 
         public ProductController(IProductRepository productRepository,
                                  ICategoryRepository categoryRepository,
                                  IWebHostEnvironment env,
-                                 ApplicationDbContext context)
+                                 ApplicationDbContext context,
+                                 ILogger<ProductController> logger)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _env = env;
             _context = context;
+            _logger = logger;
         }
 
-        // ══════════════════════════════════════════════════════
-        //  PUBLIC — xem chi tiết sản phẩm
-        // ══════════════════════════════════════════════════════
+        // PUBLIC — xem chi tiết
         public async Task<IActionResult> Detail(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
-
             var allProducts = await _productRepository.GetAllAsync();
             var productList = allProducts.ToList();
-
-            var related = productList
-                .Where(p => p.CategoryId == product.CategoryId && p.Id != id)
-                .Take(4).ToList();
-
+            var related = productList.Where(p => p.CategoryId == product.CategoryId && p.Id != id).Take(4).ToList();
             if (related.Count < 4)
-            {
-                var extra = productList
-                    .Where(p => p.CategoryId != product.CategoryId && p.Id != id)
-                    .Take(4 - related.Count).ToList();
-                related.AddRange(extra);
-            }
-
-            return View(new ProductDetailViewModel
-            {
-                Product = product,
-                RelatedProducts = related
-            });
+                related.AddRange(productList.Where(p => p.CategoryId != product.CategoryId && p.Id != id).Take(4 - related.Count));
+            return View(new ProductDetailViewModel { Product = product, RelatedProducts = related });
         }
 
-        // ══════════════════════════════════════════════════════
-        //  ADMIN — danh sách
-        // ══════════════════════════════════════════════════════
+        // ADMIN — danh sách
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
             var products = await _productRepository.GetAllAsync();
-            // FIX: Truyền danh mục để view render filter buttons động
             ViewBag.Categories = await _categoryRepository.GetAllAsync();
             return View(products);
         }
 
-        // ══════════════════════════════════════════════════════
-        //  ADMIN — thêm sản phẩm
-        // ══════════════════════════════════════════════════════
+        // ADMIN — thêm GET
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Add()
         {
@@ -88,6 +66,7 @@ namespace WebBanHang_2380600870.Controllers
             return View();
         }
 
+        // ADMIN — thêm POST
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -99,34 +78,32 @@ namespace WebBanHang_2380600870.Controllers
             ModelState.Remove("Category");
             ModelState.Remove("DiscountPercent");
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                if (ImageFile != null && ImageFile.Length > 0)
-                {
-                    var validationError = ValidateImageFile(ImageFile);
-                    if (validationError != null)
-                    {
-                        ModelState.AddModelError("ImageFile", validationError);
-                        var cats = await _categoryRepository.GetAllAsync();
-                        ViewBag.Categories = new SelectList(cats, "Id", "Name");
-                        return View(product);
-                    }
-                    product.ImageUrl = await SaveImage(ImageFile);
-                }
-
-                await _productRepository.AddAsync(product);
-                TempData["Success"] = $"Đã thêm sản phẩm \"{product.Name}\" thành công!";
-                return RedirectToAction(nameof(Index));
+                var cats = await _categoryRepository.GetAllAsync();
+                ViewBag.Categories = new SelectList(cats, "Id", "Name");
+                return View(product);
             }
 
-            var categories = await _categoryRepository.GetAllAsync();
-            ViewBag.Categories = new SelectList(categories, "Id", "Name");
-            return View(product);
+            if (ImageFile != null && ImageFile.Length > 0)
+            {
+                var err = ValidateImageFile(ImageFile);
+                if (err != null)
+                {
+                    ModelState.AddModelError("ImageFile", err);
+                    var cats = await _categoryRepository.GetAllAsync();
+                    ViewBag.Categories = new SelectList(cats, "Id", "Name");
+                    return View(product);
+                }
+                product.ImageUrl = await SaveImage(ImageFile);
+            }
+
+            await _productRepository.AddAsync(product);
+            TempData["Success"] = $"Đã thêm sản phẩm \"{product.Name}\" thành công!";
+            return RedirectToAction(nameof(Index));
         }
 
-        // ══════════════════════════════════════════════════════
-        //  ADMIN — xem chi tiết (admin view)
-        // ══════════════════════════════════════════════════════
+        // ADMIN — xem chi tiết admin
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Display(int id)
         {
@@ -135,22 +112,17 @@ namespace WebBanHang_2380600870.Controllers
             return View(product);
         }
 
-        // ══════════════════════════════════════════════════════
-        //  ADMIN — chỉnh sửa GET
-        // ══════════════════════════════════════════════════════
+        // ADMIN — chỉnh sửa GET
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
-
             ViewBag.Categories = await _categoryRepository.GetAllAsync();
             return View(product);
         }
 
-        // ══════════════════════════════════════════════════════
-        //  ADMIN — chỉnh sửa POST (CÓ xử lý extra images)
-        // ══════════════════════════════════════════════════════
+        // ADMIN — chỉnh sửa POST
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -158,7 +130,9 @@ namespace WebBanHang_2380600870.Controllers
             int id,
             Product product,
             IFormFile? ImageFile,
-            List<IFormFile?>? ExtraImages,
+            IFormFile? ExtraFile0,
+            IFormFile? ExtraFile1,
+            IFormFile? ExtraFile2,
             List<int?>? ExtraImageIds,
             List<string?>? ExtraImageUrls)
         {
@@ -167,7 +141,9 @@ namespace WebBanHang_2380600870.Controllers
             ModelState.Remove("Images");
             ModelState.Remove("Category");
             ModelState.Remove("DiscountPercent");
-            ModelState.Remove("ExtraImages");
+            ModelState.Remove("ExtraFile0");
+            ModelState.Remove("ExtraFile1");
+            ModelState.Remove("ExtraFile2");
             ModelState.Remove("ExtraImageIds");
             ModelState.Remove("ExtraImageUrls");
 
@@ -176,7 +152,8 @@ namespace WebBanHang_2380600870.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.Categories = await _categoryRepository.GetAllAsync();
-                return View(product);
+                var rp = await _productRepository.GetByIdAsync(id);
+                return View(rp ?? product);
             }
 
             var existing = await _context.Products
@@ -193,43 +170,74 @@ namespace WebBanHang_2380600870.Controllers
             existing.IsOnSale = product.IsOnSale;
             existing.DiscountPercent = product.DiscountPercent;
 
-            // ── Ảnh chính (slot 0) ──
+            // ── Ảnh chính ──
             if (ImageFile != null && ImageFile.Length > 0)
             {
                 var err = ValidateImageFile(ImageFile);
                 if (err != null)
                 {
-                    ModelState.AddModelError("ImageFile", err);
+                    TempData["Error"] = $"Ảnh chính: {err}";
                     ViewBag.Categories = await _categoryRepository.GetAllAsync();
-                    return View(product);
+                    var rp = await _productRepository.GetByIdAsync(id);
+                    return View(rp ?? product);
                 }
                 DeleteOldLocalImage(existing.ImageUrl);
                 existing.ImageUrl = await SaveImage(ImageFile);
+                _logger.LogInformation("Main image saved: {Url}", existing.ImageUrl);
             }
             else if (!string.IsNullOrWhiteSpace(product.ImageUrl))
             {
-                existing.ImageUrl = product.ImageUrl;
+                if (existing.ImageUrl != product.ImageUrl)
+                {
+                    if (!string.IsNullOrEmpty(existing.ImageUrl) && existing.ImageUrl.StartsWith("/images/"))
+                        DeleteOldLocalImage(existing.ImageUrl);
+                    existing.ImageUrl = product.ImageUrl;
+                }
             }
+            // Nếu cả 2 rỗng → giữ nguyên ảnh cũ
 
-            // ── Ảnh phụ (slots 1-3) ──
-            var existingImages = existing.Images?.ToList() ?? new List<ProductImage>();
+            // ── Ảnh phụ (3 slots) ──
+            // Dùng OrderBy(Id) để đảm bảo nhất quán với View
+            var existingImages = existing.Images?
+                .OrderBy(img => img.Id)
+                .ToList() ?? new List<ProductImage>();
+
+            // Nhóm 3 file inputs riêng biệt (tránh indexed binding issue)
+            var extraFiles = new IFormFile?[] { ExtraFile0, ExtraFile1, ExtraFile2 };
+
+            _logger.LogInformation("ExtraFile0={F0} ExtraFile1={F1} ExtraFile2={F2}",
+                ExtraFile0?.Length ?? 0, ExtraFile1?.Length ?? 0, ExtraFile2?.Length ?? 0);
+            _logger.LogInformation("ExtraImageUrls: {Urls}", string.Join(", ", ExtraImageUrls ?? new List<string?>()));
+            _logger.LogInformation("ExistingImages count: {Count}", existingImages.Count);
 
             for (int i = 0; i < 3; i++)
             {
-                var newFile = (ExtraImages != null && i < ExtraImages.Count) ? ExtraImages[i] : null;
-                var currentUrl = (ExtraImageUrls != null && i < ExtraImageUrls.Count) ? ExtraImageUrls[i] ?? "" : "";
+                var newFile = extraFiles[i];
+                var currentUrl = (ExtraImageUrls != null && i < ExtraImageUrls.Count)
+                    ? (ExtraImageUrls[i] ?? "") : "";
                 var existingImg = i < existingImages.Count ? existingImages[i] : null;
 
                 bool hasNewFile = newFile != null && newFile.Length > 0;
-                bool isDeleted = string.IsNullOrEmpty(currentUrl);
-                bool isNewUrl = !isDeleted && currentUrl != "new_file" && currentUrl.StartsWith("http");
+                bool isMarker = currentUrl == "new_file";
+                bool isEmptyUrl = string.IsNullOrEmpty(currentUrl);
+
+                _logger.LogInformation(
+                    "Slot {Slot}: hasNewFile={HasFile} fileLen={Len} isMarker={Marker} isEmptyUrl={Empty} existingImg={Img}",
+                    i, hasNewFile, newFile?.Length ?? 0, isMarker, isEmptyUrl, existingImg?.Url ?? "null");
 
                 if (hasNewFile)
                 {
                     var err = ValidateImageFile(newFile!);
-                    if (err != null) continue;
+                    if (err != null)
+                    {
+                        TempData["Error"] = $"Ảnh phụ {i + 2}: {err}";
+                        _logger.LogWarning("Slot {Slot} validation failed: {Err}", i, err);
+                        continue;
+                    }
 
                     var newUrl = await SaveImage(newFile!);
+                    _logger.LogInformation("Slot {Slot}: saved new file → {Url}", i, newUrl);
+
                     if (existingImg != null)
                     {
                         DeleteOldLocalImage(existingImg.Url);
@@ -241,29 +249,37 @@ namespace WebBanHang_2380600870.Controllers
                         _context.ProductImages.Add(new ProductImage { ProductId = id, Url = newUrl });
                     }
                 }
-                else if (isNewUrl)
+                else if (isMarker)
+                {
+                    // "new_file" marker nhưng không có file thực tế → bỏ qua
+                    _logger.LogWarning("Slot {Slot}: isMarker but no file received", i);
+                }
+                else if (!isEmptyUrl)
                 {
                     if (existingImg != null)
                     {
-                        if (existingImg.Url?.StartsWith("/images/") == true)
-                            DeleteOldLocalImage(existingImg.Url);
-                        existingImg.Url = currentUrl;
-                        _context.ProductImages.Update(existingImg);
+                        if (existingImg.Url != currentUrl)
+                        {
+                            if (existingImg.Url?.StartsWith("/images/") == true)
+                                DeleteOldLocalImage(existingImg.Url);
+                            existingImg.Url = currentUrl;
+                            _context.ProductImages.Update(existingImg);
+                        }
                     }
                     else
                     {
                         _context.ProductImages.Add(new ProductImage { ProductId = id, Url = currentUrl });
                     }
                 }
-                else if (isDeleted)
+                else
                 {
+                    // URL rỗng → xóa ảnh slot này
                     if (existingImg != null)
                     {
                         DeleteOldLocalImage(existingImg.Url);
                         _context.ProductImages.Remove(existingImg);
                     }
                 }
-                // currentUrl == "new_file" nhưng không có file → giữ nguyên
             }
 
             _context.Products.Update(existing);
@@ -276,9 +292,7 @@ namespace WebBanHang_2380600870.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult Update(int id) => RedirectToAction(nameof(Edit), new { id });
 
-        // ══════════════════════════════════════════════════════
-        //  ADMIN — xóa sản phẩm
-        // ══════════════════════════════════════════════════════
+        // ADMIN — xóa
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -294,33 +308,32 @@ namespace WebBanHang_2380600870.Controllers
         {
             var product = await _productRepository.GetByIdAsync(id);
             string name = product?.Name ?? $"#{id}";
-
             if (product != null)
                 DeleteOldLocalImage(product.ImageUrl);
-
             await _productRepository.DeleteAsync(id);
             TempData["Success"] = $"Đã xóa sản phẩm \"{name}\" thành công!";
             return RedirectToAction(nameof(Index));
         }
 
-        // ══════════════════════════════════════════════════════
-        //  Helpers
-        // ══════════════════════════════════════════════════════
+        // ── Helpers ──
         private static string? ValidateImageFile(IFormFile file)
         {
             if (file.Length > MaxImageSizeBytes)
                 return "Ảnh không được vượt quá 5MB.";
-            if (!AllowedMimeTypes.Contains(file.ContentType))
-                return "Chỉ chấp nhận ảnh định dạng JPG, PNG, WebP hoặc GIF.";
+
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" }.Contains(ext))
-                return "File không hợp lệ. Chỉ chấp nhận .jpg, .jpeg, .png, .webp, .gif";
+            if (string.IsNullOrEmpty(ext) || !AllowedExtensions.Contains(ext))
+                return $"Chỉ chấp nhận ảnh .jpg, .jpeg, .png, .webp, .gif, .bmp (nhận được: '{ext}')";
+
             return null;
         }
 
         private async Task<string> SaveImage(IFormFile image)
         {
-            var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var webRoot = _env.WebRootPath;
+            if (string.IsNullOrEmpty(webRoot))
+                webRoot = Path.Combine(_env.ContentRootPath, "wwwroot");
+
             var imagesFolder = Path.Combine(webRoot, "images");
             if (!Directory.Exists(imagesFolder))
                 Directory.CreateDirectory(imagesFolder);
@@ -332,6 +345,7 @@ namespace WebBanHang_2380600870.Controllers
             using (var fs = new FileStream(savePath, FileMode.Create))
                 await image.CopyToAsync(fs);
 
+            _logger.LogInformation("Image file saved to disk: {Path}", savePath);
             return "/images/" + uniqueFileName;
         }
 
@@ -341,12 +355,17 @@ namespace WebBanHang_2380600870.Controllers
                 return;
             try
             {
-                var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var webRoot = _env.WebRootPath;
+                if (string.IsNullOrEmpty(webRoot))
+                    webRoot = Path.Combine(_env.ContentRootPath, "wwwroot");
                 var filePath = Path.Combine(webRoot, imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
                 if (System.IO.File.Exists(filePath))
                     System.IO.File.Delete(filePath);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Could not delete old image {Url}: {Ex}", imageUrl, ex.Message);
+            }
         }
     }
 }

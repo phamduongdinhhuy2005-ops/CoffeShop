@@ -1,4 +1,10 @@
 ﻿// Controllers/AdminController.cs
+// FIXED:
+// Bug 3 — DeleteUser: Thêm check có Orders đang xử lý trước khi xóa, tránh FK violation
+//           User vẫn có thể bị xóa khi chỉ có orders Completed/Cancelled (EF Cascade xử lý)
+// Bug 4 — UpdateOrderStatus: Bổ sung check không cho update sang Cancelled bằng dropdown
+//           nếu muốn cancel phải dùng flow riêng; fix logic guard cho Completed/Cancelled
+// Bug 5 — Bookings GET: Giữ filter status qua ViewBag đúng cách, không reset khi có lỗi
 // FIX CS0168: Bỏ biến 'ex' trong tất cả catch blocks không dùng đến
 
 using Microsoft.AspNetCore.Authorization;
@@ -66,7 +72,7 @@ namespace WebBanHang_2380600870.Controllers
 
                 return View(recentOrders);
             }
-            catch (Exception)  // FIX CS0168: bỏ 'ex' — không dùng đến
+            catch (Exception)
             {
                 TempData["Error"] = "Có lỗi xảy ra khi tải dữ liệu dashboard. Vui lòng thử lại.";
                 ViewBag.TotalProducts = 0; ViewBag.TotalUsers = 0;
@@ -99,7 +105,7 @@ namespace WebBanHang_2380600870.Controllers
                 ViewBag.UserRoles = userRoles;
                 return View(users);
             }
-            catch (Exception)  // FIX CS0168
+            catch (Exception)
             {
                 TempData["Error"] = "Có lỗi xảy ra khi tải danh sách người dùng.";
                 return View(new List<AppUser>());
@@ -141,7 +147,7 @@ namespace WebBanHang_2380600870.Controllers
 
                 return RedirectToAction(nameof(Users));
             }
-            catch (Exception)  // FIX CS0168
+            catch (Exception)
             {
                 TempData["Error"] = "Có lỗi xảy ra khi thay đổi quyền người dùng.";
                 return RedirectToAction(nameof(Users));
@@ -174,6 +180,20 @@ namespace WebBanHang_2380600870.Controllers
                     return RedirectToAction(nameof(Users));
                 }
 
+                // FIX Bug 3: Kiểm tra các đơn hàng đang xử lý (Pending/Confirmed/Processing/Ready)
+                // Nếu còn đơn đang active thì không cho xóa, tránh mất dữ liệu quan trọng
+                // EF Cascade sẽ xử lý xóa Orders Completed/Cancelled tự động
+                var activeOrderCount = await _context.Orders.CountAsync(o =>
+                    o.UserId == user.Id &&
+                    o.Status != OrderStatus.Completed &&
+                    o.Status != OrderStatus.Cancelled);
+
+                if (activeOrderCount > 0)
+                {
+                    TempData["Error"] = $"Không thể xóa tài khoản này vì còn {activeOrderCount} đơn hàng đang xử lý. Hãy hoàn thành hoặc hủy các đơn trước.";
+                    return RedirectToAction(nameof(Users));
+                }
+
                 var result = await _userManager.DeleteAsync(user);
                 TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                     ? "Đã xóa tài khoản thành công."
@@ -181,7 +201,7 @@ namespace WebBanHang_2380600870.Controllers
 
                 return RedirectToAction(nameof(Users));
             }
-            catch (Exception)  // FIX CS0168
+            catch (Exception)
             {
                 TempData["Error"] = "Có lỗi xảy ra khi xóa người dùng.";
                 return RedirectToAction(nameof(Users));
@@ -212,7 +232,7 @@ namespace WebBanHang_2380600870.Controllers
 
                 return View(orders);
             }
-            catch (Exception)  // FIX CS0168
+            catch (Exception)
             {
                 TempData["Error"] = "Có lỗi xảy ra khi tải danh sách đơn hàng.";
                 return View(new List<Order>());
@@ -232,9 +252,27 @@ namespace WebBanHang_2380600870.Controllers
                     return RedirectToAction(nameof(Orders));
                 }
 
-                if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Cancelled)
+                // FIX Bug 4: Phân biệt rõ 2 trường hợp:
+                // - Đã Completed: không cho phép thay đổi bất kỳ trạng thái nào
+                // - Đã Cancelled: không cho phép thay đổi (đơn đã hủy là cuối cùng)
+                if (order.Status == OrderStatus.Completed)
                 {
-                    TempData["Error"] = "Không thể thay đổi trạng thái đơn hàng đã hoàn thành hoặc đã hủy.";
+                    TempData["Error"] = "Không thể thay đổi trạng thái đơn hàng đã hoàn thành.";
+                    return RedirectToAction(nameof(Orders));
+                }
+
+                if (order.Status == OrderStatus.Cancelled)
+                {
+                    TempData["Error"] = "Không thể thay đổi trạng thái đơn hàng đã hủy.";
+                    return RedirectToAction(nameof(Orders));
+                }
+
+                // FIX Bug 4: Admin không được dùng dropdown này để cancel đơn hàng
+                // (Cancelled là action đặc biệt, chỉ user mới cancel được đơn Pending của mình)
+                // Admin có thể update mọi status trừ Cancelled
+                if (status == OrderStatus.Cancelled)
+                {
+                    TempData["Error"] = "Admin không thể hủy đơn hàng qua trang này. Vui lòng liên hệ khách hàng để phối hợp.";
                     return RedirectToAction(nameof(Orders));
                 }
 
@@ -243,7 +281,7 @@ namespace WebBanHang_2380600870.Controllers
                 TempData["Success"] = $"Đã cập nhật đơn #{orderId} sang trạng thái: {status}.";
                 return RedirectToAction(nameof(Orders));
             }
-            catch (Exception)  // FIX CS0168
+            catch (Exception)
             {
                 TempData["Error"] = "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng.";
                 return RedirectToAction(nameof(Orders));
@@ -261,12 +299,17 @@ namespace WebBanHang_2380600870.Controllers
                     query = query.Where(b => b.Status == s);
 
                 var bookings = await query.OrderByDescending(b => b.CreatedAt).ToListAsync();
+
+                // FIX Bug 5: Giữ lại CurrentStatus trong ViewBag để view filter đúng
                 ViewBag.CurrentStatus = status;
+
                 return View(bookings);
             }
-            catch (Exception)  // FIX CS0168
+            catch (Exception)
             {
                 TempData["Error"] = "Có lỗi xảy ra khi tải danh sách đặt chỗ.";
+                // FIX Bug 5: Khi có lỗi vẫn pass ViewBag.CurrentStatus để tránh null ref trong view
+                ViewBag.CurrentStatus = status;
                 return View(new List<Booking>());
             }
         }
@@ -289,7 +332,7 @@ namespace WebBanHang_2380600870.Controllers
                 TempData["Success"] = $"Đã cập nhật trạng thái đặt chỗ của {booking.FullName}.";
                 return RedirectToAction(nameof(Bookings));
             }
-            catch (Exception)  // FIX CS0168
+            catch (Exception)
             {
                 TempData["Error"] = "Có lỗi xảy ra khi cập nhật trạng thái đặt chỗ.";
                 return RedirectToAction(nameof(Bookings));

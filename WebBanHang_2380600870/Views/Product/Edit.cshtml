@@ -7,7 +7,9 @@
     var categories = ViewBag.Categories as IEnumerable<WebBanHang_2380600870.Models.Category>;
 
     // Ảnh phụ từ bảng ProductImages (tối đa 3 slot, index 0-2)
-    var extraImages = Model.Images?.ToList() ?? new List<WebBanHang_2380600870.Models.ProductImage>();
+    // OrderBy Id để đảm bảo thứ tự nhất quán với controller
+    var extraImages = (Model.Images?.OrderBy(img => img.Id).ToList())
+                      ?? new List<WebBanHang_2380600870.Models.ProductImage>();
     string ExtraUrl(int i) => i < extraImages.Count ? (extraImages[i].Url ?? "") : "";
     int ExtraId(int i)     => i < extraImages.Count ? extraImages[i].Id : 0;
 }
@@ -45,12 +47,10 @@
     .ep-back-btn:hover { background: #dcd7c9; border-color: #a27b5c; color: #a27b5c; }
     .ep-back-btn .material-symbols-outlined { font-size: 19px; }
 
-    /* Vertical divider */
     .ep-header-div {
         width: 1px; height: 32px; background: #e2e8f0; flex-shrink: 0;
     }
 
-    /* Title block */
     .ep-header-title-block { flex: 1; min-width: 0; }
     .ep-header-title {
         font-size: 1.05rem; font-weight: 800; color: #2c3639;
@@ -75,7 +75,6 @@
         background: #10b981; flex-shrink: 0;
     }
 
-    /* Action buttons */
     .ep-header-actions { display: flex; gap: .5rem; align-items: center; margin-left: auto; }
 
     .ep-btn-ghost {
@@ -117,7 +116,6 @@
     .ep-btn-primary:active { transform: translateY(0); }
     .ep-btn-primary .material-symbols-outlined { font-size: 17px; }
 
-    /* Hide old status bar */
     .ep-status-bar { display: none; }
     .ep-status-dot, .ep-status-text, .ep-status-sep,
     .ep-sku-badge, .ep-updated { display: none; }
@@ -178,7 +176,6 @@
     .ep-val-msg { color: #ef4444; font-size: .72rem; font-weight: 600; margin-top: .3rem; display: none; }
     .ep-val-msg.show { display: block; }
 
-    /* ── SALE BOX ── */
     .ep-sale-box {
         background: rgba(234,179,8,.06);
         border: 1.5px solid rgba(234,179,8,.3);
@@ -207,11 +204,8 @@
         transition: border-color .2s, box-shadow .2s;
     }
     .img-slot:hover { border-color: rgba(162,123,92,.55); box-shadow: 0 4px 14px rgba(162,123,92,.14); }
-
-    /* Slot 0 = ảnh chính */
     .img-slot.slot-main { border-color: #a27b5c; }
 
-    /* Badge số thứ tự */
     .slot-badge {
         position: absolute; top: .38rem; left: .38rem; z-index: 3;
         background: rgba(44,54,57,.68); color: #fff;
@@ -223,7 +217,6 @@
     }
     .img-slot.slot-main .slot-badge { background: rgba(162,123,92,.85); }
 
-    /* "Ảnh chính" label at bottom of slot 0 */
     .slot-main-label {
         position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
         background: rgba(162,123,92,.82);
@@ -234,14 +227,12 @@
         pointer-events: none;
     }
 
-    /* Image fill */
     .img-slot img {
         width: 100%; height: 100%; object-fit: cover;
         display: block; transition: transform .35s;
     }
     .img-slot:hover img { transform: scale(1.04); }
 
-    /* Empty state */
     .slot-empty {
         position: absolute; inset: 0;
         display: flex; flex-direction: column;
@@ -252,7 +243,6 @@
     .slot-empty .material-symbols-outlined { font-size: 26px; }
     .slot-empty span { font-size: .68rem; font-weight: 600; text-align: center; line-height: 1.35; }
 
-    /* Hover overlay */
     .slot-overlay {
         position: absolute; inset: 0; z-index: 2;
         background: rgba(28,22,16,.52);
@@ -332,7 +322,6 @@
     }
     .url-modal-apply:hover { background: rgba(162,123,92,.88); transform: translateY(-1px); }
 
-    /* Upload hint bar */
     .img-hint {
         display: flex; align-items: center; gap: .45rem;
         background: rgba(162,123,92,.06);
@@ -385,16 +374,10 @@
 
 @* ── PAGE HEADER ── *@
 <div class="ep-header">
-
-    @* Back button — icon only *@
     <a href="@Url.Action("Index", "Product")" class="ep-back-btn" title="Quay lại danh sách">
         <span class="material-symbols-outlined">arrow_back</span>
     </a>
-
-    @* Vertical divider *@
     <div class="ep-header-div"></div>
-
-    @* Title + meta chips *@
     <div class="ep-header-title-block">
         <div class="ep-header-title">Chỉnh Sửa Sản Phẩm</div>
         <div class="ep-header-sub">
@@ -419,8 +402,6 @@
             </span>
         </div>
     </div>
-
-    @* Action buttons *@
     <div class="ep-header-actions">
         <button class="ep-btn-danger" type="button" onclick="showDeleteModal()">
             <span class="material-symbols-outlined">delete</span>
@@ -433,7 +414,6 @@
     </div>
 </div>
 
-@* ── STATUS BAR ── *@
 <div class="ep-status-bar">
     <span class="ep-status-dot" id="statusDot"></span>
     <span class="ep-status-text" id="statusText">Còn hàng</span>
@@ -448,14 +428,15 @@
 <form asp-action="Edit" asp-controller="Product" method="post" enctype="multipart/form-data" id="editForm" novalidate>
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
-    <input type="hidden" asp-for="ImageUrl" id="hiddenImageUrl" />
+    @* FIX: dùng value trực tiếp từ Model thay vì asp-for (asp-for render value="" rỗng từ ModelState) *@
+    <input type="hidden" name="ImageUrl" id="hiddenImageUrl" value="@Model.ImageUrl" />
 
     @* Hidden inputs tracking URL của từng slot ảnh phụ (empty string = đã xóa) *@
     <input type="hidden" name="ExtraImageUrls[0]" id="extraUrl0" value="@ExtraUrl(0)" />
     <input type="hidden" name="ExtraImageUrls[1]" id="extraUrl1" value="@ExtraUrl(1)" />
     <input type="hidden" name="ExtraImageUrls[2]" id="extraUrl2" value="@ExtraUrl(2)" />
 
-    @* Hidden inputs lưu ID ảnh phụ hiện có (để controller biết cần update hay insert) *@
+    @* Hidden inputs lưu ID ảnh phụ hiện có *@
     <input type="hidden" name="ExtraImageIds[0]" value="@ExtraId(0)" />
     <input type="hidden" name="ExtraImageIds[1]" value="@ExtraId(1)" />
     <input type="hidden" name="ExtraImageIds[2]" value="@ExtraId(2)" />
@@ -652,10 +633,10 @@
                 </div>
 
                 @* ── Hidden file inputs — một per slot ── *@
-                <input type="file" id="fileSlot0" name="ImageFile"       accept="image/*" style="display:none;" onchange="handleFile(0,this)" />
-                <input type="file" id="fileSlot1" name="ExtraImages[0]"  accept="image/*" style="display:none;" onchange="handleFile(1,this)" />
-                <input type="file" id="fileSlot2" name="ExtraImages[1]"  accept="image/*" style="display:none;" onchange="handleFile(2,this)" />
-                <input type="file" id="fileSlot3" name="ExtraImages[2]"  accept="image/*" style="display:none;" onchange="handleFile(3,this)" />
+                <input type="file" id="fileSlot0" name="ImageFile"  accept="image/*" style="display:none;" onchange="handleFile(0,this)" />
+                <input type="file" id="fileSlot1" name="ExtraFile0" accept="image/*" style="display:none;" onchange="handleFile(1,this)" />
+                <input type="file" id="fileSlot2" name="ExtraFile1" accept="image/*" style="display:none;" onchange="handleFile(2,this)" />
+                <input type="file" id="fileSlot3" name="ExtraFile2" accept="image/*" style="display:none;" onchange="handleFile(3,this)" />
 
                 @* ── URL paste cho ảnh chính ── *@
                 <div style="margin-top:.75rem;">
@@ -681,7 +662,6 @@
                     </p>
                 </div>
 
-                @* Hint *@
                 <div class="img-hint" style="margin-top:.75rem;">
                     <span class="material-symbols-outlined">info</span>
                     Nhấn ô ảnh để chọn: tải file lên <span style="font-weight:700;color:#a27b5c;">↑</span> hoặc dán URL <span style="font-weight:700;color:#a27b5c;">🔗</span>
@@ -716,7 +696,7 @@
     </div>
 </div>
 
-@* ── Choose method popup (file upload vs URL) khi click vào slot trống ── *@
+@* ── Choose method popup ── *@
 <div id="choosePopup"
      style="position:fixed;z-index:10001;display:none;background:#fff;border-radius:14px;
             padding:.75rem;box-shadow:0 12px 40px rgba(44,54,57,.18);
@@ -778,334 +758,329 @@
 <div id="ep-toast-bridge" data-msg="@epToastMsg" style="display:none;"></div>
 
 @section Scripts {
-    <script>
-        // ── Init ─────────────────────────────────────────────
-        (function init() {
-            var hidden   = document.getElementById('hiddenImageUrl');
-            var urlInput = document.getElementById('urlInput');
-            if (hidden && urlInput && urlInput.value && !hidden.value) {
-                hidden.value = urlInput.value;
-            }
-            var saleChecked = document.getElementById('toggleSale').checked;
-            toggleSaleBox(saleChecked);
-            calcSalePrice();
-        })();
+<script>
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+(function init() {
+    var saleOn = document.getElementById('toggleSale').checked;
+    setSaleSlider(saleOn);
+    if (saleOn) document.getElementById('saleBox').classList.add('show');
+    calcSalePrice();
+})();
 
-        // ── Sale toggle ───────────────────────────────────────
-        function toggleSaleBox(on) {
-            var box    = document.getElementById('saleBox');
-            var slider = document.getElementById('saleSlider');
-            var thumb  = document.getElementById('saleThumb');
-            if (on) {
-                box.classList.add('show');
-                slider.style.background = '#a27b5c';
-                thumb.style.transform   = 'translateX(18px)';
-            } else {
-                box.classList.remove('show');
-                slider.style.background = '#e2e8f0';
-                thumb.style.transform   = 'translateX(0)';
-            }
-            calcSalePrice();
-        }
+// ══════════════════════════════════════════════════════════════
+//  SALE TOGGLE
+// ══════════════════════════════════════════════════════════════
+function setSaleSlider(on) {
+    var slider = document.getElementById('saleSlider');
+    var thumb  = document.getElementById('saleThumb');
+    slider.style.background = on ? '#a27b5c' : '#e2e8f0';
+    thumb.style.transform   = on ? 'translateX(18px)' : 'translateX(0)';
+}
 
-        function calcSalePrice() {
-            var price    = parseFloat(document.getElementById('Price').value)    || 0;
-            var discount = parseFloat(document.getElementById('DiscountPercent').value) || 0;
-            var el = document.getElementById('salePriceDisplay');
-            if (!el) return;
-            if (price > 0 && discount > 0)
-                el.textContent = (price * (1 - discount / 100)).toLocaleString('vi-VN') + '₫';
-            else
-                el.textContent = price > 0 ? price.toLocaleString('vi-VN') + '₫' : '—';
-        }
+function toggleSaleBox(on) {
+    setSaleSlider(on);
+    var box = document.getElementById('saleBox');
+    if (on) box.classList.add('show');
+    else    box.classList.remove('show');
+    calcSalePrice();
+}
 
-        // ══════════════════════════════════════════════════════
-        //  SLOT CLICK — mở choose popup (upload / URL)
-        // ══════════════════════════════════════════════════════
-        var _activeSlot = 0;
+function calcSalePrice() {
+    var price    = parseFloat(document.getElementById('Price').value)    || 0;
+    var discount = parseFloat(document.getElementById('DiscountPercent').value) || 0;
+    var el = document.getElementById('salePriceDisplay');
+    if (!el) return;
+    if (price > 0 && discount > 0)
+        el.textContent = (price * (1 - discount / 100)).toLocaleString('vi-VN') + '₫';
+    else
+        el.textContent = price > 0 ? price.toLocaleString('vi-VN') + '₫' : '—';
+}
 
-        function slotClick(slot) {
-            // Nếu slot đã có ảnh, overlay xử lý → không làm gì thêm
-            var img = document.getElementById('slotImg' + slot);
-            if (img) return; // overlay handles it
-            // Slot trống → mở choose popup
-            openChoosePopup(slot, document.getElementById('slot' + slot));
-        }
+// ══════════════════════════════════════════════════════════════
+//  IMAGE SLOTS
+//  slot 0 = ảnh chính (hiddenImageUrl + fileSlot0)
+//  slot 1 = extra 0 (extraUrl0 + fileSlot1)
+//  slot 2 = extra 1 (extraUrl1 + fileSlot2)
+//  slot 3 = extra 2 (extraUrl2 + fileSlot3)
+// ══════════════════════════════════════════════════════════════
+var _activeSlot = 0;
 
-        // ── Choose popup ──────────────────────────────────────
-        function openChoosePopup(slot, anchorEl) {
-            _activeSlot = slot;
-            var popup    = document.getElementById('choosePopup');
-            var backdrop = document.getElementById('chooseBackdrop');
+// Click vào slot trống → mở choose popup
+function slotClick(slot) {
+    if (document.getElementById('slotImg' + slot)) return; // đã có ảnh, overlay xử lý
+    openChoosePopup(slot, document.getElementById('slot' + slot));
+}
 
-            var rect = anchorEl.getBoundingClientRect();
-            popup.style.top  = (rect.top + window.scrollY + rect.height / 2 - 30) + 'px';
-            popup.style.left = (rect.right + window.scrollX + 8) + 'px';
+// ── CHOOSE POPUP ──────────────────────────────────────────────
+function openChoosePopup(slot, anchorEl) {
+    _activeSlot = slot;
+    var popup    = document.getElementById('choosePopup');
+    var backdrop = document.getElementById('chooseBackdrop');
 
-            // Clamp nếu ra ngoài viewport
-            popup.style.display = 'block';
-            var pw = popup.offsetWidth;
-            var ph = popup.offsetHeight;
-            if (rect.right + pw + 16 > window.innerWidth) {
-                popup.style.left = Math.max(8, rect.left + window.scrollX - pw - 8) + 'px';
-            }
-            var topPx = parseFloat(popup.style.top);
-            if (topPx + ph > window.scrollY + window.innerHeight - 8) {
-                popup.style.top = (window.scrollY + window.innerHeight - ph - 12) + 'px';
-            }
+    var rect = anchorEl.getBoundingClientRect();
+    popup.style.left = (rect.right + window.scrollX + 8) + 'px';
+    popup.style.top  = (rect.top  + window.scrollY + rect.height / 2 - 30) + 'px';
+    popup.style.display = 'block';
 
-            backdrop.style.display = 'block';
+    // Clamp to viewport
+    var pw = popup.offsetWidth, ph = popup.offsetHeight;
+    if (rect.right + pw + 16 > window.innerWidth)
+        popup.style.left = Math.max(8, rect.left + window.scrollX - pw - 8) + 'px';
+    var topPx = parseFloat(popup.style.top);
+    if (topPx + ph > window.scrollY + window.innerHeight - 8)
+        popup.style.top = (window.scrollY + window.innerHeight - ph - 12) + 'px';
 
-            document.getElementById('chooseUpload').onclick = function() {
-                closeChoosePopup();
-                triggerFile(_activeSlot);
-            };
-            document.getElementById('chooseUrl').onclick = function() {
-                closeChoosePopup();
-                openUrlModal(_activeSlot);
-            };
-        }
+    backdrop.style.display = 'block';
 
-        function closeChoosePopup() {
-            document.getElementById('choosePopup').style.display    = 'none';
-            document.getElementById('chooseBackdrop').style.display = 'none';
-        }
+    document.getElementById('chooseUpload').onclick = function() {
+        closeChoosePopup(); triggerFile(_activeSlot);
+    };
+    document.getElementById('chooseUrl').onclick = function() {
+        closeChoosePopup(); openUrlModal(_activeSlot);
+    };
+}
 
-        // ── File inputs ───────────────────────────────────────
-        function triggerFile(slot) {
-            document.getElementById('fileSlot' + slot).click();
-        }
+function closeChoosePopup() {
+    document.getElementById('choosePopup').style.display    = 'none';
+    document.getElementById('chooseBackdrop').style.display = 'none';
+}
 
-        function handleFile(slot, input) {
-            var file = input.files[0];
-            if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function(e) { applyPreview(slot, e.target.result); };
-            reader.readAsDataURL(file);
-            if (slot === 0) {
-                document.getElementById('hiddenImageUrl').value = '';
-                document.getElementById('urlInput').value       = '';
-            } else {
-                var extraEl = document.getElementById('extraUrl' + (slot - 1));
-                if (extraEl) extraEl.value = 'new_file';
-            }
-        }
+// ── FILE UPLOAD ───────────────────────────────────────────────
+function triggerFile(slot) {
+    document.getElementById('fileSlot' + slot).click();
+}
 
-        // ── URL modal ─────────────────────────────────────────
-        function openUrlModal(slot) {
-            _activeSlot = slot;
-            var modal   = document.getElementById('urlModal');
-            var input   = document.getElementById('urlModalInput');
-            var title   = document.getElementById('urlModalTitle');
+function handleFile(slot, input) {
+    var file = input.files[0];
+    if (!file) return;
 
-            title.textContent = slot === 0 ? 'Dán URL ảnh chính' : 'Dán URL ảnh phụ ' + (slot + 1);
+    // Show preview immediately
+    var reader = new FileReader();
+    reader.onload = function(e) { applyPreview(slot, e.target.result); };
+    reader.readAsDataURL(file);
 
-            // Pre-fill URL hiện tại của slot
-            var currentUrl = '';
-            if (slot === 0) {
-                currentUrl = document.getElementById('urlInput').value;
-            } else {
-                var extraEl = document.getElementById('extraUrl' + (slot - 1));
-                if (extraEl && extraEl.value !== 'new_file') currentUrl = extraEl.value;
-            }
-            input.value = currentUrl;
+    if (slot === 0) {
+        // Main image: clear URL inputs so only file is submitted
+        document.getElementById('urlInput').value = '';
+        document.getElementById('hiddenImageUrl').value = '';
+    } else {
+        // Extra image: set URL to empty so controller uses file (not URL)
+        // Controller nhận file qua ExtraFile0/1/2 riêng biệt - không cần marker
+        document.getElementById('extraUrl' + (slot - 1)).value = '';
+    }
+}
 
-            modal.classList.add('open');
-            setTimeout(function() { input.focus(); input.select(); }, 120);
-        }
+// ── URL MODAL ─────────────────────────────────────────────────
+function openUrlModal(slot) {
+    _activeSlot = slot;
 
-        function closeUrlModal(e) {
-            if (e && e.target !== document.getElementById('urlModal')) return;
+    var modal = document.getElementById('urlModal');
+    var input = document.getElementById('urlModalInput');
+    document.getElementById('urlModalTitle').textContent =
+        slot === 0 ? 'Dán URL ảnh chính' : 'Dán URL ảnh phụ ' + (slot + 1);
+
+    // Pre-fill current URL for this slot
+    if (slot === 0) {
+        input.value = document.getElementById('hiddenImageUrl').value;
+    } else {
+        var extraEl = document.getElementById('extraUrl' + (slot - 1));
+        input.value = (extraEl && extraEl.value !== 'new_file') ? extraEl.value : '';
+    }
+
+    modal.classList.add('open');
+    setTimeout(function() { input.focus(); input.select(); }, 120);
+}
+
+function closeUrlModal(e) {
+    if (e && e.target !== document.getElementById('urlModal')) return;
+    document.getElementById('urlModal').classList.remove('open');
+}
+
+function applyUrlModal() {
+    var url = document.getElementById('urlModalInput').value.trim();
+    if (!url) { document.getElementById('urlModal').classList.remove('open'); return; }
+
+    document.getElementById('urlModal').classList.remove('open');
+
+    if (_activeSlot === 0) {
+        // Clear file input, set both visible URL field and hidden URL field
+        document.getElementById('fileSlot0').value = '';
+        document.getElementById('urlInput').value  = url;
+        document.getElementById('hiddenImageUrl').value = url;
+    } else {
+        // Clear file input for this slot, set hidden URL
+        document.getElementById('fileSlot' + _activeSlot).value = '';
+        document.getElementById('extraUrl' + (_activeSlot - 1)).value = url;
+    }
+
+    applyPreview(_activeSlot, url);
+}
+
+// Sync visible URL text field → hidden URL field on every keystroke
+function applyUrlPreview() {
+    var url = document.getElementById('urlInput').value.trim();
+    // When user types in URL field, clear file input and sync hidden
+    document.getElementById('fileSlot0').value = '';
+    document.getElementById('hiddenImageUrl').value = url;
+    if (url) applyPreview(0, url);
+}
+
+// ── PREVIEW + OVERLAY ─────────────────────────────────────────
+function applyPreview(slot, src) {
+    var slotEl  = document.getElementById('slot' + slot);
+    var existImg = document.getElementById('slotImg' + slot);
+    var emptyEl  = document.getElementById('slotEmpty' + slot);
+
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    if (existImg) {
+        existImg.src = src;
+    } else {
+        var img = document.createElement('img');
+        img.id  = 'slotImg' + slot;
+        img.src = src;
+        img.alt = 'Ảnh ' + (slot + 1);
+        var ov = slotEl.querySelector('.slot-overlay');
+        if (ov) slotEl.insertBefore(img, ov);
+        else    slotEl.appendChild(img);
+    }
+    ensureOverlay(slot, slotEl);
+}
+
+function ensureOverlay(slot, slotEl) {
+    if (slotEl.querySelector('.slot-overlay')) return;
+    var ov = document.createElement('div');
+    ov.className = 'slot-overlay';
+    ov.innerHTML =
+        '<button type="button" class="slot-action-btn" onclick="event.stopPropagation();triggerFile(' + slot + ')">' +
+            '<span class="material-symbols-outlined">upload</span></button>' +
+        '<button type="button" class="slot-action-btn url-btn" onclick="event.stopPropagation();openUrlModal(' + slot + ')">' +
+            '<span class="material-symbols-outlined">link</span></button>' +
+        '<button type="button" class="slot-action-btn del" onclick="event.stopPropagation();clearSlot(' + slot + ')">' +
+            '<span class="material-symbols-outlined">delete</span></button>';
+    slotEl.appendChild(ov);
+}
+
+// ── CLEAR SLOT ────────────────────────────────────────────────
+function clearSlot(slot) {
+    var slotEl  = document.getElementById('slot' + slot);
+    var existImg = document.getElementById('slotImg' + slot);
+    var emptyEl  = document.getElementById('slotEmpty' + slot);
+    var ov       = slotEl.querySelector('.slot-overlay');
+
+    if (existImg) existImg.remove();
+    if (ov)       ov.remove();
+
+    var fi = document.getElementById('fileSlot' + slot);
+    if (fi) fi.value = '';
+
+    if (emptyEl) {
+        emptyEl.style.display = '';
+    } else {
+        var empty = document.createElement('div');
+        empty.id        = 'slotEmpty' + slot;
+        empty.className = 'slot-empty';
+        empty.innerHTML = '<span class="material-symbols-outlined">add_photo_alternate</span>' +
+            '<span>' + (slot === 0 ? 'Thêm ảnh chính' : 'Chưa có ảnh') + '</span>';
+        slotEl.appendChild(empty);
+    }
+
+    if (slot === 0) {
+        document.getElementById('urlInput').value      = '';
+        document.getElementById('hiddenImageUrl').value = '';
+    } else {
+        document.getElementById('extraUrl' + (slot - 1)).value = ''; // empty = xóa
+    }
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────────
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropZone').style.borderColor = '';
+    var file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    // Assign to fileSlot0 and trigger handleFile
+    var dt = new DataTransfer();
+    dt.items.add(file);
+    var fi = document.getElementById('fileSlot0');
+    fi.files = dt.files;
+    handleFile(0, fi);
+}
+
+// ── COUNTER ───────────────────────────────────────────────────
+function updateCounter(fieldId, counterId, max) {
+    var el = document.getElementById(fieldId);
+    var ct = document.getElementById(counterId);
+    if (el && ct) ct.textContent = el.value.length;
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────
+function submitForm() {
+    // Validate required fields
+    var valid = true;
+    [
+        { id: 'Name',       err: 'nameErr',  isNum: false },
+        { id: 'Price',      err: 'priceErr', isNum: true  },
+        { id: 'CategoryId', err: 'catErr',   isNum: false },
+    ].forEach(function(c) {
+        var el    = document.getElementById(c.id);
+        var errEl = document.getElementById(c.err);
+        var bad   = c.isNum ? (!el.value || parseFloat(el.value) < 0) : !el.value.trim();
+        el.classList.toggle('error', bad);
+        errEl.classList.toggle('show', bad);
+        if (bad) valid = false;
+    });
+
+    if (!valid) { showToast('⚠ Vui lòng điền đầy đủ thông tin.'); return; }
+
+    // Ensure consistency:
+    // If file is selected for slot 0 → hidden must be empty (file takes priority)
+    // If no file → hidden already has URL or empty (keep existing)
+    var fileInput = document.getElementById('fileSlot0');
+    if (fileInput.files && fileInput.files.length > 0) {
+        document.getElementById('hiddenImageUrl').value = '';
+    }
+
+    document.getElementById('editForm').submit();
+}
+
+// ── KEYBOARD ─────────────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    document.getElementById('urlModal').classList.remove('open');
+    closeChoosePopup();
+});
+
+// ── MODAL & TOAST ─────────────────────────────────────────────
+function showDeleteModal() { document.getElementById('deleteOverlay').classList.add('show'); }
+function closeModal()      { document.getElementById('deleteOverlay').classList.remove('show'); }
+
+function showToast(msg) {
+    var t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg || 'Đã lưu!';
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 3500);
+}
+
+// Auto-show TempData toast
+(function() {
+    var bridge = document.getElementById('ep-toast-bridge');
+    if (!bridge) return;
+    var msg = bridge.getAttribute('data-msg');
+    if (msg) setTimeout(function() { showToast(msg); }, 300);
+})();
+
+// Touch swipe to close URL modal
+(function() {
+    var el = document.getElementById('urlModal');
+    var sy = 0;
+    el.addEventListener('touchstart', function(e) { sy = e.touches[0].clientY; }, {passive:true});
+    el.addEventListener('touchend', function(e) {
+        if (e.changedTouches[0].clientY - sy > 80)
             document.getElementById('urlModal').classList.remove('open');
-        }
-
-        function applyUrlModal() {
-            var url = document.getElementById('urlModalInput').value.trim();
-            if (!url) return;
-
-            document.getElementById('urlModal').classList.remove('open');
-
-            if (_activeSlot === 0) {
-                // Slot 0: cập nhật URL input chính + hiddenImageUrl
-                document.getElementById('urlInput').value        = url;
-                document.getElementById('hiddenImageUrl').value  = url;
-                // Clear file input
-                document.getElementById('fileSlot0').value       = '';
-                applyPreview(0, url);
-            } else {
-                // Slots 1-3: cập nhật extraUrl hidden + preview
-                var extraEl = document.getElementById('extraUrl' + (_activeSlot - 1));
-                if (extraEl) extraEl.value = url;
-                // Clear file input cho slot này
-                document.getElementById('fileSlot' + _activeSlot).value = '';
-                applyPreview(_activeSlot, url);
-            }
-        }
-
-        // ── Preview helpers ───────────────────────────────────
-        function applyUrlPreview() {
-            var url = document.getElementById('urlInput').value.trim();
-            document.getElementById('hiddenImageUrl').value = url;
-            if (url) applyPreview(0, url);
-        }
-
-        function applyPreview(slot, src) {
-            var slotEl   = document.getElementById('slot' + slot);
-            var existImg = document.getElementById('slotImg' + slot);
-            var emptyEl  = document.getElementById('slotEmpty' + slot);
-
-            if (emptyEl) emptyEl.style.display = 'none';
-
-            if (existImg) {
-                existImg.src = src;
-            } else {
-                var img     = document.createElement('img');
-                img.id      = 'slotImg' + slot;
-                img.src     = src;
-                img.alt     = 'Ảnh ' + (slot + 1);
-                var overlay = slotEl.querySelector('.slot-overlay');
-                if (overlay) slotEl.insertBefore(img, overlay);
-                else         slotEl.appendChild(img);
-            }
-
-            ensureOverlay(slot, slotEl);
-        }
-
-        function ensureOverlay(slot, slotEl) {
-            if (slotEl.querySelector('.slot-overlay')) return;
-            var ov = document.createElement('div');
-            ov.className = 'slot-overlay';
-            ov.innerHTML =
-                '<button type="button" class="slot-action-btn" onclick="event.stopPropagation();triggerFile(' + slot + ')" title="Tải file lên">' +
-                    '<span class="material-symbols-outlined">upload</span>' +
-                '</button>' +
-                '<button type="button" class="slot-action-btn url-btn" onclick="event.stopPropagation();openUrlModal(' + slot + ')" title="Dán URL">' +
-                    '<span class="material-symbols-outlined">link</span>' +
-                '</button>' +
-                '<button type="button" class="slot-action-btn del" onclick="event.stopPropagation();clearSlot(' + slot + ')" title="Xóa">' +
-                    '<span class="material-symbols-outlined">delete</span>' +
-                '</button>';
-            slotEl.appendChild(ov);
-        }
-
-        function clearSlot(slot) {
-            var slotEl   = document.getElementById('slot' + slot);
-            var existImg = document.getElementById('slotImg' + slot);
-            var emptyEl  = document.getElementById('slotEmpty' + slot);
-            var overlay  = slotEl.querySelector('.slot-overlay');
-
-            if (existImg) existImg.remove();
-            if (overlay)  overlay.remove();
-
-            var fi = document.getElementById('fileSlot' + slot);
-            if (fi) fi.value = '';
-
-            if (emptyEl) {
-                emptyEl.style.display = '';
-            } else {
-                var empty = document.createElement('div');
-                empty.id        = 'slotEmpty' + slot;
-                empty.className = 'slot-empty';
-                empty.innerHTML = '<span class="material-symbols-outlined">add_photo_alternate</span><span>Chưa có ảnh</span>';
-                slotEl.appendChild(empty);
-            }
-
-            if (slot === 0) {
-                document.getElementById('hiddenImageUrl').value = '';
-                document.getElementById('urlInput').value       = '';
-            } else {
-                var extraEl = document.getElementById('extraUrl' + (slot - 1));
-                if (extraEl) extraEl.value = '';
-            }
-        }
-
-        // ── Drag & Drop ───────────────────────────────────────
-        function handleDrop(e) {
-            e.preventDefault();
-            document.getElementById('dropZone').style.borderColor = '';
-            var file = e.dataTransfer.files[0];
-            if (!file || !file.type.startsWith('image/')) return;
-            var dt = new DataTransfer();
-            dt.items.add(file);
-            var fi = document.getElementById('fileSlot0');
-            fi.files = dt.files;
-            var reader = new FileReader();
-            reader.onload = function(ev) { applyPreview(0, ev.target.result); };
-            reader.readAsDataURL(file);
-            document.getElementById('hiddenImageUrl').value = '';
-            document.getElementById('urlInput').value       = '';
-        }
-
-        // ── Counter ───────────────────────────────────────────
-        function updateCounter(fId, cId, max) {
-            var el = document.getElementById(fId);
-            var ct = document.getElementById(cId);
-            if (el && ct) ct.textContent = el.value.length;
-        }
-
-        // ── Submit ────────────────────────────────────────────
-        function submitForm() {
-            var valid = true;
-            var checks = [
-                { id: 'Name',       err: 'nameErr',  isNum: false },
-                { id: 'Price',      err: 'priceErr', isNum: true  },
-                { id: 'CategoryId', err: 'catErr',   isNum: false },
-            ];
-            checks.forEach(function(c) {
-                var el    = document.getElementById(c.id);
-                var errEl = document.getElementById(c.err);
-                var bad   = c.isNum
-                    ? (!el.value || parseFloat(el.value) < 0)
-                    : !el.value.trim();
-                if (bad) { el.classList.add('error');    errEl.classList.add('show');    valid = false; }
-                else     { el.classList.remove('error'); errEl.classList.remove('show'); }
-            });
-            if (!valid) { showToast('⚠ Vui lòng điền đầy đủ thông tin.'); return; }
-
-            // Sync hiddenImageUrl
-            var urlVal = document.getElementById('urlInput').value.trim();
-            var hidden = document.getElementById('hiddenImageUrl');
-            if (urlVal && !document.getElementById('fileSlot0').files.length) {
-                hidden.value = urlVal;
-            }
-
-            // Sync extraUrl cho các slot URL-based (không có file mới)
-            for (var s = 1; s <= 3; s++) {
-                var fi = document.getElementById('fileSlot' + s);
-                var eu = document.getElementById('extraUrl' + (s - 1));
-                if (eu && eu.value === 'new_file' && fi && fi.files.length > 0) {
-                    // có file mới → controller xử lý qua ExtraImages
-                    eu.value = 'new_file'; // keep marker
-                }
-            }
-
-            document.getElementById('editForm').submit();
-        }
-
-        // ── Keyboard shortcut: Esc đóng URL modal ─────────────
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.getElementById('urlModal').classList.remove('open');
-                closeChoosePopup();
-            }
-        });
-
-        // ── Modal & Toast ─────────────────────────────────────
-        function showDeleteModal() { document.getElementById('deleteOverlay').classList.add('show'); }
-        function closeModal()      { document.getElementById('deleteOverlay').classList.remove('show'); }
-
-        function showToast(msg) {
-            var t = document.getElementById('toast');
-            document.getElementById('toastMsg').textContent = msg || 'Đã lưu!';
-            t.classList.add('show');
-            setTimeout(function() { t.classList.remove('show'); }, 3200);
-        }
-
-        (function() {
-            var bridge = document.getElementById('ep-toast-bridge');
-            if (!bridge) return;
-            var msg = bridge.getAttribute('data-msg');
-            if (msg) setTimeout(function() { showToast(msg); }, 300);
-        })();
-    </script>
+    }, {passive:true});
+})();
+</script>
 }
