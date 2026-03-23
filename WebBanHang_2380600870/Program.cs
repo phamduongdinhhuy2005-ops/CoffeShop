@@ -1,16 +1,14 @@
 // Program.cs
 // FIXED:
-// Bug 11 — OAuth registration: identityBuilder.Services.AddAuthentication() là sai API
-//           IdentityBuilder không có property .Services để chain thêm provider
-//           Cần dùng builder.Services.AddAuthentication() sau khi AddIdentity đã chạy
-// Bug 12 — Admin seed FullName: "Quản Trị Viên" bị lưu dưới dạng chuỗi mojibake
-//           Sửa thành string literal UTF-8 đúng chuẩn
-// (Giữ nguyên: OAuth optional check, Session trước Routing, cookie config)
+// Bug 11 — OAuth registration: dùng builder.Services.AddAuthentication() đúng cách
+// Bug 12 — Admin seed FullName đúng UTF-8
+// FIX ID  — Đăng ký IdGeneratorService cho gap-filling ID reuse
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WebBanHang_2380600870.Models;
 using WebBanHang_2380600870.Repositories;
+using WebBanHang_2380600870.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,8 +49,6 @@ var fbAppId = builder.Configuration["Authentication:Facebook:AppId"];
 var fbAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
 
 // FIX Bug 11: Dùng builder.Services.AddAuthentication() — KHÔNG phải identityBuilder.Services
-// AddIdentity() đã tự gọi AddAuthentication() bên trong và set DefaultScheme.
-// Ta chỉ cần chain thêm provider qua builder.Services, không tạo builder mới.
 var authBuilder = builder.Services.AddAuthentication();
 
 if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
@@ -94,9 +90,10 @@ builder.Services.AddSession(options =>
 });
 builder.Services.AddHttpContextAccessor();
 
-// ===== REPOSITORIES =====
+// ===== REPOSITORIES & SERVICES =====
 builder.Services.AddScoped<IProductRepository, EFProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, EFCategoryRepository>();
+builder.Services.AddScoped<IdGeneratorService>();  // FIX ID: gap-filling service
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
@@ -124,7 +121,7 @@ using (var scope = app.Services.CreateScope())
         {
             UserName = adminEmail,
             Email = adminEmail,
-            FullName = "Quản Trị Viên",   // FIX Bug 12: chuỗi UTF-8 đúng chuẩn
+            FullName = "Quản Trị Viên",   // FIX Bug 12: UTF-8 đúng chuẩn
             EmailConfirmed = true
         };
         var result = await userManager.CreateAsync(admin, "Admin@123");

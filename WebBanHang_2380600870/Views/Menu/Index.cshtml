@@ -1,6 +1,4 @@
-﻿@* FILE: Views/Menu/Index.cshtml *@
-@* REDESIGN v6: 8 sản phẩm/trang · pagination dùng tp-dot/tp-arrow từ Product/Detail *@
-@model IEnumerable<WebBanHang_2380600870.Models.Product>
+﻿@model IEnumerable<WebBanHang_2380600870.Models.Product>
 @{
     ViewData["Title"] = "Thực Đơn | Góc Lặng";
     Layout = "_Layout";
@@ -8,6 +6,11 @@
     var categories = ViewBag.Categories as IEnumerable<WebBanHang_2380600870.Models.Category>
                      ?? Enumerable.Empty<WebBanHang_2380600870.Models.Category>();
     var products = Model.ToList();
+
+    // FIX BUG FILTER: Dùng allProducts để tính count trong tabs — không dùng Model (filtered)
+    var allProducts = ViewBag.AllProducts as List<WebBanHang_2380600870.Models.Product>
+                      ?? products;
+
     string activeCatName = activeCategory != null
         ? (categories.FirstOrDefault(c => c.Id == activeCategory)?.Name ?? "")
         : "Tất Cả";
@@ -362,11 +365,12 @@
                 data-cat-id="" data-cat-name="Tất Cả"
                 onclick="mnSwitchCat(this)">
             Tất Cả
-            <span class="mn-filter__tab-count">@Model.Count()</span>
+            @* FIX: allProducts.Count() thay vì Model.Count() *@
+            <span class="mn-filter__tab-count">@allProducts.Count()</span>
         </button>
         @foreach (var cat in categories)
         {
-            int catCount = Model.Count(p => p.CategoryId == cat.Id);
+            int catCount = allProducts.Count(p => p.CategoryId == cat.Id); // FIX: allProducts thay vì Model
             <button class="mn-filter__tab @(activeCategory == cat.Id ? "mn-filter__tab--active" : "")"
                     data-cat-id="@cat.Id" data-cat-name="@cat.Name"
                     onclick="mnSwitchCat(this)">
@@ -420,7 +424,8 @@
 <!-- Embed all product data as JSON -->
 <script id="mn-products-data" type="application/json">
 @{
-    var allForJs = Model.Select(p => new {
+    // FIX: allProducts (toàn bộ) thay vì Model (filtered) để JS filter đúng
+    var allForJs = allProducts.Select(p => new {
         id        = p.Id,
         catId     = p.CategoryId,
         catName   = p.Category?.Name ?? "",

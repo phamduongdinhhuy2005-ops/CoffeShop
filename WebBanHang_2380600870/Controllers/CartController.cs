@@ -1,19 +1,12 @@
 ﻿// Controllers/CartController.cs
-// FIXED:
-// Bug 7 — CancelOrder: Dùng FirstOrDefaultAsync với tracking rồi reload để tránh
-//           race condition khi 2 request cùng cancel 1 đơn hàng đồng thời.
-//           Thêm .AsNoTracking() cho read-only queries để tối ưu hiệu năng.
-// Bug 9 — Checkout GET/POST: Khi cart rỗng do session expire, redirect về Menu thay vì
-//           chỉ Index (giúp UX tốt hơn, người dùng biết phải thêm hàng từ đâu).
-//           Thêm thông báo rõ ràng hơn.
-// FIX: toppingPrice param — server cộng giá topping vào UnitPrice
-// NEW: CancelOrder action — user hủy đơn Pending
+// FIX IDENTITY_INSERT: Dùng ExecutionStrategy.ExecuteAsync để tắt retry logic của SQL Server.
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebBanHang_2380600870.Models;
+using WebBanHang_2380600870.Services;
 
 namespace WebBanHang_2380600870.Controllers
 {
@@ -21,12 +14,16 @@ namespace WebBanHang_2380600870.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IdGeneratorService _idGen;
         private const string CartSessionKey = "ShoppingCart";
 
-        public CartController(ApplicationDbContext context, UserManager<AppUser> userManager)
+        public CartController(ApplicationDbContext context,
+                               UserManager<AppUser> userManager,
+                               IdGeneratorService idGen)
         {
             _context = context;
             _userManager = userManager;
+            _idGen = idGen;
         }
 
         private Cart GetCart() => HttpContext.Session.GetObject<Cart>(CartSessionKey) ?? new Cart();
@@ -121,7 +118,6 @@ namespace WebBanHang_2380600870.Controllers
             var cart = GetCart();
             if (cart.Items == null || !cart.Items.Any())
             {
-                // FIX Bug 9: Redirect về Menu thay vì chỉ báo lỗi, UX rõ ràng hơn
                 TempData["Error"] = "Giỏ hàng của bạn đang trống. Hãy thêm sản phẩm từ thực đơn.";
                 return RedirectToAction("Index", "Menu");
             }
@@ -143,7 +139,6 @@ namespace WebBanHang_2380600870.Controllers
             var cart = GetCart();
             if (cart.Items == null || !cart.Items.Any())
             {
-                // FIX Bug 9: Consistent redirect về Menu khi cart rỗng
                 TempData["Error"] = "Giỏ hàng của bạn đang trống. Hãy thêm sản phẩm từ thực đơn.";
                 return RedirectToAction("Index", "Menu");
             }
@@ -173,8 +168,20 @@ namespace WebBanHang_2380600870.Controllers
                 }).ToList()
             };
 
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            order.Id = await _idGen.NextOrderIdAsync();
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Orders ON");
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
+                await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Orders OFF");
+                await transaction.CommitAsync();
+            });
+
+            await _idGen.ReseedOrdersAsync();
             cart.Clear(); SaveCart(cart);
 
             TempData["Success"] = $"Đặt hàng thành công! Mã đơn hàng #{order.Id}";
@@ -209,7 +216,6 @@ namespace WebBanHang_2380600870.Controllers
             return View(orders);
         }
 
-        // FIX Bug 7: CancelOrder — dùng optimistic concurrency để tránh double-cancel
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -218,7 +224,6 @@ namespace WebBanHang_2380600870.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
 
-            // FIX Bug 7: Load với tracking để EF detect concurrent changes
             var order = await _context.Orders
                 .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == user.Id);
 
@@ -228,7 +233,6 @@ namespace WebBanHang_2380600870.Controllers
                 return RedirectToAction(nameof(OrderHistory));
             }
 
-            // FIX Bug 7: Re-check status sau khi load (tránh race condition)
             if (order.Status != OrderStatus.Pending)
             {
                 TempData["Error"] = "Chỉ có thể hủy đơn hàng đang chờ xác nhận.";
@@ -244,14 +248,12 @@ namespace WebBanHang_2380600870.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                // FIX Bug 7: Nếu concurrency conflict (đơn đã được cập nhật bởi request khác)
                 TempData["Error"] = "Đơn hàng đã được cập nhật trước đó. Vui lòng kiểm tra lại trạng thái.";
             }
 
             return RedirectToAction(nameof(OrderHistory));
         }
 
-        // DeleteOrder: User xóa đơn hàng khỏi lịch sử
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
