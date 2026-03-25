@@ -1,4 +1,4 @@
-﻿@* Views/Admin/CategoryOptions.cshtml *@
+@* Views/Admin/CategoryOptions.cshtml *@
 @{
     ViewData["Title"] = "Tùy Chọn Theo Danh Mục";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -531,10 +531,10 @@
 <!-- Pass server categories to JS -->
 <script>
     // ── Danh mục từ server (luôn up-to-date) ──────────────────────
-    const SERVER_CATEGORIES = @Html.Raw(serverCategoriesJson); // FIX TS1109
+    var SERVER_CATEGORIES = @Html.Raw(serverCategoriesJson); // FIX TS1109
 
     // ── Icon mapping theo tên (fallback cho danh mục mới) ─────────
-    const ICON_MAP = {
+    var ICON_MAP = {
         "Cà Phê":           { icon: "coffee",        sub: "Đồ uống có caffeine" },
         "Trà & Thảo Mộc":   { icon: "local_florist", sub: "Trà tươi & thảo mộc" },
         "Bánh Sáng":        { icon: "bakery_dining",  sub: "Bánh & đồ ăn" },
@@ -545,7 +545,7 @@
     }
 
     // ── Default config cho danh mục chưa có config ────────────────
-    const DEFAULT_TOPPINGS = {
+    var DEFAULT_TOPPINGS = {
         "Cà Phê": [
             { name: "Thêm đá",           price: 0     },
             { name: "Sữa yến mạch",      price: 10000 },
@@ -568,7 +568,7 @@
     };
 
     // ── Storage key (phải khớp với Detail.cshtml) ─────────────────
-    const STORAGE_KEY = 'goclang_category_options';
+    var STORAGE_KEY = 'goclang_category_options';
 
     // ── Load/Save config ─────────────────────────────────────────
     function loadConfig() {
@@ -608,12 +608,12 @@
         return merged;
     }
 
-    let config = buildConfig();
-    let dirty  = false;
+    var config = buildConfig();
+    var dirty  = false;
 
     // ── Modal state ───────────────────────────────────────────────
-    let _editCat   = null;
-    let _editIndex = null;
+    var _editCat   = null;
+    var _editIndex = null;
 
     function setDirty() {
         dirty = true;
@@ -837,7 +837,7 @@
     }
 
     // ── Toast ─────────────────────────────────────────────────────
-    let _toastTimer = null;
+    var _toastTimer = null;
     function showToast(msg) {
         clearTimeout(_toastTimer);
         const t = document.getElementById('coToast');

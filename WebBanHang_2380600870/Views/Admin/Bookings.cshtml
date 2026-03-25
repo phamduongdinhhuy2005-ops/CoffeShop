@@ -1,4 +1,4 @@
-﻿@model IEnumerable<WebBanHang_2380600870.Models.Booking>
+@model IEnumerable<WebBanHang_2380600870.Models.Booking>
 @{
     ViewData["Title"] = "Quản Lý Đặt Chỗ";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -127,11 +127,14 @@
     }
 </div>
 
-@section Scripts {
     <script>
         setTimeout(() => {
             const t = document.getElementById('hcToast');
-            if (t) { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }
+            if (t) {
+                t.style.opacity = '0';
+                t.style.transition = 'opacity .4s';
+                setTimeout(() => t.remove(), 400);
+            }
         }, 4000);
 
         // ── Pagination ──

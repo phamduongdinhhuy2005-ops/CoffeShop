@@ -1,4 +1,7 @@
 ﻿// Controllers/ProductController.cs
+// THEM MOI: Action ApiDemo() — trang demo RESTful API Bai 6
+// Tat ca chuc nang cu giu nguyen, chi them 1 action o cuoi
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -35,7 +38,7 @@ namespace WebBanHang_2380600870.Controllers
             _logger = logger;
         }
 
-        // PUBLIC — xem chi tiết
+        // PUBLIC — xem chi tiet
         public async Task<IActionResult> Detail(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
@@ -48,7 +51,7 @@ namespace WebBanHang_2380600870.Controllers
             return View(new ProductDetailViewModel { Product = product, RelatedProducts = related });
         }
 
-        // ADMIN — danh sách
+        // ADMIN — danh sach
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
@@ -57,7 +60,7 @@ namespace WebBanHang_2380600870.Controllers
             return View(products);
         }
 
-        // ADMIN — thêm GET
+        // ADMIN — them GET
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Add()
         {
@@ -66,7 +69,7 @@ namespace WebBanHang_2380600870.Controllers
             return View();
         }
 
-        // ADMIN — thêm POST
+        // ADMIN — them POST
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -95,7 +98,7 @@ namespace WebBanHang_2380600870.Controllers
                 return View(product);
             }
 
-            // ── Ảnh chính ──
+            // ── Anh chinh ──
             if (ImageFile != null && ImageFile.Length > 0)
             {
                 var err = ValidateImageFile(ImageFile);
@@ -108,12 +111,12 @@ namespace WebBanHang_2380600870.Controllers
                 }
                 product.ImageUrl = await SaveImage(ImageFile);
             }
-            // Nếu không có file thì giữ nguyên ImageUrl từ hidden input (URL paste)
+            // Neu khong co file thi giu nguyen ImageUrl tu hidden input (URL paste)
 
-            // Lưu sản phẩm trước để có Id
+            // Luu san pham truoc de co Id
             await _productRepository.AddAsync(product);
 
-            // ── Ảnh phụ (3 slots) ──
+            // ── Anh phu (3 slots) ──
             var extraFiles = new IFormFile?[] { ExtraFile0, ExtraFile1, ExtraFile2 };
             for (int i = 0; i < 3; i++)
             {
@@ -143,11 +146,11 @@ namespace WebBanHang_2380600870.Controllers
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"Đã thêm sản phẩm \"{product.Name}\" thành công!";
+            TempData["Success"] = $"Da them san pham \"{product.Name}\" thanh cong!";
             return RedirectToAction(nameof(Index));
         }
 
-        // ADMIN — xem chi tiết admin
+        // ADMIN — xem chi tiet admin
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Display(int id)
         {
@@ -156,7 +159,7 @@ namespace WebBanHang_2380600870.Controllers
             return View(product);
         }
 
-        // ADMIN — chỉnh sửa GET
+        // ADMIN — chinh sua GET
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id)
         {
@@ -166,7 +169,7 @@ namespace WebBanHang_2380600870.Controllers
             return View(product);
         }
 
-        // ADMIN — chỉnh sửa POST
+        // ADMIN — chinh sua POST
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -206,7 +209,7 @@ namespace WebBanHang_2380600870.Controllers
 
             if (existing == null) return NotFound();
 
-            // ── Cập nhật thông tin cơ bản ──
+            // ── Cap nhat thong tin co ban ──
             existing.Name = product.Name;
             existing.Price = product.Price;
             existing.Description = product.Description;
@@ -214,13 +217,13 @@ namespace WebBanHang_2380600870.Controllers
             existing.IsOnSale = product.IsOnSale;
             existing.DiscountPercent = product.DiscountPercent;
 
-            // ── Ảnh chính ──
+            // ── Anh chinh ──
             if (ImageFile != null && ImageFile.Length > 0)
             {
                 var err = ValidateImageFile(ImageFile);
                 if (err != null)
                 {
-                    TempData["Error"] = $"Ảnh chính: {err}";
+                    TempData["Error"] = $"Anh chinh: {err}";
                     ViewBag.Categories = await _categoryRepository.GetAllAsync();
                     var rp = await _productRepository.GetByIdAsync(id);
                     return View(rp ?? product);
@@ -238,15 +241,12 @@ namespace WebBanHang_2380600870.Controllers
                     existing.ImageUrl = product.ImageUrl;
                 }
             }
-            // Nếu cả 2 rỗng → giữ nguyên ảnh cũ
 
-            // ── Ảnh phụ (3 slots) ──
-            // Dùng OrderBy(Id) để đảm bảo nhất quán với View
+            // ── Anh phu (3 slots) ──
             var existingImages = existing.Images?
                 .OrderBy(img => img.Id)
                 .ToList() ?? new List<ProductImage>();
 
-            // Nhóm 3 file inputs riêng biệt (tránh indexed binding issue)
             var extraFiles = new IFormFile?[] { ExtraFile0, ExtraFile1, ExtraFile2 };
 
             _logger.LogInformation("ExtraFile0={F0} ExtraFile1={F1} ExtraFile2={F2}",
@@ -274,13 +274,13 @@ namespace WebBanHang_2380600870.Controllers
                     var err = ValidateImageFile(newFile!);
                     if (err != null)
                     {
-                        TempData["Error"] = $"Ảnh phụ {i + 2}: {err}";
+                        TempData["Error"] = $"Anh phu {i + 2}: {err}";
                         _logger.LogWarning("Slot {Slot} validation failed: {Err}", i, err);
                         continue;
                     }
 
                     var newUrl = await SaveImage(newFile!);
-                    _logger.LogInformation("Slot {Slot}: saved new file → {Url}", i, newUrl);
+                    _logger.LogInformation("Slot {Slot}: saved new file — {Url}", i, newUrl);
 
                     if (existingImg != null)
                     {
@@ -295,7 +295,6 @@ namespace WebBanHang_2380600870.Controllers
                 }
                 else if (isMarker)
                 {
-                    // "new_file" marker nhưng không có file thực tế → bỏ qua
                     _logger.LogWarning("Slot {Slot}: isMarker but no file received", i);
                 }
                 else if (!isEmptyUrl)
@@ -317,7 +316,6 @@ namespace WebBanHang_2380600870.Controllers
                 }
                 else
                 {
-                    // URL rỗng → xóa ảnh slot này
                     if (existingImg != null)
                     {
                         DeleteOldLocalImage(existingImg.Url);
@@ -329,14 +327,14 @@ namespace WebBanHang_2380600870.Controllers
             _context.Products.Update(existing);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"Đã cập nhật sản phẩm \"{existing.Name}\" thành công!";
+            TempData["Success"] = $"Da cap nhat san pham \"{existing.Name}\" thanh cong!";
             return RedirectToAction(nameof(Index));
         }
 
         [Authorize(Roles = "Admin")]
         public IActionResult Update(int id) => RedirectToAction(nameof(Edit), new { id });
 
-        // ADMIN — xóa
+        // ADMIN — xoa
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -355,19 +353,27 @@ namespace WebBanHang_2380600870.Controllers
             if (product != null)
                 DeleteOldLocalImage(product.ImageUrl);
             await _productRepository.DeleteAsync(id);
-            TempData["Success"] = $"Đã xóa sản phẩm \"{name}\" thành công!";
+            TempData["Success"] = $"Da xoa san pham \"{name}\" thanh cong!";
             return RedirectToAction(nameof(Index));
+        }
+
+        // ========== BAI 6: TRANG DEMO API ==========
+        // ADMIN — trang demo RESTful API (fetch/JS goi du 5 CRUD endpoint)
+        [Authorize(Roles = "Admin")]
+        public IActionResult ApiDemo()
+        {
+            return View();
         }
 
         // ── Helpers ──
         private static string? ValidateImageFile(IFormFile file)
         {
             if (file.Length > MaxImageSizeBytes)
-                return "Ảnh không được vượt quá 5MB.";
+                return "Anh khong duoc vuot qua 5MB.";
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (string.IsNullOrEmpty(ext) || !AllowedExtensions.Contains(ext))
-                return $"Chỉ chấp nhận ảnh .jpg, .jpeg, .png, .webp, .gif, .bmp (nhận được: '{ext}')";
+                return $"Chi chap nhan anh .jpg, .jpeg, .png, .webp, .gif, .bmp (nhan duoc: '{ext}')";
 
             return null;
         }

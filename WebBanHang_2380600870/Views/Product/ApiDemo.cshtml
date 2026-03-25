@@ -1,0 +1,1082 @@
+@* Views/Product/ApiDemo.cshtml — REDESIGNED *@
+@{
+    ViewData["Title"] = "Demo RESTful API";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "ApiDemo";
+    ViewData["Breadcrumb"] = "<a href='/Product'>Sản phẩm</a> <span class='material-symbols-outlined'>chevron_right</span> API Demo";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+
+<style>
+    /* ══════════════════════════════════════════════════
+       CSS VARIABLES
+    ══════════════════════════════════════════════════ */
+    :root {
+      /* ── Brand palette (matches _AdminLayout) ── */
+      --bg:          #1e2a2b;       /* darkest — card bg, hero, ref */
+      --surface:     #243234;       /* mid — card surface */
+      --surface2:    #2c3a3b;       /* lighter — input bg, hover */
+      --border:      rgba(162,123,92,0.18);   /* primary brown tint */
+      --border-soft: rgba(162,123,92,0.08);
+      --text:        #dcd7c9;       /* clr-neutral */
+      --muted:       #8c9a9b;
+      --accent:      #a27b5c;       /* clr-primary */
+      --accent-glow: rgba(162,123,92,0.22);
+      --green:       #10b981;
+      --blue:        #3b82f6;
+      --amber:       #f59e0b;
+      --red:         #ef4444;
+      --purple:      #8b5cf6;
+      --teal:        #06b6d4;
+      --mono:        'JetBrains Mono', monospace;
+      --sans:        'Be Vietnam Pro', sans-serif;
+      --radius:      12px;
+      --radius-sm:   8px;
+    }
+
+    /* ══ RESET ══ */
+    .api-demo * { box-sizing: border-box; }
+    .api-demo { font-family: var(--sans); color: var(--text); }
+
+    /* ══ HERO BANNER ══════════════════════════════════ */
+    .ad-hero {
+      position: relative;
+      background: var(--bg);
+      border-radius: 20px;
+      padding: 2.5rem 2.5rem 2rem;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .ad-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 80% at 0% 50%, rgba(162,123,92,.22) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 60% at 100% 20%, rgba(63,78,79,.35) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .ad-hero-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2rem;
+      align-items: center;
+      position: relative; z-index: 1;
+    }
+    .ad-hero-eyebrow {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-size: .65rem; font-weight: 700; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: .75rem;
+    }
+    .ad-hero-eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
+    .ad-hero-title {
+      font-family: var(--sans); font-size: 1.75rem; font-weight: 700;
+      color: var(--text); line-height: 1.2; margin-bottom: .5rem;
+    }
+    .ad-hero-title span { color: var(--accent); }
+    .ad-hero-sub {
+      font-size: .875rem; color: var(--muted); line-height: 1.75; max-width: 520px;
+    }
+    .ad-hero-sub code {
+      background: rgba(162,123,92,.15); color: var(--accent);
+      padding: .15rem .5rem; border-radius: 5px; font-family: var(--mono);
+      font-size: .78rem;
+    }
+    .ad-hero-actions { display: flex; gap: .625rem; flex-direction: column; align-items: flex-end; }
+    .ad-btn-guide {
+      display: inline-flex; align-items: center; gap: .45rem;
+      padding: .65rem 1.25rem; border-radius: var(--radius-sm);
+      background: var(--accent); color: #fff;
+      border: none; cursor: pointer;
+      font-family: var(--sans); font-size: .85rem; font-weight: 600;
+      transition: opacity .15s, transform .12s;
+      white-space: nowrap;
+    }
+    .ad-btn-guide:hover { opacity: .88; transform: translateY(-1px); }
+    .ad-btn-guide .material-symbols-outlined { font-size: 17px; }
+    .ad-btn-swagger {
+      display: inline-flex; align-items: center; gap: .45rem;
+      padding: .6rem 1.2rem; border-radius: var(--radius-sm);
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border); cursor: pointer;
+      font-family: var(--sans); font-size: .82rem; font-weight: 500;
+      text-decoration: none; transition: border-color .15s, color .15s;
+    }
+    .ad-btn-swagger:hover { border-color: rgba(162,123,92,.4); color: var(--accent); }
+    .ad-btn-swagger .material-symbols-outlined { font-size: 14px; }
+
+    /* ══ GUIDE PANEL ══════════════════════════════════ */
+    .ad-guide {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      animation: slideDown .3s cubic-bezier(.22,1,.36,1);
+    }
+    .ad-guide.open { display: block; }
+    @@keyframes slideDown {
+      from { opacity:0; transform:translateY(-10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .ad-guide-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(162,123,92,.05);
+    }
+    .ad-guide-title {
+      display: flex; align-items: center; gap: .625rem;
+      font-size: .95rem; font-weight: 700; color: var(--text);
+    }
+    .ad-guide-title .material-symbols-outlined { font-size: 20px; color: var(--accent); }
+    .ad-guide-close {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 1px solid var(--border); background: none; cursor: pointer;
+      color: var(--muted); display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s, color .15s;
+    }
+    .ad-guide-close:hover { border-color: var(--red); color: var(--red); }
+    .ad-guide-close .material-symbols-outlined { font-size: 16px; }
+    .ad-guide-body { padding: 1.75rem; }
+    .ad-guide-intro {
+      font-size: .875rem; color: var(--muted); line-height: 1.8; margin-bottom: 1.5rem;
+      padding: 1rem 1.25rem;
+      background: rgba(59,130,246,.06); border: 1px solid rgba(59,130,246,.15);
+      border-radius: var(--radius-sm);
+    }
+    .ad-guide-intro strong { color: var(--text); }
+    .ad-guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    @@media(max-width:700px) { .ad-guide-grid { grid-template-columns: 1fr; } }
+    .ad-guide-card {
+      padding: 1.1rem 1.25rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: border-color .2s;
+    }
+    .ad-guide-card:hover { border-color: rgba(162,123,92,.3); }
+    .ad-guide-card-title {
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .8rem; font-weight: 700; color: var(--text); margin-bottom: .5rem;
+    }
+    .ad-guide-card-title .material-symbols-outlined { font-size: 15px; color: var(--accent); }
+    .ad-guide-card-desc { font-size: .78rem; color: var(--muted); line-height: 1.65; }
+    .ad-guide-flow {
+      display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .ad-flow-step {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .55rem .9rem; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: .78rem; color: var(--text);
+    }
+    .ad-flow-step .num {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: .62rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .ad-flow-arrow { color: var(--muted); font-size: .75rem; }
+    .ad-guide-methods { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .ad-method-pill {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .4rem .875rem; border-radius: 99px;
+      font-size: .72rem; font-weight: 700; border: 1px solid;
+    }
+    .ad-method-pill.get    { background: rgba(59,130,246,.1);  color: #60a5fa; border-color: rgba(59,130,246,.25); }
+    .ad-method-pill.post   { background: rgba(16,185,129,.1);  color: #34d399; border-color: rgba(16,185,129,.25); }
+    .ad-method-pill.put    { background: rgba(245,158,11,.1);  color: #fbbf24; border-color: rgba(245,158,11,.25); }
+    .ad-method-pill.delete { background: rgba(239,68,68,.1);   color: #f87171; border-color: rgba(239,68,68,.25); }
+    .ad-method-pill .lock  { font-size: 11px; opacity: .7; }
+
+    /* ══ ENDPOINT REFERENCE ══════════════════════════ */
+    .ad-ref {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .ad-ref-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .875rem 1.5rem;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .ad-ref-title {
+      font-family: var(--mono); font-size: .65rem; font-weight: 700;
+      letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .ad-ref-title::before {
+      content: ''; display: block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 8px var(--accent);
+    }
+    .ad-ref-rows { padding: .5rem; }
+    .ad-ref-row {
+      display: grid;
+      grid-template-columns: 58px 1fr auto auto;
+      gap: .625rem;
+      align-items: center;
+      padding: .6rem .875rem;
+      border-radius: var(--radius-sm);
+      transition: background .12s;
+    }
+    .ad-ref-row:hover { background: var(--surface); }
+    .ad-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: .16rem .5rem; border-radius: 5px;
+      font-family: var(--mono); font-size: .6rem; font-weight: 700;
+      letter-spacing: .04em;
+    }
+    .b-get    { background: #1e3a5f; color: #60a5fa; }
+    .b-post   { background: #064e3b; color: #34d399; }
+    .b-put    { background: #451a03; color: #fbbf24; }
+    .b-delete { background: #450a0a; color: #f87171; }
+    .ad-ref-path { font-family: var(--mono); font-size: .8rem; color: var(--text); }
+    .ad-ref-desc { font-size: .72rem; color: var(--muted); text-align: right; }
+    .ad-ref-lock { font-size: 13px; color: var(--amber); }
+
+    /* ══ MAIN GRID ════════════════════════════════════ */
+    .ad-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @@media(max-width:960px) { .ad-grid { grid-template-columns: 1fr; } }
+    .ad-grid-full { grid-column: 1 / -1; }
+
+    /* ══ API CARD ═════════════════════════════════════ */
+    .ad-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .ad-card:hover { border-color: rgba(162,123,92,.22); }
+    .ad-card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem .875rem;
+      border-bottom: 1px solid var(--border-soft);
+      gap: .5rem;
+    }
+    .ad-card-head-left {
+      display: flex; align-items: center; gap: .625rem; flex-wrap: wrap;
+    }
+    .ad-card-title {
+      font-size: .875rem; font-weight: 700; color: var(--text);
+      font-family: var(--mono);
+    }
+    .ad-card-subtitle { font-size: .7rem; color: var(--muted); margin-top: .15rem; }
+    .ad-lock-icon { font-size: 14px; color: var(--amber); }
+
+    .ad-card-body { padding: 1rem 1.25rem; }
+    .ad-card-body .ad-field { margin-bottom: .625rem; }
+    .ad-card-body .ad-field:last-of-type { margin-bottom: 0; }
+
+    .ad-label {
+      display: block; font-size: .62rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .1em;
+      color: var(--muted); margin-bottom: .3rem;
+    }
+    .ad-input, .ad-select, .ad-textarea {
+      width: 100%; padding: .6rem .875rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--sans); font-size: .85rem; color: var(--text);
+      outline: none; transition: border-color .15s, box-shadow .15s;
+      box-sizing: border-box;
+    }
+    .ad-input:focus, .ad-select:focus, .ad-textarea:focus {
+      border-color: rgba(162,123,92,.5);
+      box-shadow: 0 0 0 3px rgba(162,123,92,.1);
+    }
+    .ad-input::placeholder, .ad-textarea::placeholder { color: var(--muted); opacity: .6; }
+    .ad-select option { background: #1e2330; }
+    .ad-input-row { display: flex; gap: .5rem; }
+    .ad-input-row .ad-input { margin-bottom: 0; flex: 1; }
+    .ad-checkbox-row {
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .82rem; color: var(--muted); margin-bottom: .5rem;
+    }
+    .ad-checkbox-row input { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+    .ad-slide-field { display: none; margin-top: .5rem; }
+    .ad-slide-field.show { display: block; }
+
+    .ad-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+
+    /* ══ BUTTONS ══════════════════════════════════════ */
+    .ad-btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .58rem 1.1rem; border-radius: var(--radius-sm); border: none;
+      font-family: var(--sans); font-size: .82rem; font-weight: 600;
+      cursor: pointer; transition: opacity .15s, transform .12s;
+      white-space: nowrap;
+    }
+    .ad-btn:hover:not(:disabled) { opacity: .82; transform: translateY(-1px); }
+    .ad-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .ad-btn .material-symbols-outlined { font-size: 15px; }
+    .ad-btn-blue   { background: var(--blue);   color: #fff; }
+    .ad-btn-green  { background: var(--green);  color: #fff; }
+    .ad-btn-amber  { background: var(--amber);  color: #000; }
+    .ad-btn-red    { background: var(--red);    color: #fff; }
+    .ad-btn-ghost  { background: var(--surface2); color: var(--muted); }
+    .ad-btn-ghost:hover { color: var(--text); }
+    .ad-btn-full { width: 100%; justify-content: center; margin-top: .625rem; }
+
+    .ad-card-footer { padding: 0 1.25rem 1.25rem; }
+
+    /* ══ STATUS + COUNT ══ */
+    .ad-meta { display: flex; align-items: center; gap: .625rem; margin-bottom: .6rem; flex-wrap: wrap; }
+    .ad-status-chip {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .2rem .6rem; border-radius: 99px;
+      font-size: .65rem; font-weight: 700; letter-spacing: .05em;
+    }
+    .chip-2xx  { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.25); }
+    .chip-201  { background: rgba(6,182,212,.12);  color: var(--teal);  border: 1px solid rgba(6,182,212,.25); }
+    .chip-204  { background: rgba(139,92,246,.12); color: #a78bfa;      border: 1px solid rgba(139,92,246,.25); }
+    .chip-4xx  { background: rgba(245,158,11,.12); color: var(--amber); border: 1px solid rgba(245,158,11,.25); }
+    .chip-5xx  { background: rgba(239,68,68,.12);  color: var(--red);   border: 1px solid rgba(239,68,68,.25); }
+    .ad-count-badge {
+      font-size: .7rem; color: var(--muted);
+      display: flex; align-items: center; gap: .3rem;
+      font-family: var(--mono);
+    }
+    .ad-count-badge .material-symbols-outlined { font-size: 13px; color: var(--accent); }
+
+    /* ══ RESULT BOX ══════════════════════════════════ */
+    .ad-result-wrap { position: relative; margin-top: .75rem; }
+    .ad-result {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .875rem 1rem;
+      font-family: var(--mono); font-size: .73rem; color: var(--muted);
+      max-height: 220px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-all;
+      line-height: 1.7; transition: border-left-color .25s;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    .ad-result::-webkit-scrollbar { width: 4px; }
+    .ad-result::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+    .ad-result.s2xx  { border-left-color: var(--green); color: #86efac; }
+    .ad-result.s201  { border-left-color: var(--teal);  color: #a5f3fc; }
+    .ad-result.s204  { border-left-color: #8b5cf6;      color: #c4b5fd; }
+    .ad-result.s4xx  { border-left-color: var(--amber); color: #fde68a; }
+    .ad-result.s5xx  { border-left-color: var(--red);   color: #fca5a5; }
+    .ad-result.loading { border-left-color: var(--amber); }
+    .ad-copy-wrap { position: absolute; top: .5rem; right: .5rem; }
+    .ad-copy-btn {
+      display: flex; align-items: center; gap: .25rem;
+      padding: .25rem .55rem; border-radius: 6px;
+      background: rgba(255,255,255,.06); border: 1px solid var(--border);
+      color: var(--muted); font-family: var(--sans); font-size: .68rem;
+      font-weight: 600; cursor: pointer; transition: background .15s, color .15s;
+    }
+    .ad-copy-btn:hover { background: rgba(255,255,255,.12); color: var(--text); }
+    .ad-copy-btn .material-symbols-outlined { font-size: 12px; }
+
+    /* ══ HISTORY ══════════════════════════════════════ */
+    .ad-history {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+    .ad-history-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .875rem 1.25rem;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .ad-history-title {
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .82rem; font-weight: 700; color: var(--text);
+    }
+    .ad-history-title .material-symbols-outlined { font-size: 17px; color: var(--accent); }
+    .ad-history-clear {
+      font-size: .7rem; color: var(--muted); background: none; border: none;
+      cursor: pointer; font-family: var(--sans); transition: color .15s;
+      padding: .2rem .5rem; border-radius: 5px;
+    }
+    .ad-history-clear:hover { color: var(--red); background: rgba(239,68,68,.08); }
+    .ad-history-list { padding: .5rem; min-height: 60px; }
+    .ad-history-empty {
+      text-align: center; padding: 1.5rem; color: var(--muted);
+      font-size: .82rem; font-style: italic;
+    }
+    .ad-history-item {
+      display: flex; align-items: center; gap: .75rem;
+      padding: .5rem .75rem; border-radius: var(--radius-sm);
+      transition: background .12s; cursor: pointer;
+    }
+    .ad-history-item:hover { background: var(--surface2); }
+    .ad-hist-method { font-family: var(--mono); font-size: .68rem; font-weight: 800; min-width: 46px; }
+    .m-get    { color: var(--blue); }
+    .m-post   { color: var(--green); }
+    .m-put    { color: var(--amber); }
+    .m-delete { color: var(--red); }
+    .ad-hist-url { flex: 1; font-family: var(--mono); font-size: .75rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ad-hist-status { font-family: var(--mono); font-size: .72rem; font-weight: 700; min-width: 36px; text-align: right; }
+    .ad-hist-ts { font-size: .65rem; color: var(--muted); min-width: 52px; text-align: right; }
+
+    /* ══ DELETE MODAL ════════════════════════════════ */
+    .ad-modal-overlay {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,.72); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+      opacity: 0; pointer-events: none; transition: opacity .22s;
+    }
+    .ad-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .ad-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 1.75rem; max-width: 380px; width: 100%;
+      box-shadow: 0 24px 64px rgba(0,0,0,.6);
+      transform: scale(.93) translateY(10px);
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    .ad-modal-overlay.open .ad-modal { transform: scale(1) translateY(0); }
+    .ad-modal-icon {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.25);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;
+    }
+    .ad-modal-icon .material-symbols-outlined { font-size: 22px; color: var(--red); }
+    .ad-modal-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: .4rem; }
+    .ad-modal-label { font-size: .78rem; color: var(--muted); margin-bottom: 1rem; }
+    .ad-modal-body  { font-size: .85rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.25rem; }
+    .ad-modal-body strong { color: var(--text); }
+    .ad-modal-actions { display: flex; gap: .625rem; }
+    .ad-modal-cancel {
+      flex: 1; padding: .65rem; border-radius: var(--radius-sm);
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); font-family: var(--sans); font-size: .85rem; font-weight: 600; cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .ad-modal-cancel:hover { border-color: var(--border); color: var(--text); }
+    .ad-modal-confirm {
+      flex: 1; padding: .65rem; border-radius: var(--radius-sm);
+      background: var(--red); border: none; color: #fff;
+      font-family: var(--sans); font-size: .85rem; font-weight: 700; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .ad-modal-confirm:hover { opacity: .88; }
+
+    /* ══ TOAST ════════════════════════════════════════ */
+    #adToast {
+      position: fixed; bottom: 1.75rem; right: 1.75rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: .875rem 1.25rem;
+      display: flex; align-items: center; gap: .625rem;
+      font-size: .85rem; font-weight: 600; color: var(--text);
+      box-shadow: 0 8px 28px rgba(0,0,0,.4);
+      opacity: 0; transform: translateY(12px);
+      transition: opacity .3s, transform .3s;
+      pointer-events: none; z-index: 9999;
+    }
+    #adToast.show { opacity: 1; transform: translateY(0); }
+    #adToast .material-symbols-outlined { font-size: 18px; color: var(--accent); }
+
+    /* ══ SPIN ═════════════════════════════════════════ */
+    .spin { animation: spinAnim .7s linear infinite; display: inline-block; }
+    @@keyframes spinAnim { to { transform: rotate(360deg); } }
+
+    /* ══ SEPARATOR ════════════════════════════════════ */
+    .ad-sep {
+      height: 1px; background: var(--border); margin: 1rem 0;
+    }
+</style>
+
+<!-- ════════════════════════════════════════════════
+     MARKUP
+════════════════════════════════════════════════ -->
+<div class="api-demo">
+
+    <!-- ── Delete Confirm Modal ── -->
+    <div class="ad-modal-overlay" id="adDelOverlay">
+        <div class="ad-modal">
+            <div class="ad-modal-icon"><span class="material-symbols-outlined">delete_forever</span></div>
+            <div class="ad-modal-title">Xác nhận DELETE?</div>
+            <div class="ad-modal-label" id="adDelLabel">—</div>
+            <p class="ad-modal-body">Xóa vĩnh viễn. Sản phẩm có đơn hàng sẽ trả về <strong>409 Conflict</strong>.</p>
+            <div class="ad-modal-actions">
+                <button class="ad-modal-cancel" onclick="document.getElementById('adDelOverlay').classList.remove('open')">Hủy</button>
+                <button class="ad-modal-confirm" id="adDelConfirmBtn">Gửi DELETE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Toast ── -->
+    <div id="adToast"><span class="material-symbols-outlined">info</span><span id="adToastMsg"></span></div>
+
+    <!-- ══ HERO BANNER ══ -->
+    <div class="ad-hero">
+        <div class="ad-hero-grid">
+            <div>
+                <div class="ad-hero-eyebrow"><span class="dot"></span>Live · Đang hoạt động</div>
+                <h1 class="ad-hero-title">RESTful API <span>Góc Lặng</span></h1>
+                <p class="ad-hero-sub">
+                    Demo 5 thao tác CRUD qua <code>fetch()</code> → <code>/api/products</code><br>
+                    <strong style="color:#6b7280;font-weight:400;">POST · PUT · DELETE yêu cầu đăng nhập Admin.</strong>
+                </p>
+            </div>
+            <div class="ad-hero-actions">
+                <button class="ad-btn-guide" onclick="toggleGuide()">
+                    <span class="material-symbols-outlined" id="guideIcon">menu_book</span>
+                    <span id="guideBtnText">Hướng Dẫn</span>
+                </button>
+                <a href="/swagger" target="_blank" class="ad-btn-swagger">
+                    <span class="material-symbols-outlined">description</span>
+                    Swagger UI
+                    <span class="material-symbols-outlined" style="font-size:12px;">open_in_new</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ GUIDE PANEL ══ -->
+    <div class="ad-guide" id="adGuide">
+        <div class="ad-guide-header">
+            <div class="ad-guide-title">
+                <span class="material-symbols-outlined">menu_book</span>
+                Hướng Dẫn Sử Dụng API
+            </div>
+            <button class="ad-guide-close" onclick="toggleGuide()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="ad-guide-body">
+
+            <div class="ad-guide-intro">
+                <strong>API này là gì?</strong> Đây là RESTful API cho hệ thống quản lý sản phẩm của Góc Lặng Café, xây dựng trên
+                <strong>ASP.NET Core 8 / ControllerBase</strong> theo đúng chuẩn Bài 6 — Repository Pattern + JSON responses.
+                Bạn có thể gọi API từ bất kỳ công cụ nào: fetch() (trang này), Postman, Swagger, hoặc ứng dụng ngoài.
+            </div>
+
+            <!-- Flow -->
+            <div style="margin-bottom:1rem;">
+                <div class="ad-label" style="margin-bottom:.625rem;">Luồng hoạt động</div>
+                <div class="ad-guide-flow">
+                    <div class="ad-flow-step"><span class="num">1</span>Chọn endpoint</div>
+                    <div class="ad-flow-arrow">→</div>
+                    <div class="ad-flow-step"><span class="num">2</span>Điền tham số</div>
+                    <div class="ad-flow-arrow">→</div>
+                    <div class="ad-flow-step"><span class="num">3</span>Nhấn Gửi Request</div>
+                    <div class="ad-flow-arrow">→</div>
+                    <div class="ad-flow-step"><span class="num">4</span>Đọc kết quả JSON</div>
+                </div>
+            </div>
+
+            <!-- Cards -->
+            <div class="ad-guide-grid">
+                <div class="ad-guide-card">
+                    <div class="ad-guide-card-title"><span class="material-symbols-outlined">lock_open</span>Không cần xác thực</div>
+                    <div class="ad-guide-card-desc">GET /api/products và GET /api/products/{id} có thể gọi tự do. Kết quả trả về dạng JSON, header <strong style="color:#e8eaf0;">X-Total-Count</strong> chứa tổng số bản ghi.</div>
+                </div>
+                <div class="ad-guide-card">
+                    <div class="ad-guide-card-title"><span class="material-symbols-outlined">lock</span>Yêu cầu Admin</div>
+                    <div class="ad-guide-card-desc">POST · PUT · DELETE yêu cầu cookie session của Admin. Nếu chưa đăng nhập server trả về <strong style="color:#fbbf24;">401 Unauthorized</strong> thay vì redirect.</div>
+                </div>
+                <div class="ad-guide-card">
+                    <div class="ad-guide-card-title"><span class="material-symbols-outlined">warning</span>HTTP Status Codes</div>
+                    <div class="ad-guide-card-desc"><strong style="color:#34d399;">200/201</strong> thành công · <strong style="color:#a78bfa;">204</strong> No Content · <strong style="color:#fbbf24;">400/404/422</strong> lỗi client · <strong style="color:#f87171;">409</strong> Conflict · <strong style="color:#f87171;">500</strong> lỗi server</div>
+                </div>
+                <div class="ad-guide-card">
+                    <div class="ad-guide-card-title"><span class="material-symbols-outlined">tips_and_updates</span>Tip thực hành</div>
+                    <div class="ad-guide-card-desc">Dùng <strong style="color:#e8eaf0;">GET by ID</strong> trước khi PUT để pre-fill form. POST xong sẽ tự động refresh danh sách. Thử DELETE với ID vừa tạo.</div>
+                </div>
+            </div>
+
+            <!-- Methods summary -->
+            <div class="ad-label" style="margin-bottom:.625rem;">Các phương thức</div>
+            <div class="ad-guide-methods">
+                <span class="ad-method-pill get">GET — Lấy dữ liệu, không thay đổi server</span>
+                <span class="ad-method-pill post">POST — Tạo mới (201 Created)</span>
+                <span class="ad-method-pill put">PUT — Cập nhật toàn bộ (204 No Content) <span class="lock">🔒</span></span>
+                <span class="ad-method-pill delete">DELETE — Xóa vĩnh viễn (204) <span class="lock">🔒</span></span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══ ENDPOINT REFERENCE ══ -->
+    <div class="ad-ref">
+        <div class="ad-ref-header">
+            <div class="ad-ref-title">Endpoint Reference</div>
+            <span style="font-size:.7rem;color:var(--muted);font-family:var(--mono);">v1 · /api/products</span>
+        </div>
+        <div class="ad-ref-rows">
+            <div class="ad-ref-row"><span class="ad-badge b-get">GET</span><span class="ad-ref-path">/api/products</span><span class="ad-ref-desc">Tất cả · ?categoryId= &amp; ?onSaleOnly=</span><span></span></div>
+            <div class="ad-ref-row"><span class="ad-badge b-get">GET</span><span class="ad-ref-path">/api/products/{id}</span><span class="ad-ref-desc">Lấy theo ID · 404 nếu không tìm thấy</span><span></span></div>
+            <div class="ad-ref-row"><span class="ad-badge b-get">GET</span><span class="ad-ref-path">/api/products/categories</span><span class="ad-ref-desc">Danh sách danh mục</span><span></span></div>
+            <div class="ad-ref-row"><span class="ad-badge b-post">POST</span><span class="ad-ref-path">/api/products</span><span class="ad-ref-desc">Tạo sản phẩm · 201 Created</span><span class="material-symbols-outlined ad-ref-lock">lock</span></div>
+            <div class="ad-ref-row"><span class="ad-badge b-put">PUT</span><span class="ad-ref-path">/api/products/{id}</span><span class="ad-ref-desc">Cập nhật · 204 / 409 Conflict</span><span class="material-symbols-outlined ad-ref-lock">lock</span></div>
+            <div class="ad-ref-row"><span class="ad-badge b-delete">DELETE</span><span class="ad-ref-path">/api/products/{id}</span><span class="ad-ref-desc">Xóa · 409 nếu có đơn hàng</span><span class="material-symbols-outlined ad-ref-lock">lock</span></div>
+        </div>
+    </div>
+
+    <!-- ══ CARDS GRID ══ -->
+    <div class="ad-grid">
+
+        <!-- ── 1. GET ALL ── -->
+        <div class="ad-card">
+            <div class="ad-card-head">
+                <div class="ad-card-head-left">
+                    <span class="ad-badge b-get">GET</span>
+                    <div>
+                        <div class="ad-card-title">/api/products</div>
+                        <div class="ad-card-subtitle">Filter theo danh mục và trạng thái sale</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ad-card-body">
+                <div class="ad-row-2">
+                    <div class="ad-field">
+                        <label class="ad-label">Danh mục</label>
+                        <select id="filter-catid" class="ad-select"><option value="">Tất cả</option></select>
+                    </div>
+                    <div class="ad-field">
+                        <label class="ad-label">Chỉ Sale</label>
+                        <select id="filter-sale" class="ad-select">
+                            <option value="">Tất cả</option>
+                            <option value="true">Chỉ sale</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="ad-card-footer">
+                <button class="ad-btn ad-btn-blue ad-btn-full" id="btn-getall" onclick="apiGetAll()">
+                    <span class="material-symbols-outlined" id="icon-getall">send</span> Gửi Request
+                </button>
+                <div class="ad-meta" id="meta-getall" style="display:none;margin-top:.625rem;"></div>
+                <div class="ad-result-wrap">
+                    <div class="ad-result" id="res-getall">Nhấn "Gửi Request" để xem kết quả...</div>
+                    <div class="ad-copy-wrap"><button class="ad-copy-btn" onclick="copyRes('res-getall')"><span class="material-symbols-outlined">content_copy</span>Copy</button></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 2. GET BY ID ── -->
+        <div class="ad-card">
+            <div class="ad-card-head">
+                <div class="ad-card-head-left">
+                    <span class="ad-badge b-get">GET</span>
+                    <div>
+                        <div class="ad-card-title">/api/products/{id}</div>
+                        <div class="ad-card-subtitle">404 nếu không tồn tại · tự điền form PUT</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ad-card-body">
+                <div class="ad-field">
+                    <label class="ad-label">ID sản phẩm</label>
+                    <div class="ad-input-row">
+                        <input class="ad-input" type="number" id="input-getid" placeholder="Nhập ID (VD: 1)" min="1"
+                               onkeydown="if(event.key==='Enter') apiGetById()" />
+                        <button class="ad-btn ad-btn-blue" id="btn-getbyid" onclick="apiGetById()">
+                            <span class="material-symbols-outlined" id="icon-getbyid">send</span> Gửi
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="ad-card-footer">
+                <div class="ad-result-wrap">
+                    <div class="ad-result" id="res-getbyid">Nhập ID và nhấn "Gửi"...</div>
+                    <div class="ad-copy-wrap"><button class="ad-copy-btn" onclick="copyRes('res-getbyid')"><span class="material-symbols-outlined">content_copy</span>Copy</button></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 3. POST ── -->
+        <div class="ad-card">
+            <div class="ad-card-head">
+                <div class="ad-card-head-left">
+                    <span class="ad-badge b-post">POST</span>
+                    <div>
+                        <div class="ad-card-title">/api/products</div>
+                        <div class="ad-card-subtitle">201 Created · 422 nếu CategoryId sai</div>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined ad-lock-icon">lock</span>
+            </div>
+            <div class="ad-card-body">
+                <div class="ad-field"><label class="ad-label">Tên sản phẩm <span style="color:var(--red)">*</span></label><input class="ad-input" type="text" id="post-name" placeholder="VD: Cà Phê Sữa Đá" /></div>
+                <div class="ad-row-2">
+                    <div class="ad-field"><label class="ad-label">Giá <span style="color:var(--red)">*</span></label><input class="ad-input" type="number" id="post-price" placeholder="55000" min="100" step="500" /></div>
+                    <div class="ad-field"><label class="ad-label">Danh mục <span style="color:var(--red)">*</span></label><select class="ad-select" id="post-catid"><option value="">-- Chọn --</option></select></div>
+                </div>
+                <div class="ad-field"><label class="ad-label">Mô tả</label><input class="ad-input" type="text" id="post-desc" placeholder="Tùy chọn" /></div>
+                <div class="ad-checkbox-row"><input type="checkbox" id="post-onsale" onchange="toggleDiscount('post')"><label for="post-onsale">Bật khuyến mãi (IsOnSale)</label></div>
+                <div class="ad-slide-field" id="post-discount-wrap"><input class="ad-input" type="number" id="post-discount" placeholder="% giảm giá (0–100)" min="0" max="100" /></div>
+            </div>
+            <div class="ad-card-footer">
+                <button class="ad-btn ad-btn-green ad-btn-full" id="btn-post" onclick="apiPost()">
+                    <span class="material-symbols-outlined" id="icon-post">add_circle</span> Gửi Request
+                </button>
+                <div class="ad-result-wrap">
+                    <div class="ad-result" id="res-post">Điền form và nhấn "Gửi Request"...</div>
+                    <div class="ad-copy-wrap"><button class="ad-copy-btn" onclick="copyRes('res-post')"><span class="material-symbols-outlined">content_copy</span>Copy</button></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 4. PUT ── -->
+        <div class="ad-card">
+            <div class="ad-card-head">
+                <div class="ad-card-head-left">
+                    <span class="ad-badge b-put">PUT</span>
+                    <div>
+                        <div class="ad-card-title">/api/products/{id}</div>
+                        <div class="ad-card-subtitle">204 No Content · 409 Conflict</div>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined ad-lock-icon">lock</span>
+            </div>
+            <div class="ad-card-body">
+                <div class="ad-row-2">
+                    <div class="ad-field"><label class="ad-label">ID cần cập nhật <span style="color:var(--red)">*</span></label><input class="ad-input" type="number" id="put-id" placeholder="ID" min="1" /></div>
+                    <div class="ad-field"><label class="ad-label">Danh mục <span style="color:var(--red)">*</span></label><select class="ad-select" id="put-catid"><option value="">-- Chọn --</option></select></div>
+                </div>
+                <div class="ad-field"><label class="ad-label">Tên mới <span style="color:var(--red)">*</span></label><input class="ad-input" type="text" id="put-name" placeholder="Tên sản phẩm" /></div>
+                <div class="ad-row-2">
+                    <div class="ad-field"><label class="ad-label">Giá mới <span style="color:var(--red)">*</span></label><input class="ad-input" type="number" id="put-price" placeholder="Giá" min="100" step="500" /></div>
+                    <div class="ad-field"><label class="ad-label">Mô tả mới</label><input class="ad-input" type="text" id="put-desc" placeholder="Tùy chọn" /></div>
+                </div>
+                <div class="ad-checkbox-row"><input type="checkbox" id="put-onsale" onchange="toggleDiscount('put')"><label for="put-onsale">Bật khuyến mãi (IsOnSale)</label></div>
+                <div class="ad-slide-field" id="put-discount-wrap"><input class="ad-input" type="number" id="put-discount" placeholder="% giảm giá (0–100)" min="0" max="100" /></div>
+                <div style="font-size:.7rem;color:rgba(162,123,92,.7);display:flex;align-items:center;gap:.3rem;margin-top:.375rem;">
+                    <span class="material-symbols-outlined" style="font-size:13px;">tips_and_updates</span>
+                    GET by ID trước để tự điền dữ liệu
+                </div>
+            </div>
+            <div class="ad-card-footer">
+                <button class="ad-btn ad-btn-amber ad-btn-full" id="btn-put" onclick="apiPut()">
+                    <span class="material-symbols-outlined" id="icon-put">edit</span> Gửi Request
+                </button>
+                <div class="ad-result-wrap">
+                    <div class="ad-result" id="res-put">Điền form và nhấn "Gửi Request"...</div>
+                    <div class="ad-copy-wrap"><button class="ad-copy-btn" onclick="copyRes('res-put')"><span class="material-symbols-outlined">content_copy</span>Copy</button></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 5. DELETE ── full width ── -->
+        <div class="ad-card ad-grid-full">
+            <div class="ad-card-head">
+                <div class="ad-card-head-left">
+                    <span class="ad-badge b-delete">DELETE</span>
+                    <div>
+                        <div class="ad-card-title">/api/products/{id}</div>
+                        <div class="ad-card-subtitle">204 No Content · 404 Not Found · <strong style="color:var(--amber);">409 Conflict</strong> nếu có đơn hàng liên kết</div>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined ad-lock-icon">lock</span>
+            </div>
+            <div class="ad-card-body">
+                <div class="ad-input-row">
+                    <input class="ad-input" type="number" id="delete-id"
+                           placeholder="Nhập ID cần xóa — thử với sản phẩm vừa POST"
+                           min="1" onkeydown="if(event.key==='Enter') openDeleteConfirm()" />
+                    <button class="ad-btn ad-btn-red" id="btn-delete" onclick="openDeleteConfirm()" style="flex-shrink:0;">
+                        <span class="material-symbols-outlined" id="icon-delete">delete_forever</span> Gửi Request
+                    </button>
+                </div>
+            </div>
+            <div class="ad-card-footer">
+                <div class="ad-result-wrap">
+                    <div class="ad-result" id="res-delete">Nhập ID và nhấn "Gửi Request"...</div>
+                    <div class="ad-copy-wrap"><button class="ad-copy-btn" onclick="copyRes('res-delete')"><span class="material-symbols-outlined">content_copy</span>Copy</button></div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /.ad-grid -->
+    <!-- ══ REQUEST HISTORY ══ -->
+    <div class="ad-history">
+        <div class="ad-history-head">
+            <div class="ad-history-title">
+                <span class="material-symbols-outlined">history</span>
+                Request History
+                <span style="font-size:.7rem;color:var(--muted);font-weight:400;">(5 gần nhất)</span>
+            </div>
+            <button class="ad-history-clear" onclick="clearHistory()">Xóa lịch sử</button>
+        </div>
+        <div class="ad-history-list" id="histList">
+            <div class="ad-history-empty">Chưa có request nào — thử gửi một vài API call ở trên!</div>
+        </div>
+    </div>
+
+</div><!-- /.api-demo -->
+    <script>
+        var _cats = [];
+        var _hist = [];
+        var _pollCount = 0;
+
+        /* ── INIT ── */
+        // Không dùng DOMContentLoaded vì trang được nạp qua SPA fetch
+        loadCategories();
+
+        async function loadCategories() {
+          try {
+            var r = await fetch('/api/products/categories');
+            if (!r.ok) return;
+            _cats = await r.json();
+            ['filter-catid','post-catid','put-catid'].forEach(function(id) {
+              var sel = document.getElementById(id); if (!sel) return;
+              var first = sel.options[0];
+              sel.innerHTML = ''; sel.appendChild(first);
+              _cats.forEach(function(c) {
+                var o = document.createElement('option');
+                o.value = c.id; o.textContent = c.name; sel.appendChild(o);
+              });
+            });
+          } catch(e) {}
+        }
+
+        /* ── GUIDE TOGGLE ── */
+        function toggleGuide() {
+          var g = document.getElementById('adGuide');
+          var open = g.classList.toggle('open');
+          document.getElementById('guideBtnText').textContent = open ? 'Đóng Hướng Dẫn' : 'Hướng Dẫn';
+          document.getElementById('guideIcon').textContent = open ? 'close' : 'menu_book';
+        }
+
+        /* ── TOGGLE DISCOUNT FIELD ── */
+        function toggleDiscount(pfx) {
+          var cb = document.getElementById(pfx+'-onsale');
+          var w = document.getElementById(pfx+'-discount-wrap');
+          if (w) w.classList.toggle('show', cb.checked);
+        }
+
+        /* ── HELPERS ── */
+        function statusClass(code) {
+          if (code===204) return 's204';
+          if (code===201) return 's201';
+          if (code>=200&&code<300) return 's2xx';
+          if (code>=400&&code<500) return 's4xx';
+          if (code>=500) return 's5xx';
+          return '';
+        }
+        function statusChip(code) {
+          var cls = code===204?'chip-204':code===201?'chip-201':code>=200&&code<300?'chip-2xx':code>=400&&code<500?'chip-4xx':'chip-5xx';
+          var map = {200:'200 OK',201:'201 Created',204:'204 No Content',400:'400 Bad Request',401:'401 Unauthorized',403:'403 Forbidden',404:'404 Not Found',409:'409 Conflict',422:'422 Unprocessable',500:'500 Server Error'};
+          return '<span class="ad-status-chip '+cls+'">'+map[code]+'</span>';
+        }
+        function fmtStatus(code) {
+          var map={200:'200 OK',201:'201 Created',204:'204 No Content',400:'400 Bad Request',401:'401 Unauthorized',403:'403 Forbidden',404:'404 Not Found',409:'409 Conflict',422:'422 Unprocessable',500:'500 Server Error'};
+          return map[code]||String(code);
+        }
+        async function safeJson(r) { try{return await r.json();}catch(e){return null;} }
+
+        function showResult(id, code, data, reqBody) {
+          var el = document.getElementById(id);
+          el.className = 'ad-result '+statusClass(code);
+          var out = '// HTTP '+fmtStatus(code)+'\n\n';
+          if (reqBody) out += '// Request Body:\n'+JSON.stringify(reqBody,null,2)+'\n\n';
+          if (data!=null) out += '// Response:\n'+(typeof data==='string'?data:JSON.stringify(data,null,2));
+          else out += '// (No response body)';
+          el.textContent = out;
+        }
+        function showLoading(id, btnId, iconId) {
+          var el=document.getElementById(id);
+          el.className='ad-result loading'; el.textContent='⏳ Đang gửi request...';
+          if(btnId){document.getElementById(btnId).disabled=true;}
+          if(iconId){var ico=document.getElementById(iconId);ico.textContent='sync';ico.className='material-symbols-outlined spin';}
+        }
+        function doneLoading(btnId, iconId, iconText) {
+          if(btnId)document.getElementById(btnId).disabled=false;
+          if(iconId){var ico=document.getElementById(iconId);ico.textContent=iconText||'send';ico.className='material-symbols-outlined';}
+        }
+
+        /* ── HISTORY ── */
+        function pushHistory(method, url, code) {
+          var now=new Date();
+          var ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+          _hist.unshift({method:method,url:url,code:code,ts:ts});
+          if(_hist.length>5)_hist.pop();
+          renderHistory();
+        }
+        function clearHistory() { _hist=[]; renderHistory(); }
+        function renderHistory() {
+          var panel=document.getElementById('histList');
+          if(!_hist.length){panel.innerHTML='<div class="ad-history-empty">Chưa có request nào.</div>';return;}
+          panel.innerHTML=_hist.map(function(h){
+            var sc=h.code<300?'var(--green)':h.code<500?'var(--amber)':'var(--red)';
+            return '<div class="ad-history-item">'
+              +'<span class="ad-hist-method m-'+h.method.toLowerCase()+'">'+h.method+'</span>'
+              +'<span class="ad-hist-url">'+h.url+'</span>'
+              +'<span class="ad-hist-status" style="color:'+sc+'">'+h.code+'</span>'
+              +'<span class="ad-hist-ts">'+h.ts+'</span>'
+              +'</div>';
+          }).join('');
+        }
+
+        /* ── COPY ── */
+        function copyRes(id) {
+          var el=document.getElementById(id);
+          navigator.clipboard.writeText(el.textContent)
+            .then(function(){adToast('✅ Đã copy vào clipboard');})
+            .catch(function(){
+              var t=document.createElement('textarea');t.value=el.textContent;
+              document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
+              adToast('✅ Đã copy');
+            });
+        }
+        function adToast(msg) {
+          var t=document.getElementById('adToast');
+          document.getElementById('adToastMsg').textContent=msg;
+          t.classList.add('show');
+          setTimeout(function(){t.classList.remove('show');},2800);
+        }
+
+        /* ── META ROW ── */
+        function showMeta(id, chip, extra) {
+          var el=document.getElementById(id); if(!el)return;
+          el.style.display='flex';
+          el.innerHTML=chip+(extra?'<span class="ad-count-badge"><span class="material-symbols-outlined">inventory_2</span>'+extra+'</span>':'');
+        }
+
+        /* ── GET ALL ── */
+        async function apiGetAll() {
+          showLoading('res-getall','btn-getall','icon-getall');
+          var p=new URLSearchParams();
+          var catId=document.getElementById('filter-catid').value;
+          var sale=document.getElementById('filter-sale').value;
+          if(catId)p.append('categoryId',catId);
+          if(sale)p.append('onSaleOnly',sale);
+          var url='/api/products'+(p.toString()?'?'+p.toString():'');
+          try {
+            var r=await fetch(url);
+            var data=await safeJson(r);
+            var tc=r.headers.get('X-Total-Count');
+            showMeta('meta-getall',statusChip(r.status),tc?tc+' sản phẩm':null);
+            showResult('res-getall',r.status,data);
+            pushHistory('GET',url,r.status);
+          } catch(e){showResult('res-getall',0,'Lỗi kết nối: '+e.message);}
+          doneLoading('btn-getall','icon-getall','send');
+        }
+
+        /* ── GET BY ID ── */
+        async function apiGetById() {
+          var id=document.getElementById('input-getid').value.trim();
+          if(!id){showResult('res-getbyid',400,{message:'Vui lòng nhập ID.'});return;}
+          showLoading('res-getbyid','btn-getbyid','icon-getbyid');
+          var url='/api/products/'+id;
+          try {
+            var r=await fetch(url);
+            var data=await safeJson(r);
+            showResult('res-getbyid',r.status,data);
+            pushHistory('GET',url,r.status);
+            if(r.ok&&data){
+              document.getElementById('put-id').value=data.id||'';
+              document.getElementById('put-name').value=data.name||'';
+              document.getElementById('put-price').value=data.price||'';
+              document.getElementById('put-desc').value=data.description||'';
+              document.getElementById('put-catid').value=data.categoryId||'';
+              var ps=document.getElementById('put-onsale');
+              ps.checked=!!data.isOnSale; toggleDiscount('put');
+              if(data.discountPercent!=null)document.getElementById('put-discount').value=data.discountPercent;
+              adToast('✏️ Đã tự điền form PUT với dữ liệu sản phẩm #'+data.id);
+            }
+          } catch(e){showResult('res-getbyid',0,'Lỗi kết nối: '+e.message);}
+          doneLoading('btn-getbyid','icon-getbyid','send');
+        }
+
+        /* ── POST ── */
+        async function apiPost() {
+          var name=document.getElementById('post-name').value.trim();
+          var price=parseFloat(document.getElementById('post-price').value);
+          var desc=document.getElementById('post-desc').value.trim();
+          var catId=parseInt(document.getElementById('post-catid').value);
+          var onSale=document.getElementById('post-onsale').checked;
+          var discount=onSale?parseFloat(document.getElementById('post-discount').value):null;
+          if(!name){showResult('res-post',400,{message:'Vui lòng nhập Tên.'});return;}
+          if(!price){showResult('res-post',400,{message:'Vui lòng nhập Giá.'});return;}
+          if(!catId){showResult('res-post',400,{message:'Vui lòng chọn Danh mục.'});return;}
+          var body={name:name,price:price,description:desc||null,categoryId:catId,isOnSale:onSale,discountPercent:(onSale&&!isNaN(discount)?discount:null)};
+          showLoading('res-post','btn-post','icon-post');
+          try {
+            var r=await fetch('/api/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+            var data=await safeJson(r);
+            showResult('res-post',r.status,data,body);
+            pushHistory('POST','/api/products',r.status);
+            if(r.status===201){adToast('✅ Tạo thành công! ID = '+(data?.id||'?'));await apiGetAll();}
+          } catch(e){showResult('res-post',0,'Lỗi kết nối: '+e.message,body);}
+          doneLoading('btn-post','icon-post','add_circle');
+        }
+
+        /* ── PUT ── */
+        async function apiPut() {
+          var id=document.getElementById('put-id').value.trim();
+          var name=document.getElementById('put-name').value.trim();
+          var price=parseFloat(document.getElementById('put-price').value);
+          var desc=document.getElementById('put-desc').value.trim();
+          var catId=parseInt(document.getElementById('put-catid').value);
+          var onSale=document.getElementById('put-onsale').checked;
+          var discount=onSale?parseFloat(document.getElementById('put-discount').value):null;
+          if(!id)  {showResult('res-put',400,{message:'Vui lòng nhập ID.'});return;}
+          if(!name){showResult('res-put',400,{message:'Vui lòng nhập Tên.'});return;}
+          if(!price){showResult('res-put',400,{message:'Vui lòng nhập Giá.'});return;}
+          if(!catId){showResult('res-put',400,{message:'Vui lòng chọn Danh mục.'});return;}
+          var body={name:name,price:price,description:desc||null,categoryId:catId,isOnSale:onSale,discountPercent:(onSale&&!isNaN(discount)?discount:null)};
+          var url='/api/products/'+id;
+          showLoading('res-put','btn-put','icon-put');
+          try {
+            var r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+            if(r.status===204){
+              showResult('res-put',204,{message:'Cập nhật thành công!',updated_id:parseInt(id)},body);
+              adToast('✅ Cập nhật sản phẩm #'+id);
+            }else{var data=await safeJson(r);showResult('res-put',r.status,data,body);}
+            pushHistory('PUT',url,r.status);
+          } catch(e){showResult('res-put',0,'Lỗi kết nối: '+e.message,body);}
+          doneLoading('btn-put','icon-put','edit');
+        }
+
+        /* ── DELETE CONFIRM ── */
+        function openDeleteConfirm() {
+          var id=document.getElementById('delete-id').value.trim();
+          if(!id){showResult('res-delete',400,{message:'Vui lòng nhập ID.'});return;}
+          document.getElementById('adDelLabel').textContent='Sản phẩm ID #'+id;
+          var overlay=document.getElementById('adDelOverlay');
+          overlay.classList.add('open');
+          var btn=document.getElementById('adDelConfirmBtn');
+          var nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+          nb.addEventListener('click',function(){overlay.classList.remove('open');apiDelete(parseInt(id));});
+        }
+        async function apiDelete(id) {
+          showLoading('res-delete','btn-delete','icon-delete');
+          var url='/api/products/'+id;
+          try {
+            var r=await fetch(url,{method:'DELETE'});
+            if(r.status===204){
+              showResult('res-delete',204,{message:'Xóa thành công!',deleted_id:id});
+              adToast('🗑️ Đã xóa sản phẩm #'+id);
+              await apiGetAll();
+            }else{
+              var data=await safeJson(r);showResult('res-delete',r.status,data);
+              if(r.status===409)adToast('⚠️ Không thể xóa — có đơn hàng liên kết');
+            }
+            pushHistory('DELETE',url,r.status);
+          } catch(e){showResult('res-delete',0,'Lỗi kết nối: '+e.message);}
+          doneLoading('btn-delete','icon-delete','delete_forever');
+        }
+
+        document.addEventListener('keydown',function(e){
+          if(e.key==='Escape')document.getElementById('adDelOverlay').classList.remove('open');
+        });
+    </script>

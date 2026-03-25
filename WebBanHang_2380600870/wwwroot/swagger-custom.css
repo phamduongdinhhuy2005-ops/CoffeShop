@@ -1,0 +1,88 @@
+﻿/* wwwroot/swagger-custom.css */
+/* Góc Lặng — Swagger UI custom styling */
+
+:root {
+    --primary: #a27b5c;
+    --secondary: #2c3639;
+    --bg: #f7f7f6;
+}
+
+body {
+    background: var(--bg) !important;
+    font-family: 'Work Sans', 'Segoe UI', sans-serif !important;
+}
+
+.swagger-ui .topbar {
+    background: var(--secondary) !important;
+    padding: .75rem 1.5rem !important;
+}
+
+    .swagger-ui .topbar .topbar-wrapper img {
+        display: none;
+    }
+
+    .swagger-ui .topbar .topbar-wrapper::before {
+        content: "☕ Góc Lặng API";
+        color: #dcd7c9;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+    }
+
+.swagger-ui .info .title {
+    color: var(--secondary) !important;
+}
+
+.swagger-ui .info .description {
+    color: #3f4e4f !important;
+}
+
+/* Method badges */
+.swagger-ui .opblock.opblock-get .opblock-summary-method {
+    background: #3b82f6 !important;
+}
+
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
+    background: #10b981 !important;
+}
+
+.swagger-ui .opblock.opblock-put .opblock-summary-method {
+    background: #f59e0b !important;
+}
+
+.swagger-ui .opblock.opblock-delete .opblock-summary-method {
+    background: #ef4444 !important;
+}
+
+.swagger-ui .opblock.opblock-get {
+    border-color: rgba(59,130,246,.3) !important;
+    background: rgba(59,130,246,.03) !important;
+}
+
+.swagger-ui .opblock.opblock-post {
+    border-color: rgba(16,185,129,.3) !important;
+    background: rgba(16,185,129,.03) !important;
+}
+
+.swagger-ui .opblock.opblock-put {
+    border-color: rgba(245,158,11,.3) !important;
+    background: rgba(245,158,11,.03) !important;
+}
+
+.swagger-ui .opblock.opblock-delete {
+    border-color: rgba(239,68,68,.25) !important;
+    background: rgba(239,68,68,.03) !important;
+}
+
+.swagger-ui .btn.execute {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+    .swagger-ui .btn.execute:hover {
+        background: #8d6a4d !important;
+    }
+
+.swagger-ui section.models {
+    display: none !important;
+}

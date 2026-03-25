@@ -1,22 +1,21 @@
 // Program.cs
-// FIXED:
-// Bug 11 — OAuth registration: dùng builder.Services.AddAuthentication() đúng cách
-// Bug 12 — Admin seed FullName đúng UTF-8
-// FIX ID  — Đăng ký IdGeneratorService cho gap-filling ID reuse
+// FIX: Thêm Swagger/OpenApi để /swagger hoạt động
+// FIX: Cookie auth returns 401/403 cho /api routes thay vì redirect
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using WebBanHang_2380600870.Models;
 using WebBanHang_2380600870.Repositories;
 using WebBanHang_2380600870.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ===== DATABASE =====
+// DATABASE
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ===== IDENTITY =====
+// IDENTITY
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -24,31 +23,21 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 6;
-
     options.User.RequireUniqueEmail = true;
-
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
-
     options.SignIn.RequireConfirmedEmail = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// ===== GOOGLE + FACEBOOK OAUTH =====
-// Chỉ đăng ký nếu key tồn tại — người clone về chưa có key vẫn chạy được
-// Để bật: thêm vào appsettings.json hoặc User Secrets:
-//   "Authentication": {
-//     "Google":   { "ClientId": "...", "ClientSecret": "..." },
-//     "Facebook": { "AppId":    "...", "AppSecret":    "..." }
-//   }
+// GOOGLE + FACEBOOK OAUTH (optional)
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 var fbAppId = builder.Configuration["Authentication:Facebook:AppId"];
 var fbAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
 
-// FIX Bug 11: Dùng builder.Services.AddAuthentication() — KHÔNG phải identityBuilder.Services
 var authBuilder = builder.Services.AddAuthentication();
 
 if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
@@ -69,7 +58,7 @@ if (!string.IsNullOrEmpty(fbAppId) && !string.IsNullOrEmpty(fbAppSecret))
     });
 }
 
-// ===== COOKIE =====
+// COOKIE
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -79,9 +68,31 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
-// ===== SESSION =====
+// SESSION
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(60);
@@ -90,15 +101,92 @@ builder.Services.AddSession(options =>
 });
 builder.Services.AddHttpContextAccessor();
 
-// ===== REPOSITORIES & SERVICES =====
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ApiPolicy", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .WithExposedHeaders("X-Total-Count");
+    });
+});
+
+// SWAGGER
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Góc Lặng API",
+        Version = "v1",
+        Description = "RESTful API cho hệ thống quản lý cửa hàng cà phê Góc Lặng. " +
+                      "Các endpoint POST/PUT/DELETE yêu cầu đăng nhập Admin.",
+        Contact = new OpenApiContact
+        {
+            Name = "Góc Lặng Café",
+            Email = "hello@goclang.vn"
+        }
+    });
+
+    // Cookie auth scheme cho Swagger UI
+    c.AddSecurityDefinition("cookieAuth", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.ApiKey,
+        In = ParameterLocation.Cookie,
+        Name = ".AspNetCore.Identity.Application",
+        Description = "Đăng nhập Admin tại /Account/Login trước, rồi dùng API."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "cookieAuth"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Group endpoints theo controller
+    c.TagActionsBy(api =>
+    {
+        if (api.GroupName != null) return new[] { api.GroupName };
+        var controllerActionDescriptor = api.ActionDescriptor as
+            Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor;
+        return controllerActionDescriptor != null
+            ? new[] { controllerActionDescriptor.ControllerName }
+            : new[] { api.RelativePath ?? "Other" };
+    });
+
+    c.DocInclusionPredicate((name, api) => true);
+});
+
+// REPOSITORIES & SERVICES
 builder.Services.AddScoped<IProductRepository, EFProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, EFCategoryRepository>();
-builder.Services.AddScoped<IdGeneratorService>();  // FIX ID: gap-filling service
-builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<IdGeneratorService>();
+
+// CONTROLLERS + JSON
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy =
+            System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
 
 var app = builder.Build();
 
-// ===== SEED ROLES + ADMIN =====
+// SEED ROLES + ADMIN
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -121,7 +209,7 @@ using (var scope = app.Services.CreateScope())
         {
             UserName = adminEmail,
             Email = adminEmail,
-            FullName = "Quản Trị Viên",   // FIX Bug 12: UTF-8 đúng chuẩn
+            FullName = "Quan Tri Vien",
             EmailConfirmed = true
         };
         var result = await userManager.CreateAsync(admin, "Admin@123");
@@ -130,6 +218,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// MIDDLEWARE
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -137,12 +226,26 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
-// Session phải đứng trước Routing để middleware pipeline xử lý đúng
+app.UseCors("ApiPolicy");
 app.UseSession();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// SWAGGER UI — accessible at /swagger
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Góc Lặng API v1");
+    c.RoutePrefix = "swagger";
+    c.DocumentTitle = "Góc Lặng — API Docs";
+    c.DefaultModelsExpandDepth(-1); // Ẩn schema models mặc định
+    c.DisplayRequestDuration();
+    c.EnableFilter();
+    c.InjectStylesheet("/swagger-custom.css");
+});
+
+app.MapControllers();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

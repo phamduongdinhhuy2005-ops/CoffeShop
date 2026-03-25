@@ -1,4 +1,4 @@
-﻿@model IEnumerable<WebBanHang_2380600870.Models.Product>
+@model IEnumerable<WebBanHang_2380600870.Models.Product>
 @{
     ViewData["Title"] = "Quản Lý Sản Phẩm";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -191,11 +191,18 @@
 @* Search + filter bar *@
 <div style="background:#fff;border-radius:14px;border:1px solid rgba(162,123,92,.15);padding:1rem 1.25rem;margin-bottom:1rem;">
     @* Row 1: Search *@
-    <div style="position:relative;margin-bottom:.75rem;">
-        <span class="material-symbols-outlined" style="position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:18px;color:rgba(63,78,79,.4);pointer-events:none;">search</span>
-        <input id="searchInput" oninput="filterTable()" placeholder="Tìm theo tên sản phẩm..."
-               style="width:100%;padding:.6rem .9rem .6rem 2.5rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;font-family:'Work Sans',sans-serif;font-size:.875rem;color:#2c3639;outline:none;transition:border-color .15s;box-sizing:border-box;"
-               onfocus="this.style.borderColor='#a27b5c'" onblur="this.style.borderColor='rgba(162,123,92,.25)'" />
+    <div style="margin-bottom:.75rem;">
+        <div style="position:relative;">
+            <span class="material-symbols-outlined" style="position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-size:18px;color:rgba(63,78,79,.4);pointer-events:none;">search</span>
+            <input id="searchInput" oninput="filterTable()" placeholder="Tìm theo tên hoặc ID sản phẩm..."
+                   style="width:100%;padding:.6rem .9rem .6rem 2.5rem;border:1.5px solid rgba(162,123,92,.25);border-radius:10px;font-family:'Be Vietnam Pro',sans-serif;font-size:.875rem;color:#2c3639;outline:none;transition:all .2s;box-sizing:border-box;background:#fff;"
+                   onfocus="this.style.borderColor='#a27b5c'; this.style.boxShadow='0 0 0 3px rgba(162,123,92,.1)'" 
+                   onblur="this.style.borderColor='rgba(162,123,92,.25)'; this.style.boxShadow='none'" />
+        </div>
+        <div style="font-size:.7rem;color:rgba(63,78,79,.4);margin-top:.4rem;padding-left:.5rem;display:flex;align-items:center;gap:.3rem;">
+            <span class="material-symbols-outlined" style="font-size:13px;color:rgba(162,123,92,.5);">tips_and_updates</span>
+            Gõ tên sản phẩm — hoặc <strong>#5</strong> để tìm theo ID
+        </div>
     </div>
 
     @* Row 2: Filter buttons — dynamic *@
@@ -257,7 +264,7 @@
                     @foreach (var p in Model)
                     {
                         var (cbg, ctext, cborder) = GetCatColor(p.CategoryId);
-                        <tr data-name="@p.Name.ToLower()" data-cat="@p.CategoryId"
+                        <tr data-name="@p.Name.ToLower()" data-cat="@p.CategoryId" data-id="@p.Id"
                             style="border-bottom:1px solid rgba(162,123,92,.09);transition:background .12s;"
                             onmouseover="this.style.background='rgba(162,123,92,.03)'" onmouseout="this.style.background='transparent'">
                             <td style="padding:.875rem 1.25rem;">
@@ -330,23 +337,25 @@
 <script id="catData" type="application/json">@Html.Raw(catJson)</script>
 <script id="colorData" type="application/json">@Html.Raw(colorJson)</script>
 
-@section Scripts {
     <script>
         // ── Category filter (client-side, đã có data từ server) ──────────────
-        const CATS   = JSON.parse(document.getElementById('catData').textContent);
-        const COLORS = JSON.parse(document.getElementById('colorData').textContent);
+        var CATS   = JSON.parse(document.getElementById('catData').textContent);
+        var COLORS = JSON.parse(document.getElementById('colorData').textContent);
 
         function filterTable() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
             document.querySelectorAll('#productTable tbody tr').forEach(r => {
                 const nameMatch = (r.dataset.name || '').includes(q);
+                const idMatch   = q.startsWith('#')
+                    ? (r.dataset.id || '') === q.slice(1)
+                    : String(r.dataset.id || '').includes(q);
                 const catMatch  = (activeCat === 0 || parseInt(r.dataset.cat) === activeCat);
-                r.style.display = (nameMatch && catMatch) ? '' : 'none';
+                r.style.display = ((nameMatch || idMatch) && catMatch) ? '' : 'none';
             });
             updateCount();
         }
 
-        let activeCat = 0;
+        var activeCat = 0;
         function filterCat(cat, btn) {
             activeCat = cat;
 
@@ -426,4 +435,3 @@
             }
         }, 4000);
     </script>
-}

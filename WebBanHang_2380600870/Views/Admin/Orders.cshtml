@@ -1,4 +1,4 @@
-﻿@* Views/Admin/Orders.cshtml *@
+@* Views/Admin/Orders.cshtml *@
 @* FIXED:
    Bug 14 — Dropdown status vẫn có option "Cancelled" dù controller đã block server-side
              → Confusing UX: Admin thấy option "Cancelled" nhưng bấm Lưu sẽ báo lỗi
@@ -192,7 +192,6 @@
     }
 </div>
 
-@section Scripts {
     <script>
         setTimeout(() => {
             ['hcToast','hcToastErr'].forEach(id => {
@@ -227,4 +226,3 @@
             renderPage(0);
         })();
     </script>
-}

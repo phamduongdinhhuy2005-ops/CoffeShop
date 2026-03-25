@@ -1,400 +1,599 @@
-﻿@* FILE: Views/Shared/_AdminLayout.cshtml *@
-@* THAY THẾ TOÀN BỘ FILE CŨ *@
+@* FILE: Views/Shared/_AdminLayout.cshtml *@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] — Góc Lặng Admin</title>
+    <title>@ViewData["Title"] — Goc Lang Admin</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/admin.css" />
 
     <style>
-            :root {
-                --clr-primary: #a27b5c;
-                --clr-secondary: #2c3639;
-                --clr-accent: #3f4e4f;
-                --clr-neutral: #dcd7c9;
-                --clr-bg: #f7f7f6;
-                --sidebar-w: 17rem;
-            }
+        :root {
+            --clr-primary:   #a27b5c;
+            --clr-secondary: #2c3639;
+            --clr-accent:    #3f4e4f;
+            --clr-neutral:   #dcd7c9;
+            --clr-bg:        #f7f7f6;
+            --sidebar-w:     17rem;
+        }
 
-            *, *::before, *::after {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-            body {
-                font-family: 'Work Sans', sans-serif;
-                background: var(--clr-bg);
-                color: var(--clr-secondary);
-                min-height: 100vh;
-                display: flex;
-            }
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: var(--clr-bg);
+            color: var(--clr-secondary);
+            min-height: 100vh;
+            display: flex;
+        }
 
-            /* SIDEBAR */
-            .hc-sidebar {
-                width: var(--sidebar-w);
-                background: var(--clr-secondary);
-                display: flex;
-                flex-direction: column;
-                height: 100vh;
-                position: sticky;
-                top: 0;
-                flex-shrink: 0;
-            }
+        /* ── SIDEBAR ── */
+        .hc-sidebar {
+            width: var(--sidebar-w);
+            background: var(--clr-secondary);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+            box-shadow: 4px 0 20px rgba(0,0,0,.25);
+        }
 
-            .hc-sidebar-brand {
-                padding: 1.5rem;
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                border-bottom: 1px solid rgba(63,78,79,.3);
-                cursor: pointer;
-                text-decoration: none;
-                transition: opacity 0.2s;
-            }
+        /* Brand */
+        .hc-sidebar-brand {
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: .875rem;
+            border-bottom: 1px solid rgba(162,123,92,.15);
+            cursor: pointer;
+            text-decoration: none;
+            transition: background .2s;
+        }
+        .hc-sidebar-brand:hover { background: rgba(162,123,92,.08); }
 
-                .hc-sidebar-brand:hover {
-                    opacity: 0.8;
-                }
+        .hc-brand-icon {
+            width: 44px; height: 44px; border-radius: .6rem;
+            background: var(--clr-primary);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s;
+            box-shadow: 0 2px 8px rgba(162,123,92,.3);
+        }
+        .hc-sidebar-brand:hover .hc-brand-icon {
+            transform: rotate(-8deg) scale(1.07);
+            box-shadow: 0 4px 16px rgba(162,123,92,.45);
+        }
+        .hc-brand-icon .material-symbols-outlined { font-size: 26px; color: var(--clr-neutral); }
+        .hc-brand-name { color: var(--clr-neutral); font-size: 1rem; font-weight: 700; line-height: 1; }
+        .hc-brand-sub  { color: var(--clr-primary); font-size: .6rem; text-transform: uppercase; letter-spacing: .18em; margin-top: 4px; }
 
-            .hc-brand-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: .6rem;
-                background: var(--clr-primary);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-shrink: 0;
-            }
+        /* Nav */
+        .hc-nav {
+            flex: 1;
+            padding: 1rem .875rem;
+            display: flex;
+            flex-direction: column;
+            gap: .15rem;
+            overflow-y: auto;
+        }
+        .hc-nav::-webkit-scrollbar { width: 4px; }
+        .hc-nav::-webkit-scrollbar-thumb { background: rgba(162,123,92,.25); border-radius: 99px; }
 
-                .hc-brand-icon .material-symbols-outlined {
-                    font-size: 28px;
-                    color: var(--clr-neutral);
-                }
+        /* Group labels */
+        .hc-nav-group-label {
+            font-size: .58rem; font-weight: 800; color: rgba(220,215,201,.28);
+            text-transform: uppercase; letter-spacing: .22em;
+            padding: 1.1rem .875rem .375rem;
+            display: flex; align-items: center; gap: .5rem;
+        }
+        .hc-nav-group-label::after {
+            content: ''; flex: 1; height: 1px;
+            background: rgba(162,123,92,.12);
+        }
 
-            .hc-brand-name {
-                color: var(--clr-neutral);
-                font-size: 1.05rem;
-                font-weight: 700;
-                line-height: 1;
-            }
+        /* Nav links */
+        .hc-nav-link {
+            display: flex;
+            align-items: center;
+            gap: .675rem;
+            padding: .6rem .875rem;
+            border-radius: .55rem;
+            color: rgba(220,215,201,.6);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: .875rem;
+            position: relative;
+            border-left: 2px solid transparent;
+            transition: background .18s ease, color .18s ease,
+                        border-left-color .18s ease, transform .15s ease;
+        }
+        .hc-nav-link .material-symbols-outlined {
+            font-size: 20px; flex-shrink: 0;
+            transition: transform .2s cubic-bezier(.34,1.56,.64,1), color .18s;
+        }
+        .hc-nav-link:hover {
+            background: rgba(63,78,79,.4);
+            color: var(--clr-neutral);
+            border-left-color: rgba(162,123,92,.5);
+            transform: translateX(2px);
+        }
+        .hc-nav-link:hover .material-symbols-outlined { transform: scale(1.15); }
+        .hc-nav-link.active {
+            background: linear-gradient(135deg, var(--clr-primary) 0%, #8b6a4f 100%);
+            color: #fff;
+            border-left-color: rgba(255,255,255,.6);
+            box-shadow: 0 2px 12px rgba(162,123,92,.3);
+        }
+        .hc-nav-link.active .material-symbols-outlined { transform: none; color: rgba(255,255,255,.9); }
 
-            .hc-brand-sub {
-                color: var(--clr-primary);
-                font-size: .65rem;
-                text-transform: uppercase;
-                letter-spacing: .18em;
-                margin-top: 4px;
-            }
+        /* Sub-link indent */
+        .hc-nav-sub {
+            margin-left: .5rem;
+            border-left: 1.5px solid rgba(162,123,92,.2);
+            padding-left: .5rem;
+        }
+        .hc-nav-sub .hc-nav-link { font-size: .8rem; padding: .45rem .75rem; }
+        .hc-nav-sub .hc-nav-link .material-symbols-outlined { font-size: 17px; }
 
-            .hc-nav {
-                flex: 1;
-                padding: 1.5rem 1rem;
-                display: flex;
-                flex-direction: column;
-                gap: .25rem;
-                overflow-y: auto;
-            }
+        /* Badge */
+        .hc-nav-badge {
+            font-size: .52rem; font-weight: 800;
+            padding: .1rem .4rem; border-radius: 99px;
+            letter-spacing: .05em; text-transform: uppercase;
+            flex-shrink: 0; margin-left: .125rem;
+        }
+        .hc-nav-badge-new  { background: #10b981; color: #fff; }
+        .hc-nav-badge-api  { background: rgba(162,123,92,.2); color: var(--clr-primary); font-size: .54rem; }
 
-            .hc-nav-group-label {
-                font-size: .65rem;
-                font-weight: 700;
-                color: rgba(220,215,201,.35);
-                text-transform: uppercase;
-                letter-spacing: .2em;
-                padding: 1.25rem 1rem .5rem;
-            }
+        /* External link icon */
+        .hc-nav-ext { font-size: 13px !important; opacity: .4; margin-left: auto; }
 
-            .hc-nav-link {
-                display: flex;
-                align-items: center;
-                gap: .75rem;
-                padding: .75rem 1rem;
-                border-radius: .6rem;
-                color: rgba(220,215,201,.65);
-                text-decoration: none;
-                font-weight: 500;
-                font-size: .9rem;
-                transition: background .15s, color .15s;
-            }
+        /* Slide-in animation for nav items on load */
+        @@keyframes hcSlideIn {
+            from { opacity: 0; transform: translateX(-12px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        .hc-nav > *,
+        .hc-nav-sub > * {
+            animation: hcSlideIn .35s cubic-bezier(.22,1,.36,1) both;
+        }
+        .hc-nav > *:nth-child(1)  { animation-delay: .03s; }
+        .hc-nav > *:nth-child(2)  { animation-delay: .07s; }
+        .hc-nav > *:nth-child(3)  { animation-delay: .10s; }
+        .hc-nav > *:nth-child(4)  { animation-delay: .13s; }
+        .hc-nav > *:nth-child(5)  { animation-delay: .16s; }
+        .hc-nav > *:nth-child(6)  { animation-delay: .19s; }
+        .hc-nav > *:nth-child(7)  { animation-delay: .22s; }
+        .hc-nav > *:nth-child(8)  { animation-delay: .25s; }
+        .hc-nav > *:nth-child(9)  { animation-delay: .28s; }
+        .hc-nav > *:nth-child(10) { animation-delay: .31s; }
+        .hc-nav > *:nth-child(11) { animation-delay: .34s; }
+        .hc-nav > *:nth-child(12) { animation-delay: .37s; }
 
-                .hc-nav-link:hover {
-                    background: rgba(63,78,79,.35);
-                    color: var(--clr-neutral);
-                }
+        /* Footer */
+        .hc-sidebar-footer {
+            border-top: 1px solid rgba(162,123,92,.15);
+            padding: .875rem;
+        }
+        .hc-user-card {
+            display: flex; align-items: center; gap: .75rem;
+            padding: .65rem .875rem; border-radius: .55rem;
+            cursor: default;
+            transition: background .2s;
+        }
+        .hc-user-card:hover { background: rgba(63,78,79,.3); }
+        .hc-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: var(--clr-primary);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: .82rem; flex-shrink: 0;
+            ring: 2px; box-shadow: 0 0 0 2px rgba(162,123,92,.0);
+            transition: box-shadow .2s;
+        }
+        .hc-user-card:hover .hc-avatar { box-shadow: 0 0 0 2px var(--clr-primary); }
+        .hc-user-name { color: var(--clr-neutral); font-size: .84rem; font-weight: 600; }
+        .hc-user-role { color: rgba(220,215,201,.4); font-size: .7rem; }
+        .hc-logout-btn {
+            margin-left: auto; background: none; border: none; cursor: pointer;
+            color: rgba(220,215,201,.4); font-size: 18px;
+            transition: color .15s, transform .15s; padding: 0;
+        }
+        .hc-logout-btn:hover { color: #fca5a5; transform: scale(1.15); }
 
-                .hc-nav-link.active {
-                    background: var(--clr-primary);
-                    color: #fff;
-                }
+        /* ── MAIN ── */
+        .hc-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
-                .hc-nav-link .material-symbols-outlined {
-                    font-size: 22px;
-                }
+        .hc-topbar {
+            height: 72px; background: #fff;
+            border-bottom: 1px solid var(--clr-neutral);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 2rem; flex-shrink: 0;
+        }
+        .hc-page-title { font-size: 1.4rem; font-weight: 700; color: var(--clr-secondary); line-height: 1; }
+        .hc-page-sub   { font-size: .75rem; color: #94a3b8; margin-top: 3px; }
+        .hc-topbar-actions { display: flex; align-items: center; gap: 0.75rem; }
+        .hc-btn-home {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 1rem; background: var(--clr-primary); color: white;
+            text-decoration: none; border-radius: 0.5rem; font-size: 0.875rem;
+            font-weight: 500; transition: all 0.2s; border: none; cursor: pointer;
+        }
+        .hc-btn-home:hover { background: #8b6a4f; color: white; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(162,123,92,.2); }
+        .hc-btn-home .material-symbols-outlined { font-size: 18px; }
 
-            .hc-sidebar-footer {
-                border-top: 1px solid rgba(63,78,79,.3);
-                padding: 1rem;
-            }
+        /* ── SEARCH BOX in topbar ── */
+        .hc-topbar-search {
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 40px;
+        }
+        .hc-topbar-search input#hcSearchInput {
+            width: 36px; /* Bằng với nút kính lúp tàng hình khi chưa mở */
+            height: 36px;
+            padding: 0 !important;
+            border: 1px solid transparent !important;
+            background: transparent !important;
+            font-family: inherit;
+            font-size: .875rem;
+            color: transparent;
+            outline: none !important;
+            transition: width .3s cubic-bezier(.4,0,.2,1), padding .3s, border .3s, background .3s, color .3s;
+            border-radius: 8px;
+            box-shadow: none !important;
+            cursor: pointer;
+        }
+        .hc-topbar-search input#hcSearchInput::placeholder {
+            color: transparent;
+        }
+        .hc-topbar-search.open input#hcSearchInput {
+            width: 250px;
+            padding: .45rem 2.25rem .45rem 2.5rem !important;
+            border: 1.5px solid rgba(162,123,92,.35) !important;
+            background: #f7f7f6 !important;
+            color: var(--clr-secondary);
+            box-shadow: 0 4px 12px rgba(162,123,92,.08) !important;
+            cursor: text;
+        }
+        .hc-topbar-search.open input#hcSearchInput:focus {
+            border-color: var(--clr-primary) !important;
+            box-shadow: 0 0 0 3px rgba(162,123,92,.15) !important;
+            outline: none !important;
+        }
+        .hc-topbar-search .search-icon-btn {
+            position: absolute;
+            left: 0;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(63,78,79,.06);
+            border: none;
+            cursor: pointer;
+            color: rgba(63,78,79,.55);
+            border-radius: 8px;
+            transition: color .15s, background .15s;
+            z-index: 1;
+            pointer-events: none; /* Let clicks pass to the input initially */
+        }
+        .hc-topbar-search.open .search-icon-btn {
+            background: transparent;
+            color: var(--clr-primary);
+        }
+        .hc-topbar-search:hover .search-icon-btn { color: var(--clr-primary); background: rgba(63,78,79,.1); }
+        .hc-topbar-search.open:hover .search-icon-btn { background: transparent; }
+        .hc-topbar-search .search-icon-btn .material-symbols-outlined { font-size: 20px; }
+        .hc-topbar-search .search-close-btn {
+            position: absolute;
+            right: .5rem;
+            width: 20px;
+            height: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(63,78,79,.15);
+            border: none;
+            cursor: pointer;
+            color: rgba(63,78,79,.6);
+            border-radius: 50%;
+            font-size: 12px;
+            transition: background .15s;
+        }
+        .hc-topbar-search.open .search-close-btn { display: flex; }
+        .hc-topbar-search .search-close-btn:hover { background: rgba(63,78,79,.25); }
+        .hc-topbar-search .search-close-btn .material-symbols-outlined { font-size: 13px; }
 
-            .hc-user-card {
-                display: flex;
-                align-items: center;
-                gap: .75rem;
-                padding: .75rem 1rem;
-                border-radius: .6rem;
-            }
+        .hc-content { flex: 1; overflow-y: auto; padding: 2rem; }
 
-            .hc-avatar {
-                width: 36px;
-                height: 36px;
-                border-radius: 50%;
-                background: var(--clr-primary);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #fff;
-                font-weight: 800;
-                font-size: .85rem;
-                flex-shrink: 0;
-            }
+        /* ── BREADCRUMB ── */
+        .hc-breadcrumb {
+            display: flex; align-items: center; gap: .4rem;
+            font-size: .78rem; color: #94a3b8; margin-bottom: 1.5rem; flex-wrap: wrap;
+        }
+        .hc-breadcrumb a { color: var(--clr-primary); text-decoration: none; }
+        .hc-breadcrumb a:hover { text-decoration: underline; }
+        .hc-breadcrumb .material-symbols-outlined { font-size: 14px; }
 
-            .hc-user-name {
-                color: var(--clr-neutral);
-                font-size: .875rem;
-                font-weight: 600;
-            }
-
-            .hc-user-role {
-                color: rgba(220,215,201,.45);
-                font-size: .75rem;
-            }
-
-            .hc-logout-btn {
-                margin-left: auto;
-                background: none;
-                border: none;
-                cursor: pointer;
-                color: rgba(220,215,201,.45);
-                font-size: 18px;
-                transition: color .15s;
-                padding: 0;
-            }
-
-                .hc-logout-btn:hover {
-                    color: #fca5a5;
-                }
-
-            /* MAIN */
-            .hc-main {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                min-width: 0;
-            }
-
-            .hc-topbar {
-                height: 72px;
-                background: #fff;
-                border-bottom: 1px solid var(--clr-neutral);
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0 2rem;
-                flex-shrink: 0;
-            }
-
-            .hc-page-title {
-                font-size: 1.4rem;
-                font-weight: 700;
-                color: var(--clr-secondary);
-                line-height: 1;
-            }
-
-            .hc-page-sub {
-                font-size: .75rem;
-                color: #94a3b8;
-                margin-top: 3px;
-            }
-
-            .hc-topbar-actions {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-            }
-
-            .hc-btn-home {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                padding: 0.5rem 1rem;
-                background: var(--clr-primary);
-                color: white;
-                text-decoration: none;
-                border-radius: 0.5rem;
-                font-size: 0.875rem;
-                font-weight: 500;
-                transition: all 0.2s;
-                border: none;
-                cursor: pointer;
-            }
-
-                .hc-btn-home:hover {
-                    background: #8b6a4f;
-                    color: white;
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 8px rgba(162, 123, 92, 0.2);
-                }
-
-                .hc-btn-home .material-symbols-outlined {
-                    font-size: 18px;
-                }
-
-            .hc-content {
-                flex: 1;
-                overflow-y: auto;
-                padding: 2rem;
-            }
-
-            /* BREADCRUMB */
-            .hc-breadcrumb {
-                display: flex;
-                align-items: center;
-                gap: .4rem;
-                font-size: .78rem;
-                color: #94a3b8;
-                margin-bottom: 1.5rem;
-            }
-
-                .hc-breadcrumb a {
-                    color: var(--clr-primary);
-                    text-decoration: none;
-                }
-
-                .hc-breadcrumb .material-symbols-outlined {
-                    font-size: 14px;
-                }
-
-            /* SCROLLBAR */
-            ::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            ::-webkit-scrollbar-track {
-                background: transparent;
-            }
-
-            ::-webkit-scrollbar-thumb {
-                background: var(--clr-neutral);
-                border-radius: 99px;
-            }
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--clr-neutral); border-radius: 99px; }
     </style>
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
 
-    <aside class="hc-sidebar">
-        <a asp-controller="Home" asp-action="Index" class="hc-sidebar-brand">
-            <div class="hc-brand-icon">
-                <span class="material-symbols-outlined">coffee</span>
-            </div>
-            <div>
-                <div class="hc-brand-name">Góc Lặng</div>
-                <div class="hc-brand-sub">Admin Portal</div>
-            </div>
+<aside class="hc-sidebar">
+    <a asp-controller="Home" asp-action="Index" class="hc-sidebar-brand">
+        <div class="hc-brand-icon">
+            <span class="material-symbols-outlined">coffee</span>
+        </div>
+        <div>
+            <div class="hc-brand-name">Goc Lang</div>
+            <div class="hc-brand-sub">Admin Portal</div>
+        </div>
+    </a>
+
+    <nav class="hc-nav">
+        <div class="hc-nav-group-label">Quản lý</div>
+
+        <a asp-controller="Admin" asp-action="Index"
+           class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")">
+            <span class="material-symbols-outlined">dashboard</span> Dashboard
         </a>
 
-        <nav class="hc-nav">
-            <div class="hc-nav-group-label">Quản lý</div>
+        <a asp-controller="Product" asp-action="Index"
+           class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Product" ? "active" : "")">
+            <span class="material-symbols-outlined">inventory_2</span> Sản phẩm
+        </a>
 
-            <a asp-controller="Admin" asp-action="Index"
-                   class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")">
-                <span class="material-symbols-outlined">dashboard</span> Dashboard
-            </a>
-            <a asp-controller="Product" asp-action="Index"
-                   class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Product" ? "active" : "")">
-                <span class="material-symbols-outlined">inventory_2</span> Sản phẩm
-            </a>
-            <a asp-controller="Category" asp-action="Index"
-                   class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Category" ? "active" : "")">
-                <span class="material-symbols-outlined">category</span> Danh mục
-            </a>
+        <a asp-controller="Category" asp-action="Index"
+           class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Category" ? "active" : "")">
+            <span class="material-symbols-outlined">category</span> Danh mục
+        </a>
+
+        <div class="hc-nav-sub">
             <a asp-controller="Admin" asp-action="CategoryOptions"
-                   class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "CategoryOptions" ? "active" : "")"
-                   style="padding-left:2.25rem;font-size:.82rem;">
-                <span class="material-symbols-outlined" style="font-size:17px;">tune</span> Tùy chọn SP
+               class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "CategoryOptions" ? "active" : "")">
+                <span class="material-symbols-outlined">tune</span> Tùy chọn SP
             </a>
-            <a asp-controller="Admin" asp-action="Orders"
-                   class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Order" ? "active" : "")">
-                <span class="material-symbols-outlined">shopping_cart</span> Đơn hàng
-            </a>
-            <a asp-controller="Admin" asp-action="Bookings"
-                   class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Booking" ? "active" : "")">
-                <span class="material-symbols-outlined">event_seat</span> Đặt chỗ
-            </a>
-            <a asp-controller="Admin" asp-action="Users"
-                   class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "User" ? "active" : "")">
-                <span class="material-symbols-outlined">group</span> Người dùng
-            </a>
-        </nav>
-
-        <div class="hc-sidebar-footer">
-            <div class="hc-user-card">
-                <div class="hc-avatar">
-                    @((User?.Identity?.Name ?? "A")[0].ToString().ToUpper())
-                </div>
-                <div>
-                    <div class="hc-user-name">@(User?.Identity?.Name ?? "Admin")</div>
-                    <div class="hc-user-role">Quản lý</div>
-                </div>
-                <form asp-controller="Account" asp-action="Logout" method="post" style="margin-left:auto;">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="hc-logout-btn material-symbols-outlined" title="Đăng xuất">logout</button>
-                </form>
-            </div>
         </div>
-    </aside>
 
-    <div class="hc-main">
-        <header class="hc-topbar">
+        <div class="hc-nav-group-label">Công cụ</div>
+
+        <a asp-controller="Product" asp-action="ApiDemo"
+           class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "ApiDemo" ? "active" : "")">
+            <span class="material-symbols-outlined">api</span>
+            API Demo
+            <span class="hc-nav-badge hc-nav-badge-new">NEW</span>
+        </a>
+
+        <div class="hc-nav-sub">
+            <a href="/swagger" target="_blank" class="hc-nav-link">
+                <span class="material-symbols-outlined">description</span>
+                Swagger UI
+                <span class="hc-nav-badge hc-nav-badge-api">v1</span>
+                <span class="material-symbols-outlined hc-nav-ext">open_in_new</span>
+            </a>
+        </div>
+
+        <div class="hc-nav-group-label">Vận hành</div>
+
+        <a asp-controller="Admin" asp-action="Orders"
+           class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Order" ? "active" : "")">
+            <span class="material-symbols-outlined">shopping_cart</span> Đơn hàng
+        </a>
+
+        <a asp-controller="Admin" asp-action="Bookings"
+           class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "Booking" ? "active" : "")">
+            <span class="material-symbols-outlined">event_seat</span> Đặt chỗ
+        </a>
+
+        <a asp-controller="Admin" asp-action="Users"
+           class="hc-nav-link @(ViewData["ActivePage"]?.ToString() == "User" ? "active" : "")">
+            <span class="material-symbols-outlined">group</span> Người dùng
+        </a>
+    </nav>
+
+    <div class="hc-sidebar-footer">
+        <div class="hc-user-card">
+            <div class="hc-avatar">
+                @((User?.Identity?.Name ?? "A")[0].ToString().ToUpper())
+            </div>
             <div>
-                <div class="hc-page-title">@ViewData["Title"]</div>
-                <div class="hc-page-sub">Góc Lặng Admin Portal</div>
+                <div class="hc-user-name">@(User?.Identity?.Name ?? "Admin")</div>
+                <div class="hc-user-role">Quản lý viên</div>
             </div>
-            <div class="hc-topbar-actions">
-                <a asp-controller="Home" asp-action="Index" class="hc-btn-home">
-                    <span class="material-symbols-outlined">home</span>
-                    Về Trang Chủ
-                </a>
-                @await RenderSectionAsync("TopbarRight", required: false)
-            </div>
-        </header>
-
-        <main class="hc-content">
-            @if (ViewData["Breadcrumb"] != null)
-            {
-                <div class="hc-breadcrumb">
-                    <a asp-controller="Admin" asp-action="Index">
-                        <span class="material-symbols-outlined">home</span>
-                    </a>
-                    <span class="material-symbols-outlined">chevron_right</span>
-                    @Html.Raw(ViewData["Breadcrumb"])
-                </div>
-            }
-
-            @RenderBody()
-        </main>
+            <form asp-controller="Account" asp-action="Logout" method="post" style="margin-left:auto;">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="hc-logout-btn material-symbols-outlined" title="Đăng xuất">
+                    logout
+                </button>
+            </form>
+        </div>
     </div>
+</aside>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+<div class="hc-main">
+    <header class="hc-topbar">
+        <div>
+            <div class="hc-page-title">@ViewData["Title"]</div>
+            <div class="hc-page-sub">Góc Lặng Admin Portal</div>
+        </div>
+        <div class="hc-topbar-actions">
+            @* Search box - animated expand *@
+            <div class="hc-topbar-search" id="hcSearch">
+                <button class="search-icon-btn" onclick="toggleSearch()" type="button" title="Tìm kiếm" tabindex="-1">
+                    <span class="material-symbols-outlined">search</span>
+                </button>
+                <input type="text" id="hcSearchInput" placeholder="Tìm sản phẩm..."
+                       onfocus="if(!this.parentElement.classList.contains('open')) toggleSearch()"
+                       oninput="hcDoSearch(this.value)"
+                       onkeydown="if(event.key==='Escape') { closeSearch(); this.blur(); }" />
+                <button class="search-close-btn" onclick="closeSearch()" type="button">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <a asp-controller="Home" asp-action="Index" class="hc-btn-home">
+                <span class="material-symbols-outlined">home</span>
+                Về Trang Chủ
+            </a>
+            @await RenderSectionAsync("TopbarRight", required: false)
+        </div>
+    </header>
+
+    <main class="hc-content" id="hc-content">
+        @if (ViewData["Breadcrumb"] != null)
+        {
+            <div class="hc-breadcrumb">
+                <a asp-controller="Admin" asp-action="Index">
+                    <span class="material-symbols-outlined">home</span>
+                </a>
+                <span class="material-symbols-outlined">chevron_right</span>
+                @Html.Raw(ViewData["Breadcrumb"])
+            </div>
+        }
+
+        @RenderBody()
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── Topbar Search ────────────────────────────────────────────
+function toggleSearch() {
+    var el = document.getElementById('hcSearch');
+    if (el.classList.contains('open')) {
+        closeSearch();
+    } else {
+        el.classList.add('open');
+        setTimeout(function() { document.getElementById('hcSearchInput').focus(); }, 310);
+    }
+}
+function closeSearch() {
+    var el = document.getElementById('hcSearch');
+    el.classList.remove('open');
+    document.getElementById('hcSearchInput').value = '';
+    hcDoSearch('');
+}
+function hcDoSearch(q) {
+    if (typeof filterTable === 'function') {
+        var localInput = document.getElementById('searchInput');
+        if (localInput) {
+            localInput.value = q;
+        }
+        filterTable();
+        return;
+    }
+    // Fallback logic for pages without filterTable
+    q = (q || '').toLowerCase().trim();
+    var rows = document.querySelectorAll('#productTable tbody tr[data-name]');
+    if (!rows.length) return;
+    var visible = 0;
+    rows.forEach(function(r) {
+        var match = !q || (r.dataset.name || '').includes(q);
+        var activeCatBtn = document.querySelector('.pi-filter-btn.active');
+        var catId = activeCatBtn ? (activeCatBtn.dataset.catId || '0') : '0';
+        var catMatch = catId === '0' || String(r.dataset.cat) === catId;
+        r.style.display = (match && catMatch) ? '' : 'none';
+        if (match && catMatch) visible++;
+    });
+    var countEl = document.getElementById('rowCount');
+    if (countEl) countEl.textContent = visible + ' sản phẩm';
+    var tableCountEl = document.getElementById('tableCount');
+    if (tableCountEl) tableCountEl.textContent = 'Hiển thị ' + visible + ' sản phẩm';
+}
+// Close search on outside click
+document.addEventListener('click', function(e) {
+    var el = document.getElementById('hcSearch');
+    if (el && el.classList.contains('open') && !el.contains(e.target)) {
+        closeSearch();
+    }
+});
+</script>
+
+<script>
+// ── Admin SPA Navigation ─────────────────────────────────────
+// Intercepts .hc-nav-link clicks to swap content without full reload.
+(function() {
+    var content = document.getElementById('hc-content');
+    if (!content) return;
+
+    function setActive(url) {
+        var path = url.split('?')[0].toLowerCase();
+        document.querySelectorAll('.hc-nav-link').forEach(function(link) {
+            var href = (link.getAttribute('href') || '').toLowerCase();
+            link.classList.toggle('active', href && path.endsWith(href));
+        });
+    }
+
+    function navigate(url, push) {
+        content.classList.add('hc-fading');
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            })
+            .then(function(html) {
+                // Parse fetched HTML and extract hc-content inner HTML
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(html, 'text/html');
+                var newContent = doc.getElementById('hc-content');
+                // Update page title
+                var newTitle = doc.querySelector('title');
+                if (newTitle) document.title = newTitle.textContent;
+                if (newContent) {
+                    content.innerHTML = newContent.innerHTML;
+                } else {
+                    // Fallback: use <main> or full body
+                    var main = doc.querySelector('main.hc-content') || doc.querySelector('main');
+                    content.innerHTML = main ? main.innerHTML : doc.body.innerHTML;
+                }
+                // Re-execute inline scripts in swapped content
+                content.querySelectorAll('script').forEach(function(s) {
+                    var ns = document.createElement('script');
+                    if (s.src) { ns.src = s.src; } else { ns.textContent = s.textContent; }
+                    s.parentNode.replaceChild(ns, s);
+                });
+                if (push) history.pushState({ url: url }, '', url);
+                setActive(url);
+                content.classList.remove('hc-fading');
+                content.scrollTop = 0;
+            })
+            .catch(function() {
+                // Fallback to full page load on error
+                window.location.href = url;
+            });
+    }
+
+    // Intercept nav link clicks
+    document.querySelector('.hc-sidebar').addEventListener('click', function(e) {
+        var link = e.target.closest('.hc-nav-link');
+        if (!link) return;
+        var href = link.getAttribute('href');
+        // Skip: no href, external links, or anchors
+        if (!href || href.startsWith('http') || href.startsWith('#') || link.target === '_blank') return;
+        e.preventDefault();
+        navigate(href, true);
+    });
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.url) navigate(e.state.url, false);
+    });
+
+    // Mark current page on load
+    setActive(window.location.pathname);
+})();
+</script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

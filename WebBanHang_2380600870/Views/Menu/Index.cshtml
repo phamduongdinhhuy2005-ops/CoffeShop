@@ -1,4 +1,4 @@
-﻿@model IEnumerable<WebBanHang_2380600870.Models.Product>
+@model IEnumerable<WebBanHang_2380600870.Models.Product>
 @{
     ViewData["Title"] = "Thực Đơn | Góc Lặng";
     Layout = "_Layout";
@@ -140,6 +140,84 @@
     padding: .08rem .42rem; border-radius: 9999px; margin-left: .4rem; line-height: 1.7;
 }
 .mn-filter__tab--active .mn-filter__tab-count { background: rgba(162,123,92,.18); }
+
+/* ── Search box in filter bar ── */
+.mn-filter__search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    align-self: center; /* FIXED: canh giữa theo chiều dọc nếu parent là stretch */
+    margin-left: auto;
+    flex-shrink: 0;
+    height: 40px;
+    background: rgba(162,123,92,.06);
+    border-radius: 9999px;
+    padding: 0 4px;
+    transition: background .3s, box-shadow .3s;
+}
+.mn-filter__search-wrap.open {
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(162,123,92,.08);
+}
+.mn-filter__search {
+    width: 0;
+    padding: 0 !important;
+    border: none !important;
+    border-bottom: 1.5px solid transparent !important;
+    background: transparent !important;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: .82rem;
+    color: transparent;
+    outline: none !important;
+    transition: width .35s cubic-bezier(.22,1,.36,1), padding .35s, color .2s;
+    overflow: hidden;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+.mn-filter__search-wrap.open .mn-filter__search {
+    width: 200px;
+    border-bottom-color: transparent !important;
+    padding: .55rem 2.2rem .55rem .4rem !important; /* right padding chừa chỗ cho clear btn */
+    color: #2C3639;
+}
+.mn-filter__search-btn {
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer;
+    color: rgba(162,123,92,.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0 !important; /* FIXED: Không để padding ngoài ý muốn đè lên icon */
+    border-radius: 50%;
+    transition: transform .2s, color .2s, background .2s;
+}
+.mn-filter__search-wrap:not(.open) .mn-filter__search-btn:hover { 
+    color: #A27B5C; 
+    transform: scale(1.05); 
+    background: rgba(162,123,92,.1) !important;
+}
+.mn-filter__search-wrap.open .mn-filter__search-btn { color: #A27B5C; cursor: default; }
+.mn-search-clear {
+    position: absolute;
+    right: 6px;
+    background: none !important;
+    border: none !important;
+    cursor: pointer;
+    color: rgba(63,78,79,.4);
+    font-size: 16px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    transition: color .2s, background .2s;
+}
+.mn-search-clear.show { display: flex; }
+.mn-search-clear:hover { color: #dc2626; background: rgba(239,68,68,.1) !important; }
 
 /* ════════════════════════════════════════════════
    CONTENT
@@ -378,6 +456,17 @@
                 <span class="mn-filter__tab-count">@catCount</span>
             </button>
         }
+        <div class="mn-filter__search-wrap" id="mnSearchWrap">
+            <button class="material-symbols-outlined mn-filter__search-btn" id="mnSearchBtn"
+                    onclick="mnToggleSearch()" title="Tìm kiếm sản phẩm" tabindex="-1">search</button>
+            <input class="mn-filter__search" id="mnSearchInput" type="text"
+                   placeholder="Tìm sản phẩm..."
+                   onfocus="if(!this.parentElement.classList.contains('open')) mnToggleSearch()"
+                   oninput="mnSearchFilter()"
+                   onkeydown="if(event.key==='Escape') { mnClearSearch(false); this.blur(); }" />
+            <button class="material-symbols-outlined mn-search-clear" id="mnSearchClear"
+                    onclick="mnClearSearch(true)">close</button>
+        </div>
     </div>
 </div>
 
@@ -461,6 +550,8 @@
     var currentProducts = ALL_PRODUCTS.slice(); /* filtered list */
     var currentPage     = 0;
     var currentCatName  = '@Html.Raw(activeCatName)';
+    var currentCatId    = '@(activeCategory?.ToString() ?? "")';
+    var currentSearch   = '';
 
     /* ── DOM refs ── */
     var wrap      = document.getElementById('mn-grid-wrap');
@@ -475,8 +566,9 @@
     if (grid) {
         /* Set initial category filter if URL had one */
         var initCatId = '@(activeCategory?.ToString() ?? "")';
+        currentCatId = initCatId;
         if (initCatId !== '') {
-            currentProducts = ALL_PRODUCTS.filter(function(p){ return String(p.catId) === initCatId; });
+            currentProducts = applyFilters(ALL_PRODUCTS, initCatId, '');
         }
         renderPage(0);
     }
@@ -495,10 +587,9 @@
         var catName = btn.dataset.catName;
         currentCatName = catName;
 
-        /* Filter */
-        currentProducts = catId === ''
-            ? ALL_PRODUCTS.slice()
-            : ALL_PRODUCTS.filter(function(p){ return String(p.catId) === catId; });
+        currentCatId = catId;
+        /* Filter — kết hợp cả category lẫn search hiện tại */
+        currentProducts = applyFilters(ALL_PRODUCTS, catId, currentSearch);
 
         /* Fade → rebuild → fade in */
         wrap.classList.add('mn-fading');
@@ -687,6 +778,68 @@
     }
     /* Cards already revealed in renderPage via rAF, but also observe for safety */
     observeReveal();
+
+    /* ════════════════════════════════
+       SEARCH HELPERS
+    ════════════════════════════════ */
+    function applyFilters(source, catId, searchQ) {
+        var result = catId === ''
+            ? source.slice()
+            : source.filter(function(p){ return String(p.catId) === catId; });
+        if (searchQ.trim() === '') return result;
+        var q = searchQ.toLowerCase().trim();
+        return result.filter(function(p){
+            return p.name.toLowerCase().includes(q) ||
+                   p.desc.toLowerCase().includes(q) ||
+                   String(p.id) === q;
+        });
+    }
+
+    window.mnToggleSearch = function() {
+        var wrap  = document.getElementById('mnSearchWrap');
+        var input = document.getElementById('mnSearchInput');
+        var isOpen = wrap.classList.toggle('open');
+        if (isOpen) {
+            setTimeout(function(){ input.focus(); }, 320);
+        } else {
+            mnClearSearch(true);
+        }
+    };
+
+    window.mnSearchFilter = function() {
+        var input = document.getElementById('mnSearchInput');
+        var clearBtn = document.getElementById('mnSearchClear');
+        currentSearch = input.value;
+        clearBtn.classList.toggle('show', currentSearch.length > 0);
+        currentProducts = applyFilters(ALL_PRODUCTS, currentCatId, currentSearch);
+        /* Update meta */
+        metaCount.textContent = currentProducts.length;
+        /* Keep current category label */
+        wrap.classList.add('mn-fading');
+        setTimeout(function(){
+            renderPage(0);
+            wrap.classList.remove('mn-fading');
+        }, 150);
+    };
+
+    window.mnClearSearch = function(keepOpen) {
+        var input    = document.getElementById('mnSearchInput');
+        var clearBtn = document.getElementById('mnSearchClear');
+        var searchWrap = document.getElementById('mnSearchWrap');
+        
+        var wasEmpty = (currentSearch === '');
+        input.value  = '';
+        currentSearch = '';
+        clearBtn.classList.remove('show');
+        if (!keepOpen) searchWrap.classList.remove('open');
+        
+        // Chỉ chạy lại filter/refresh nếu input thật sự đang chứa kí tự tìm kiếm
+        if (!wasEmpty) {
+            currentProducts = applyFilters(ALL_PRODUCTS, currentCatId, '');
+            metaCount.textContent = currentProducts.length;
+            renderPage(0);
+        }
+    };
 
     /* ── XSS-safe escape ── */
     function esc(s) {
